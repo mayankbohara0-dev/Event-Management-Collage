@@ -7,20 +7,20 @@ import '../../../../core/design_system.dart';
 
 // Admin palette — dark professional
 class AdminColors {
-  static const Color bg = Color(0xFF0F0F1A);
-  static const Color sidebar = Color(0xFF14142B);
-  static const Color surface = Color(0xFF1A1A2E);
-  static const Color surfaceLight = Color(0xFF242440);
-  static const Color accent = Color(0xFF7C3AED);
-  static const Color gold = Color(0xFFFFB800);
-  static const Color success = Color(0xFF10B981);
-  static const Color error = Color(0xFFEF4444);
-  static const Color textPrimary = Color(0xFFF1F1F8);
-  static const Color textSecondary = Color(0xFF8B8BA8);
-  static const Color border = Color(0xFF2A2A4A);
+  static const Color bg = Color(0xFFF7F7F7);
+  static const Color sidebar = Color(0xFFFFFFFF);
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color surfaceLight = Color(0xFFF9FAFB);
+  static const Color accent = Color(0xFF00843D);
+  static const Color gold = Color(0xFFFFB700);
+  static const Color success = Color(0xFF00843D);
+  static const Color error = Color(0xFFE31837);
+  static const Color textPrimary = Color(0xFF111111);
+  static const Color textSecondary = Color(0xFF616161);
+  static const Color border = Color(0xFFE5E5E5);
 
   static const LinearGradient heroGradient = LinearGradient(
-    colors: [Color(0xFF1A1A2E), Color(0xFF7C3AED)],
+    colors: [Color(0xFF006630), Color(0xFF00843D)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

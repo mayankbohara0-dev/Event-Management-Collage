@@ -740,6 +740,7 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
     final roll = _profile?['roll_number']?.toString() ?? '';
     final year = _profile?['year']?.toString() ?? '';
     final sem = _profile?['semester']?.toString() ?? '';
+    final div = _profile?['division']?.toString() ?? '';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -803,6 +804,10 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
                   ],
                   if (sem.isNotEmpty) ...[
                     _InfoCard(label: 'Semester', value: 'Semester $sem', icon: Icons.class_outlined),
+                    const SizedBox(height: 12),
+                  ],
+                  if (div.isNotEmpty) ...[
+                    _InfoCard(label: 'Division', value: 'Div $div', icon: Icons.group_outlined),
                     const SizedBox(height: 12),
                   ],
                   const SizedBox(height: 8),

@@ -21,6 +21,7 @@ class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScree
   String? _selectedDepartmentId;
   String? _selectedYear;
   String? _selectedSemester;
+  String? _selectedDivision;
   
   bool _isLoading = true;
   bool _isSaving = false;
@@ -29,6 +30,7 @@ class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScree
   
   static const List<String> _years = ['1', '2', '3', '4'];
   static const List<String> _semesters = ['1','2','3','4','5','6','7','8'];
+  static const List<String> _divisions = ['A', 'B', 'C', 'D', 'E', 'F'];
 
   @override
   void initState() {
@@ -82,6 +84,7 @@ class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScree
         'department_id': _selectedDepartmentId,
         'year': _selectedYear == null ? null : int.tryParse(_selectedYear!),
         'semester': _selectedSemester == null ? null : int.tryParse(_selectedSemester!),
+        'division': _selectedDivision,
       });
       if (mounted) context.go('/student/home');
     } catch (error) {
@@ -196,6 +199,16 @@ class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScree
                       hint: 'Select Semester',
                       icon: Icons.class_outlined,
                       onChanged: (v) => setState(() => _selectedSemester = v),
+                    ),
+                    const SizedBox(height: 12),
+                    _dropdown<String>(
+                      label: 'Division',
+                      value: _selectedDivision,
+                      items: _divisions,
+                      itemLabel: (s) => 'Div $s',
+                      hint: 'Select Division',
+                      icon: Icons.group_outlined,
+                      onChanged: (v) => setState(() => _selectedDivision = v),
                     ),
 
                     const SizedBox(height: 32),
