@@ -1,18 +1,17 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/design_system.dart';
 
-// ─────────────────────────────────────────────
-// Admin Design Tokens (self-contained)
-// ─────────────────────────────────────────────
-class _AdminColors {
+// Admin palette — dark professional
+class AdminColors {
   static const Color bg = Color(0xFF0F0F1A);
+  static const Color sidebar = Color(0xFF14142B);
   static const Color surface = Color(0xFF1A1A2E);
   static const Color surfaceLight = Color(0xFF242440);
   static const Color accent = Color(0xFF7C3AED);
-  static const Color accentLight = Color(0xFFEDE9FE);
   static const Color gold = Color(0xFFFFB800);
   static const Color success = Color(0xFF10B981);
   static const Color error = Color(0xFFEF4444);
@@ -34,234 +33,231 @@ class AdminLoginScreen extends ConsumerStatefulWidget {
   ConsumerState<AdminLoginScreen> createState() => _AdminLoginScreenState();
 }
 
-class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen>
-    with SingleTickerProviderStateMixin {
+class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-  bool _obscure = true;
-  late AnimationController _animController;
-  late Animation<double> _fadeAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
-    _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeOut);
-    _animController.forward();
-  }
-
-  Future<void> _adminLogin() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      _showSnack('Please enter email and password', _AdminColors.error);
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    try {
-      final response = await Supabase.instance.client.auth.signInWithPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
-
-      if (response.user != null) {
-        final profileRes = await Supabase.instance.client
-            .from('admin_profiles')
-            .select('role')
-            .eq('id', response.user!.id)
-            .maybeSingle();
-
-        if (profileRes != null &&
-            (profileRes['role'] == 'admin' ||
-                profileRes['role'] == 'super_admin')) {
-          if (mounted) context.go('/admin/dashboard');
-        } else {
-          await Supabase.instance.client.auth.signOut();
-          if (mounted) {
-            _showSnack('Access Denied: No admin privileges.', _AdminColors.error);
-          }
-        }
-      }
-    } on AuthException catch (e) {
-      if (mounted) _showSnack(e.message, _AdminColors.error);
-    } catch (_) {
-      if (mounted) _showSnack('An unexpected error occurred', _AdminColors.error);
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  void _showSnack(String msg, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      backgroundColor: color,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    ));
-  }
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _animController.dispose();
     super.dispose();
   }
+
+  Future<void> _login() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) return;
+    setState(() => _isLoading = true);
+    try {
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        // Check admin_profiles table (the correct table per schema)
+        final adminProfile = await Supabase.instance.client
+            .from('admin_profiles')
+            .select('role')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        if (adminProfile != null) {
+          // User exists in admin_profiles — allow access
+          if (mounted) context.go('/admin/dashboard');
+        } else {
+          // Not in admin_profiles — check if they have an admin role in student profiles as fallback
+          await Supabase.instance.client.auth.signOut();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Access denied. This account is not registered as an admin.'),
+                backgroundColor: AdminColors.error,
+              ),
+            );
+          }
+        }
+      }
+    } on AuthException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(error.message),
+            backgroundColor: AdminColors.error,
+          ),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${error.toString()}'),
+            backgroundColor: AdminColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _AdminColors.bg,
-      body: Stack(
-        children: [
-          // Background orbs
-          Positioned(
-            top: -120,
-            left: -80,
-            child: Container(
-              width: 380,
-              height: 380,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _AdminColors.accent.withOpacity(0.12),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -100,
-            right: -60,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _AdminColors.gold.withOpacity(0.07),
-              ),
-            ),
-          ),
-          // Content
-          Center(
-            child: SingleChildScrollView(
+      backgroundColor: AdminColors.bg,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Top green band adapted for admin (dark)
+            Container(
+              width: double.infinity,
               padding: const EdgeInsets.all(24),
-              child: FadeTransition(
-                opacity: _fadeAnim,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 440),
+              decoration: const BoxDecoration(gradient: AdminColors.heroGradient),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  GestureDetector(
+                    onTap: () => context.go('/'),
+                    child: const Icon(Icons.arrow_back_ios_rounded,
+                        color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AdminColors.gold,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text('ADMIN PORTAL',
+                        style: GoogleFonts.inter(
+                            color: Colors.black,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.5)),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('Welcome Back, Admin',
+                      style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900)),
+                  Text('Sign in to manage the portal.',
+                      style: GoogleFonts.inter(
+                          color: Colors.white.withOpacity(0.7), fontSize: 13)),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+
+            // Form
+            Expanded(
+              child: Container(
+                color: AdminColors.surface,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Logo area
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          gradient: _AdminColors.heroGradient,
-                          borderRadius: BorderRadius.circular(22),
-                          boxShadow: [
-                            BoxShadow(
-                              color: _AdminColors.accent.withOpacity(0.4),
-                              blurRadius: 28,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
+                      const SizedBox(height: 8),
+                      Text('Email address',
+                          style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AdminColors.textSecondary)),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        style: GoogleFonts.inter(color: AdminColors.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'admin@college.edu',
+                          hintStyle: GoogleFonts.inter(color: AdminColors.textSecondary),
+                          prefixIcon: const Icon(Icons.email_outlined,
+                              color: AdminColors.textSecondary, size: 20),
+                          filled: true,
+                          fillColor: AdminColors.surfaceLight,
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AdminColors.accent, width: 2),
+                          ),
                         ),
-                        child: const Icon(Icons.admin_panel_settings_rounded,
-                            color: Colors.white, size: 40),
+                      ),
+                      const SizedBox(height: 16),
+                      Text('Password',
+                          style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AdminColors.textSecondary)),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        style: GoogleFonts.inter(color: AdminColors.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: '••••••••',
+                          hintStyle: GoogleFonts.inter(color: AdminColors.textSecondary),
+                          prefixIcon: const Icon(Icons.lock_outline_rounded,
+                              color: AdminColors.textSecondary, size: 20),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              color: AdminColors.textSecondary,
+                              size: 20,
+                            ),
+                            onPressed: () =>
+                                setState(() => _obscurePassword = !_obscurePassword),
+                          ),
+                          filled: true,
+                          fillColor: AdminColors.surfaceLight,
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AdminColors.accent, width: 2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _login,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AdminColors.accent,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30)),
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                      color: Colors.white, strokeWidth: 2))
+                              : Text('Sign In to Admin Portal',
+                                  style: GoogleFonts.inter(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white)),
+                        ),
                       ),
                       const SizedBox(height: 24),
-                      const Text(
-                        'Admin Portal',
-                        style: TextStyle(
-                          color: _AdminColors.textPrimary,
-                          fontSize: 30,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Restricted access — authorized personnel only',
-                        style: TextStyle(
-                            color: _AdminColors.textSecondary, fontSize: 13),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 40),
-
-                      // Glass card
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(28),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                          child: Container(
-                            padding: const EdgeInsets.all(28),
-                            decoration: BoxDecoration(
-                              color: _AdminColors.surface.withOpacity(0.8),
-                              borderRadius: BorderRadius.circular(28),
-                              border: Border.all(
-                                  color: _AdminColors.border, width: 1),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                _DarkField(
-                                  controller: _emailController,
-                                  label: 'Admin Email',
-                                  icon: Icons.alternate_email_rounded,
-                                  keyboardType: TextInputType.emailAddress,
-                                ),
-                                const SizedBox(height: 14),
-                                _DarkField(
-                                  controller: _passwordController,
-                                  label: 'Password',
-                                  icon: Icons.lock_outline_rounded,
-                                  obscureText: _obscure,
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _obscure
-                                          ? Icons.visibility_off_outlined
-                                          : Icons.visibility_outlined,
-                                      color: _AdminColors.textSecondary,
-                                      size: 20,
-                                    ),
-                                    onPressed: () =>
-                                        setState(() => _obscure = !_obscure),
-                                  ),
-                                ),
-                                const SizedBox(height: 28),
-                                SizedBox(
-                                  height: 54,
-                                  child: ElevatedButton(
-                                    onPressed: _isLoading ? null : _adminLogin,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: _AdminColors.accent,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(14)),
-                                      elevation: 0,
-                                    ),
-                                    child: _isLoading
-                                        ? const SizedBox(
-                                            width: 20,
-                                            height: 20,
-                                            child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                color: Colors.white),
-                                          )
-                                        : const Text(
-                                            'Access Dashboard',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                      Center(
+                        child: Text(
+                          'Access restricted to authorised administrators only.',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: AdminColors.textSecondary,
+                              height: 1.5),
                         ),
                       ),
                     ],
@@ -269,59 +265,8 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen>
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DarkField extends StatelessWidget {
-  final TextEditingController controller;
-  final String label;
-  final IconData icon;
-  final bool obscureText;
-  final Widget? suffixIcon;
-  final TextInputType? keyboardType;
-
-  const _DarkField({
-    required this.controller,
-    required this.label,
-    required this.icon,
-    this.obscureText = false,
-    this.suffixIcon,
-    this.keyboardType,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      obscureText: obscureText,
-      keyboardType: keyboardType,
-      style: const TextStyle(color: _AdminColors.textPrimary, fontSize: 15),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(
-            color: _AdminColors.textSecondary, fontSize: 14),
-        prefixIcon: Icon(icon, color: _AdminColors.textSecondary, size: 20),
-        suffixIcon: suffixIcon,
-        filled: true,
-        fillColor: _AdminColors.surfaceLight,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: _AdminColors.border),
+          ],
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: _AdminColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: _AdminColors.accent, width: 1.5),
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       ),
     );
   }

@@ -2,88 +2,63 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../core/design_system.dart';
 
 class ProfileOnboardingScreen extends ConsumerStatefulWidget {
   const ProfileOnboardingScreen({super.key});
 
   @override
-  ConsumerState<ProfileOnboardingScreen> createState() =>
-      _ProfileOnboardingScreenState();
+  ConsumerState<ProfileOnboardingScreen> createState() => _ProfileOnboardingScreenState();
 }
 
-class _ProfileOnboardingScreenState
-    extends ConsumerState<ProfileOnboardingScreen> {
-  final _formKey = GlobalKey<FormState>();
-  bool _isLoading = false;
-  bool _isFetchingDepts = true;
-
+class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScreen> {
   final _nameController = TextEditingController();
-  final _rollNumberController = TextEditingController();
-  final _enrollmentNumberController = TextEditingController();
+  final _rollController = TextEditingController();
   final _phoneController = TextEditingController();
-
   String? _selectedDepartment;
-  String? _selectedYear;
   String? _selectedSemester;
-  String? _selectedGender;
   String? _selectedBloodGroup;
+  bool _isLoading = false;
 
-  final List<Map<String, dynamic>> _departments = [];
+  static const List<String> _departments = [
+    'Computer Science', 'Information Technology', 'Electronics', 'Mechanical',
+    'Civil', 'Chemical', 'Architecture', 'MBA', 'MCA', 'Others'
+  ];
+  static const List<String> _semesters = ['1','2','3','4','5','6','7','8'];
+  static const List<String> _bloodGroups = ['A+','A-','B+','B-','O+','O-','AB+','AB-'];
 
   @override
-  void initState() {
-    super.initState();
-    _fetchDepartments();
+  void dispose() {
+    _nameController.dispose();
+    _rollController.dispose();
+    _phoneController.dispose();
+    super.dispose();
   }
 
-  Future<void> _fetchDepartments() async {
-    try {
-      final data = await Supabase.instance.client
-          .from('departments')
-          .select('id, name');
-      setState(() {
-        _departments.addAll(List<Map<String, dynamic>>.from(data));
-        _isFetchingDepts = false;
-      });
-    } catch (e) {
-      debugPrint('Error fetching departments: $e');
-      setState(() => _isFetchingDepts = false);
+  Future<void> _save() async {
+    if (_nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your name'), backgroundColor: AppColors.error),
+      );
+      return;
     }
-  }
-
-  Future<void> _submitProfile() async {
-    if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
     try {
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user == null) throw Exception('Not logged in');
-
+      final user = Supabase.instance.client.auth.currentUser!;
       await Supabase.instance.client.from('student_profiles').upsert({
         'id': user.id,
         'name': _nameController.text.trim(),
-        'roll_number': _rollNumberController.text.trim(),
-        'enrollment_number': _enrollmentNumberController.text.trim(),
-        'department_id': _selectedDepartment,
-        'year': int.tryParse(_selectedYear ?? '1'),
-        'semester': int.tryParse(_selectedSemester ?? '1'),
-        'gender': _selectedGender,
-        'phone_number': _phoneController.text.trim(),
+        'roll_number': _rollController.text.trim().isEmpty ? null : _rollController.text.trim(),
+        'phone_number': _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+        'semester': _selectedSemester == null ? null : int.tryParse(_selectedSemester!),
         'blood_group': _selectedBloodGroup,
       });
-
       if (mounted) context.go('/student/home');
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $error'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
+          SnackBar(content: Text(error.toString()), backgroundColor: AppColors.error),
         );
       }
     } finally {
@@ -92,274 +67,224 @@ class _ProfileOnboardingScreenState
   }
 
   @override
-  void dispose() {
-    _nameController.dispose();
-    _rollNumberController.dispose();
-    _enrollmentNumberController.dispose();
-    _phoneController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          // ── Header ─────────────────────────────────────────────────
-          Container(
-            padding: EdgeInsets.fromLTRB(
-                24, MediaQuery.of(context).padding.top + 24, 24, 28),
-            decoration: const BoxDecoration(
-              gradient: AppColors.heroGradient,
-              borderRadius:
-                  BorderRadius.vertical(bottom: Radius.circular(32)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(Icons.person_add_rounded,
-                      color: Colors.white, size: 28),
-                ),
-                const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Complete Your Profile',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: const BoxDecoration(color: AppColors.green),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.yellow,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      'EVENT COLLAGE',
+                      style: GoogleFonts.inter(
+                        color: AppColors.black,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.5,
                       ),
                     ),
-                    Text(
-                      'Fill in your details to get started',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.65),
-                        fontSize: 13,
+                  ),
+                  const SizedBox(height: 12),
+                  Text("What's your profile?",
+                      style: GoogleFonts.inter(
+                          color: AppColors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900)),
+                  Text('Help us personalize your experience.',
+                      style: GoogleFonts.inter(
+                          color: AppColors.white.withOpacity(0.8),
+                          fontSize: 13)),
+                ],
+              ),
+            ),
+
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 4),
+                    _SectionLabel('Personal Information'),
+                    const SizedBox(height: 12),
+                    _field(label: 'Full Name *', controller: _nameController,
+                        hint: 'e.g. Mayank Bohara', icon: Icons.person_outline),
+                    const SizedBox(height: 12),
+                    _field(label: 'Phone Number', controller: _phoneController,
+                        hint: '+91 00000 00000', icon: Icons.phone_outlined,
+                        keyboardType: TextInputType.phone),
+
+                    const SizedBox(height: 20),
+                    _SectionLabel('Academic Details'),
+                    const SizedBox(height: 12),
+                    _field(label: 'Roll Number', controller: _rollController,
+                        hint: 'e.g. 2023CS001', icon: Icons.badge_outlined),
+                    const SizedBox(height: 12),
+                    _dropdown<String>(
+                      label: 'Department',
+                      value: _selectedDepartment,
+                      items: _departments,
+                      itemLabel: (s) => s,
+                      hint: 'Select Department',
+                      icon: Icons.school_outlined,
+                      onChanged: (v) => setState(() => _selectedDepartment = v),
+                    ),
+                    const SizedBox(height: 12),
+                    _dropdown<String>(
+                      label: 'Semester',
+                      value: _selectedSemester,
+                      items: _semesters,
+                      itemLabel: (s) => 'Semester $s',
+                      hint: 'Select Semester',
+                      icon: Icons.class_outlined,
+                      onChanged: (v) => setState(() => _selectedSemester = v),
+                    ),
+                    const SizedBox(height: 12),
+                    _dropdown<String>(
+                      label: 'Blood Group',
+                      value: _selectedBloodGroup,
+                      items: _bloodGroups,
+                      itemLabel: (s) => s,
+                      hint: 'Select Blood Group',
+                      icon: Icons.bloodtype_outlined,
+                      onChanged: (v) => setState(() => _selectedBloodGroup = v),
+                    ),
+
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _save,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.black,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(height: 20, width: 20,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : Text('Continue to Events',
+                                style: GoogleFonts.inter(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.white)),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: TextButton(
+                        onPressed: () => context.go('/student/home'),
+                        child: Text('Skip for now',
+                            style: GoogleFonts.inter(
+                                color: AppColors.grey400,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500)),
                       ),
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
-
-          // ── Form ───────────────────────────────────────────────────
-          Expanded(
-            child: _isFetchingDepts
-                ? const Center(
-                    child:
-                        CircularProgressIndicator(color: AppColors.accent))
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Personal Details Section
-                          _SectionHeader(
-                            icon: Icons.person_rounded,
-                            title: 'Personal Details',
-                          ),
-                          const SizedBox(height: 16),
-                          _StyledField(
-                            controller: _nameController,
-                            label: 'Full Name',
-                            icon: Icons.badge_outlined,
-                            validator: (v) =>
-                                v!.isEmpty ? 'Required' : null,
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _StyledDropdown<String>(
-                                  label: 'Gender',
-                                  icon: Icons.people_outline,
-                                  value: _selectedGender,
-                                  items: ['Male', 'Female', 'Other']
-                                      .map((g) => DropdownMenuItem(
-                                          value: g, child: Text(g)))
-                                      .toList(),
-                                  onChanged: (v) =>
-                                      setState(() => _selectedGender = v),
-                                  validator: (v) =>
-                                      v == null ? 'Required' : null,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: _StyledField(
-                                  controller: _phoneController,
-                                  label: 'Phone',
-                                  icon: Icons.phone_outlined,
-                                  keyboardType: TextInputType.phone,
-                                  validator: (v) =>
-                                      v!.isEmpty ? 'Required' : null,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          _StyledDropdown<String>(
-                            label: 'Blood Group',
-                            icon: Icons.bloodtype_outlined,
-                            value: _selectedBloodGroup,
-                            items: ['A+', 'A−', 'B+', 'B−', 'O+', 'O−', 'AB+', 'AB−']
-                                .map((g) =>
-                                    DropdownMenuItem(value: g, child: Text(g)))
-                                .toList(),
-                            onChanged: (v) =>
-                                setState(() => _selectedBloodGroup = v),
-                          ),
-
-                          const SizedBox(height: 28),
-                          // Academic Details Section
-                          _SectionHeader(
-                            icon: Icons.school_rounded,
-                            title: 'Academic Details',
-                          ),
-                          const SizedBox(height: 16),
-                          _StyledField(
-                            controller: _rollNumberController,
-                            label: 'Roll Number',
-                            icon: Icons.tag_rounded,
-                            validator: (v) =>
-                                v!.isEmpty ? 'Required' : null,
-                          ),
-                          const SizedBox(height: 16),
-                          _StyledField(
-                            controller: _enrollmentNumberController,
-                            label: 'Enrollment Number',
-                            icon: Icons.numbers_rounded,
-                          ),
-                          const SizedBox(height: 16),
-                          _StyledDropdown<String>(
-                            label: 'Department',
-                            icon: Icons.account_tree_outlined,
-                            value: _selectedDepartment,
-                            items: _departments
-                                .map((d) => DropdownMenuItem<String>(
-                                    value: d['id'],
-                                    child: Text(d['name'])))
-                                .toList(),
-                            onChanged: (v) =>
-                                setState(() => _selectedDepartment = v),
-                            validator: (v) =>
-                                v == null ? 'Required' : null,
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _StyledDropdown<String>(
-                                  label: 'Year',
-                                  icon: Icons.calendar_month_outlined,
-                                  value: _selectedYear,
-                                  items: ['1', '2', '3', '4', '5']
-                                      .map((y) => DropdownMenuItem(
-                                          value: y,
-                                          child: Text('Year $y')))
-                                      .toList(),
-                                  onChanged: (v) =>
-                                      setState(() => _selectedYear = v),
-                                  validator: (v) =>
-                                      v == null ? 'Required' : null,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: _StyledDropdown<String>(
-                                  label: 'Semester',
-                                  icon: Icons.format_list_numbered_rounded,
-                                  value: _selectedSemester,
-                                  items: List.generate(10, (i) => (i + 1).toString())
-                                      .map((s) => DropdownMenuItem(
-                                          value: s,
-                                          child: Text('Sem $s')))
-                                      .toList(),
-                                  onChanged: (v) =>
-                                      setState(() => _selectedSemester = v),
-                                  validator: (v) =>
-                                      v == null ? 'Required' : null,
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 36),
-                          // Submit Button
-                          SizedBox(
-                            height: 56,
-                            child: FilledButton(
-                              onPressed: _isLoading ? null : _submitProfile,
-                              style: FilledButton.styleFrom(
-                                backgroundColor: AppColors.accent,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16)),
-                              ),
-                              child: _isLoading
-                                  ? const SizedBox(
-                                      width: 22,
-                                      height: 22,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2, color: Colors.white))
-                                  : const Text(
-                                      'Complete Profile & Explore Events',
-                                      style: TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                        ],
-                      ),
-                    ),
-                  ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
-}
 
-// ─────────────────────────────────────────────
-// REUSABLE WIDGETS
-// ─────────────────────────────────────────────
-class _SectionHeader extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  const _SectionHeader({required this.icon, required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
+  Widget _field({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppColors.accentLight,
-            borderRadius: BorderRadius.circular(10),
+        Text(label,
+            style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.grey600)),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            hintText: hint,
+            prefixIcon: Icon(icon, color: AppColors.grey400, size: 20),
+            filled: true,
+            fillColor: AppColors.white,
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.grey200)),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.grey200)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.green, width: 2)),
           ),
-          child: Icon(icon, color: AppColors.accent, size: 18),
         ),
-        const SizedBox(width: 10),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: AppColors.grey900,
+      ],
+    );
+  }
+
+  Widget _dropdown<T>({
+    required String label,
+    required T? value,
+    required List<T> items,
+    required String Function(T) itemLabel,
+    required String hint,
+    required IconData icon,
+    required void Function(T?) onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.grey600)),
+        const SizedBox(height: 6),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.grey200),
+          ),
+          child: DropdownButtonFormField<T>(
+            value: value,
+            onChanged: onChanged,
+            decoration: InputDecoration(
+              prefixIcon: Icon(icon, color: AppColors.grey400, size: 20),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+            hint: Text(hint, style: GoogleFonts.inter(color: AppColors.grey400, fontSize: 14)),
+            dropdownColor: AppColors.white,
+            style: GoogleFonts.inter(color: AppColors.black, fontSize: 15),
+            items: items
+                .map((item) => DropdownMenuItem<T>(
+                      value: item,
+                      child: Text(itemLabel(item)),
+                    ))
+                .toList(),
           ),
         ),
       ],
@@ -367,63 +292,23 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _StyledField extends StatelessWidget {
-  final TextEditingController controller;
+class _SectionLabel extends StatelessWidget {
   final String label;
-  final IconData icon;
-  final String? Function(String?)? validator;
-  final TextInputType? keyboardType;
-
-  const _StyledField({
-    required this.controller,
-    required this.label,
-    required this.icon,
-    this.validator,
-    this.keyboardType,
-  });
+  const _SectionLabel(this.label);
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, size: 20, color: AppColors.grey500),
-      ),
-    );
-  }
-}
-
-class _StyledDropdown<T> extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final T? value;
-  final List<DropdownMenuItem<T>> items;
-  final ValueChanged<T?> onChanged;
-  final String? Function(T?)? validator;
-
-  const _StyledDropdown({
-    required this.label,
-    required this.icon,
-    required this.value,
-    required this.items,
-    required this.onChanged,
-    this.validator,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButtonFormField<T>(
-      value: value,
-      items: items,
-      onChanged: onChanged,
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, size: 20, color: AppColors.grey500),
-      ),
+    return Row(
+      children: [
+        Container(width: 4, height: 18, decoration: BoxDecoration(
+            color: AppColors.green, borderRadius: BorderRadius.circular(4))),
+        const SizedBox(width: 8),
+        Text(label,
+            style: GoogleFonts.inter(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: AppColors.black)),
+      ],
     );
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:qr_flutter/qr_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../core/design_system.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -15,52 +15,45 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _pages = <Widget>[
-    _HomeFeed(),
-    _MyRegistrations(),
-    _ProfileTab(),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    const pages = [
+      _HomeFeed(),
+      _MyRegistrations(),
+      _ProfileTab(),
+    ];
+
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
-      ),
+      backgroundColor: AppColors.background,
+      body: IndexedStack(index: _selectedIndex, children: pages),
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 20,
-              offset: const Offset(0, -4),
-            ),
-          ],
+        decoration: const BoxDecoration(
+          color: AppColors.white,
+          border: Border(top: BorderSide(color: AppColors.grey100, width: 1)),
         ),
-        child: NavigationBar(
-          selectedIndex: _selectedIndex,
-          onDestinationSelected: (i) => setState(() => _selectedIndex = i),
-          backgroundColor: Colors.transparent,
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: (i) => setState(() => _selectedIndex = i),
+          backgroundColor: AppColors.white,
+          selectedItemColor: AppColors.green,
+          unselectedItemColor: AppColors.grey400,
+          selectedLabelStyle: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700),
+          unselectedLabelStyle: GoogleFonts.inter(fontSize: 11),
           elevation: 0,
-          indicatorColor: AppColors.accentLight,
-          destinations: const [
-            NavigationDestination(
+          items: const [
+            BottomNavigationBarItem(
               icon: Icon(Icons.explore_outlined),
-              selectedIcon: Icon(Icons.explore, color: AppColors.accent),
+              activeIcon: Icon(Icons.explore),
               label: 'Explore',
             ),
-            NavigationDestination(
-              icon: Icon(Icons.confirmation_num_outlined),
-              selectedIcon:
-                  Icon(Icons.confirmation_num, color: AppColors.accent),
-              label: 'My Tickets',
+            BottomNavigationBarItem(
+              icon: Icon(Icons.how_to_reg_outlined),
+              activeIcon: Icon(Icons.how_to_reg),
+              label: 'My Events',
             ),
-            NavigationDestination(
-              icon: Icon(Icons.person_outline_rounded),
-              selectedIcon:
-                  Icon(Icons.person_rounded, color: AppColors.accent),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
               label: 'Profile',
             ),
           ],
@@ -70,125 +63,340 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-// ─────────────────────────────────────────────
-// HOME FEED TAB
-// ─────────────────────────────────────────────
-class _HomeFeed extends ConsumerWidget {
+// ── HOME FEED ─────────────────────────────────
+class _HomeFeed extends ConsumerStatefulWidget {
   const _HomeFeed();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: CustomScrollView(
+  ConsumerState<_HomeFeed> createState() => _HomeFeedState();
+}
+
+class _HomeFeedState extends ConsumerState<_HomeFeed> {
+  List<Map<String, dynamic>> _events = [];
+  List<Map<String, dynamic>> _filtered = [];
+  bool _isLoading = true;
+  String _selectedCategory = 'All';
+  final _searchController = TextEditingController();
+  Map<String, dynamic>? _profile;
+
+  static const List<String> _categories = ['All', 'Tech', 'Cultural', 'Sports', 'Academic', 'Workshop'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final p = await Supabase.instance.client
+            .from('student_profiles')
+            .select()
+            .eq('id', user.id)
+            .maybeSingle();
+        _profile = p;
+      }
+      final events = await Supabase.instance.client
+          .from('events')
+          .select('id, title, short_description, long_description, start_date, end_date, venue, max_seats, visibility, category_id')
+          .eq('visibility', 'published')
+          .order('start_date', ascending: true);
+      if (mounted) {
+        setState(() {
+          _events = List<Map<String, dynamic>>.from(events);
+          _filtered = _events;
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _filter(String cat) {
+    setState(() {
+      _selectedCategory = cat;
+      _filtered = cat == 'All'
+          ? _events
+          : _events.where((e) => (e['category'] ?? '') == cat).toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final name = _profile?['name']?.toString().split(' ').first ?? 'Student';
+    return RefreshIndicator(
+      color: AppColors.green,
+      onRefresh: _loadData,
+      child: CustomScrollView(
         slivers: [
-          // ── Hero App Bar ──────────────────────────────────────────
+          // ── App Bar (green) ──
           SliverAppBar(
-            expandedHeight: 180,
-            floating: false,
             pinned: true,
-            backgroundColor: AppColors.primary,
+            expandedHeight: 160,
+            backgroundColor: AppColors.green,
+            elevation: 0,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                decoration: const BoxDecoration(
-                  gradient: AppColors.heroGradient,
-                ),
-                child: Stack(
+                color: AppColors.green,
+                padding: const EdgeInsets.fromLTRB(20, 60, 20, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Decorative circle
-                    Positioned(
-                      right: -30,
-                      top: -30,
-                      child: Container(
-                        width: 200,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.accent.withOpacity(0.25),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Hi $name! 👋',
+                                style: GoogleFonts.inter(
+                                    color: AppColors.white,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w900)),
+                            Text('What event are you looking for?',
+                                style: GoogleFonts.inter(
+                                    color: AppColors.white.withOpacity(0.8),
+                                    fontSize: 13)),
+                          ],
                         ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 80, 24, 20),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Discover Events 🎉',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 26,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.3,
+                        GestureDetector(
+                          onTap: () {},
+                          child: Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: AppColors.white.withOpacity(0.2),
+                              shape: BoxShape.circle,
                             ),
+                            child: const Icon(Icons.notifications_outlined, color: AppColors.white, size: 22),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Find and register for college events',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.7),
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 12),
                   ],
                 ),
               ),
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.notifications_outlined,
-                    color: Colors.white),
-                onPressed: () {},
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(52),
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (q) => setState(() {
+                    _filtered = q.isEmpty
+                        ? _events
+                        : _events.where((e) =>
+                            (e['title'] ?? '').toLowerCase().contains(q.toLowerCase())).toList();
+                  }),
+                  decoration: InputDecoration(
+                    hintText: 'Search events...',
+                    hintStyle: GoogleFonts.inter(color: AppColors.grey400, fontSize: 14),
+                    prefixIcon: const Icon(Icons.search_rounded, color: AppColors.grey400, size: 20),
+                    filled: false,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
               ),
-            ],
+            ),
+            actionsIconTheme: const IconThemeData(color: AppColors.white),
           ),
 
-          // ── Events List ───────────────────────────────────────────
-          SliverPadding(
-            padding: const EdgeInsets.all(16),
-            sliver: SliverToBoxAdapter(
-              child: FutureBuilder(
-                future: Supabase.instance.client
-                    .from('events')
-                    .select()
-                    .eq('visibility', 'published')
-                    .order('start_date', ascending: true),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Padding(
-                      padding: EdgeInsets.only(top: 60),
-                      child: Center(
-                        child: CircularProgressIndicator(
-                            color: AppColors.accent),
-                      ),
-                    );
-                  }
-                  if (snapshot.hasError) {
-                    return _ErrorState(message: '${snapshot.error}');
-                  }
+          // ── Rewards / Points Card ──
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: _PointsCard(profile: _profile),
+            ),
+          ),
 
-                  final events =
-                      snapshot.data as List<dynamic>? ?? [];
+          // ── Categories ──
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text('Categories',
+                      style: GoogleFonts.inter(
+                          fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.black)),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 38,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _categories.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (_, i) {
+                      final cat = _categories[i];
+                      final selected = _selectedCategory == cat;
+                      return GestureDetector(
+                        onTap: () => _filter(cat),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          decoration: BoxDecoration(
+                            color: selected ? AppColors.green : AppColors.grey100,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            cat,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: selected ? AppColors.white : AppColors.grey800,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
 
-                  if (events.isEmpty) {
-                    return const _EmptyState(
-                      icon: Icons.event_busy_outlined,
-                      title: 'No Events Yet',
-                      subtitle: 'Check back soon for upcoming events!',
-                    );
-                  }
-
-                  return Column(
-                    children: events
-                        .map<Widget>((event) => _EventCard(event: event))
-                        .toList(),
-                  );
-                },
+          // ── Loading / Events ──
+          if (_isLoading)
+            const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator(color: AppColors.green)),
+            )
+          else if (_filtered.isEmpty)
+            SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.event_busy_outlined, size: 64, color: AppColors.grey200),
+                    const SizedBox(height: 16),
+                    Text('No events found', style: GoogleFonts.inter(color: AppColors.grey400, fontSize: 16, fontWeight: FontWeight.w600)),
+                  ],
+                ),
               ),
+            )
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, i) => _EventCard(event: _filtered[i]),
+                childCount: _filtered.length,
+              ),
+            ),
+
+          const SliverPadding(padding: EdgeInsets.only(bottom: 20)),
+        ],
+      ),
+    );
+  }
+}
+
+// ── POINTS CARD ───────────────────────────────
+class _PointsCard extends StatelessWidget {
+  final Map<String, dynamic>? profile;
+  const _PointsCard({this.profile});
+
+  @override
+  Widget build(BuildContext context) {
+    final regCount = 0;
+    return Container(
+      decoration: BoxDecoration(
+        gradient: AppColors.heroGradient,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Stack(
+        children: [
+          // Decorative circle
+          Positioned(
+            right: -20,
+            top: -20,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.white.withOpacity(0.08),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.yellow,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text('EVENT REWARDS',
+                            style: GoogleFonts.inter(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1,
+                                color: AppColors.black)),
+                      ),
+                      const SizedBox(height: 10),
+                      Text('${regCount * 100} pts',
+                          style: GoogleFonts.inter(
+                              color: AppColors.white,
+                              fontSize: 32,
+                              fontWeight: FontWeight.w900)),
+                      Text('Earn 100 pts per event attended',
+                          style: GoogleFonts.inter(
+                              color: AppColors.white.withOpacity(0.75),
+                              fontSize: 12)),
+                    ],
+                  ),
+                ),
+                Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: AppColors.yellow,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text('View All',
+                          style: GoogleFonts.inter(
+                              color: AppColors.black,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700)),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
@@ -197,454 +405,131 @@ class _HomeFeed extends ConsumerWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// EVENT CARD
-// ─────────────────────────────────────────────
+// ── EVENT CARD ────────────────────────────────
 class _EventCard extends StatelessWidget {
   final Map<String, dynamic> event;
   const _EventCard({required this.event});
 
   @override
   Widget build(BuildContext context) {
-    final hasImage = event['cover_image_url'] != null;
-    final startDate = event['start_date'] != null
-        ? DateTime.parse(event['start_date']).toLocal()
+    final date = event['start_date'] != null
+        ? DateTime.tryParse(event['start_date'].toString())
         : null;
-    final dateStr = startDate != null
-        ? '${_monthName(startDate.month)} ${startDate.day}, ${startDate.year}'
-        : 'TBA';
+    final category = (event['category_id'] ?? 'Event').toString();
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: GestureDetector(
-        onTap: () => context.push('/student/event/${event['id']}/register'),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.accent.withOpacity(0.07),
-                blurRadius: 20,
-                offset: const Offset(0, 6),
+    return GestureDetector(
+      onTap: () => context.push('/student/event/${event['id']}/register'),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top color banner
+            Container(
+              height: 8,
+              decoration: BoxDecoration(
+                color: _categoryColor(category),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
               ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Cover Image
-              ClipRRect(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(24)),
-                child: Container(
-                  height: 180,
-                  decoration: BoxDecoration(
-                    gradient: hasImage ? null : AppColors.cardGradient1,
-                  ),
-                  child: hasImage
-                      ? Image.network(event['cover_image_url'],
-                          fit: BoxFit.cover)
-                      : Center(
-                          child: Icon(
-                            Icons.event_rounded,
-                            size: 64,
-                            color: Colors.white.withOpacity(0.4),
-                          ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _categoryColor(category).withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                ),
-              ),
-              // Content
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Tags row
-                    Row(
-                      children: [
-                        _Tag(
-                          label: event['venue'] ?? 'TBA',
-                          icon: Icons.location_on_rounded,
-                          color: AppColors.accentLight,
-                          textColor: AppColors.accent,
+                        child: Text(
+                          category.toUpperCase(),
+                          style: GoogleFonts.inter(
+                              color: _categoryColor(category),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5),
                         ),
-                        const SizedBox(width: 8),
-                        _Tag(
-                          label: dateStr,
-                          icon: Icons.calendar_today_rounded,
-                          color: AppColors.goldLight,
-                          textColor: const Color(0xFF92400E),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      event['title'] ?? 'Untitled Event',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.grey900,
-                        letterSpacing: -0.2,
                       ),
-                    ),
-                    if (event['short_description'] != null) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        event['short_description'],
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            color: AppColors.grey500, fontSize: 13, height: 1.5),
-                      ),
+                      const Spacer(),
+                      if (date != null)
+                        Text(
+                          '${_month(date.month)} ${date.day}',
+                          style: GoogleFonts.inter(
+                              color: AppColors.grey400,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600),
+                        ),
                     ],
-                    const SizedBox(height: 16),
-                    // Register button
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: () =>
-                            context.push('/student/event/${event['id']}/register'),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.accent,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14)),
-                        ),
-                        child: const Text(
-                          'Register Now →',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 15),
-                        ),
-                      ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    event['title'] ?? 'Event',
+                    style: GoogleFonts.inter(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.black),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if ((event['short_description'] ?? '').toString().isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      event['short_description'].toString(),
+                      style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: AppColors.grey400,
+                          height: 1.4),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _monthName(int month) {
-    const names = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    return names[month];
-  }
-}
-
-class _Tag extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final Color textColor;
-  const _Tag({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.textColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: textColor),
-          const SizedBox(width: 4),
-          Text(label,
-              style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: textColor)),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// MY REGISTRATIONS TAB
-// ─────────────────────────────────────────────
-class _MyRegistrations extends ConsumerWidget {
-  const _MyRegistrations();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) {
-      return const Center(child: Text('Not logged in'));
-    }
-
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('My Tickets'),
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        titleTextStyle: const TextStyle(
-          color: AppColors.grey900,
-          fontSize: 22,
-          fontWeight: FontWeight.w800,
-          fontFamily: 'Inter',
-        ),
-      ),
-      body: FutureBuilder(
-        future: Supabase.instance.client
-            .from('registrations')
-            .select(
-                'id, status, events(title, start_date, venue, cover_image_url)')
-            .eq('student_id', user.id),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-                child: CircularProgressIndicator(color: AppColors.accent));
-          }
-          if (snapshot.hasError) {
-            return _ErrorState(message: '${snapshot.error}');
-          }
-
-          final regs = snapshot.data as List<dynamic>? ?? [];
-
-          if (regs.isEmpty) {
-            return const _EmptyState(
-              icon: Icons.confirmation_num_outlined,
-              title: 'No Tickets Yet',
-              subtitle: 'Register for events to see your tickets here.',
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: regs.length,
-            itemBuilder: (context, index) {
-              final reg = regs[index];
-              final event = reg['events'];
-              final status = reg['status'] as String? ?? 'pending';
-              final regId = reg['id'] as String;
-              final isApproved = status == 'approved';
-
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: GestureDetector(
-                  onTap: () => _showQrBottomSheet(
-                      context, regId, event['title'] ?? '', status),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      if ((event['venue'] ?? '').toString().isNotEmpty) ...[
+                        const Icon(Icons.location_on_rounded, size: 14, color: AppColors.grey400),
+                        const SizedBox(width: 4),
+                        Text(
+                          event['venue'].toString(),
+                          style: GoogleFonts.inter(
+                              color: AppColors.grey400,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500),
                         ),
                       ],
-                    ),
-                    child: Row(
-                      children: [
-                        // Cover image
-                        ClipRRect(
-                          borderRadius: const BorderRadius.horizontal(
-                              left: Radius.circular(20)),
-                          child: Container(
-                            width: 90,
-                            height: 90,
-                            decoration: BoxDecoration(
-                              gradient: AppColors.cardGradient2,
-                              image: event['cover_image_url'] != null
-                                  ? DecorationImage(
-                                      image: NetworkImage(
-                                          event['cover_image_url']),
-                                      fit: BoxFit.cover)
-                                  : null,
-                            ),
-                            child: event['cover_image_url'] == null
-                                ? const Icon(Icons.event_rounded,
-                                    color: Colors.white54, size: 32)
-                                : null,
-                          ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.green,
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  event['title'] ?? 'Untitled',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 15,
-                                      color: AppColors.grey900),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  event['venue'] ?? 'TBA',
-                                  style: const TextStyle(
-                                      color: AppColors.grey500, fontSize: 12),
-                                ),
-                                const SizedBox(height: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: isApproved
-                                        ? AppColors.successLight
-                                        : AppColors.goldLight,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    status.toUpperCase(),
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: isApproved
-                                          ? AppColors.success
-                                          : AppColors.warning,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                        child: Text(
+                          'Register',
+                          style: GoogleFonts.inter(
+                              color: AppColors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.only(right: 16),
-                          child: Icon(Icons.qr_code_2_rounded,
-                              color: AppColors.accent, size: 36),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  void _showQrBottomSheet(
-      BuildContext context, String regId, String title, String status) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(28),
-        ),
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 24),
-              decoration: BoxDecoration(
-                color: AppColors.grey300,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                gradient: AppColors.heroGradient,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(Icons.confirmation_num_rounded,
-                  color: Colors.white, size: 28),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Registration Pass',
-              style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.grey900),
-            ),
-            const SizedBox(height: 6),
-            Text(title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.grey500, fontSize: 14)),
-            const SizedBox(height: 32),
-            // QR Code
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                      color: AppColors.accent.withOpacity(0.12),
-                      blurRadius: 24,
-                      spreadRadius: 2),
                 ],
-              ),
-              child: QrImageView(
-                data: regId,
-                version: QrVersions.auto,
-                size: 200,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: status == 'approved'
-                    ? AppColors.successLight
-                    : AppColors.goldLight,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                'Status: ${status.toUpperCase()}',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: status == 'approved'
-                      ? AppColors.success
-                      : AppColors.warning,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Present this QR code at the event venue for check-in.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: AppColors.grey500),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: FilledButton(
-                onPressed: () => Navigator.pop(ctx),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                ),
-                child: const Text('Close',
-                    style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
               ),
             ),
           ],
@@ -652,82 +537,237 @@ class _MyRegistrations extends ConsumerWidget {
       ),
     );
   }
+
+  Color _categoryColor(String cat) {
+    switch (cat.toLowerCase()) {
+      case 'tech':
+        return const Color(0xFF0077FF);
+      case 'cultural':
+        return const Color(0xFFFF6B35);
+      case 'sports':
+        return const Color(0xFF00C853);
+      case 'academic':
+        return const Color(0xFF7C3AED);
+      case 'workshop':
+        return const Color(0xFFFF8C00);
+      default:
+        return AppColors.green;
+    }
+  }
+
+  String _month(int m) {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return months[m - 1];
+  }
 }
 
-// ─────────────────────────────────────────────
-// PROFILE TAB
-// ─────────────────────────────────────────────
-class _ProfileTab extends StatelessWidget {
-  const _ProfileTab();
+// ── MY REGISTRATIONS ──────────────────────────
+class _MyRegistrations extends ConsumerStatefulWidget {
+  const _MyRegistrations();
+
+  @override
+  ConsumerState<_MyRegistrations> createState() => _MyRegistrationsState();
+}
+
+class _MyRegistrationsState extends ConsumerState<_MyRegistrations> {
+  List<Map<String, dynamic>> _registrations = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _isLoading = true);
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) return;
+      final data = await Supabase.instance.client
+          .from('registrations')
+          .select('*, events(title, start_date, venue)')
+          .eq('student_id', user.id)
+          .order('created_at', ascending: false);
+      if (mounted) {
+        setState(() {
+          _registrations = List<Map<String, dynamic>>.from(data);
+          _isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.green,
+        elevation: 0,
+        title: Text('My Events', style: GoogleFonts.inter(color: AppColors.white, fontWeight: FontWeight.w800)),
+        centerTitle: false,
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: AppColors.green))
+          : _registrations.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.calendar_today_outlined, size: 64, color: AppColors.grey200),
+                      const SizedBox(height: 16),
+                      Text("You haven't registered yet",
+                          style: GoogleFonts.inter(
+                              color: AppColors.grey400,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      Text('Find events on the Explore tab',
+                          style: GoogleFonts.inter(color: AppColors.grey400, fontSize: 13)),
+                    ],
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _registrations.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, i) {
+                    final reg = _registrations[i];
+                    final event = reg['events'] as Map<String, dynamic>? ?? {};
+                    final status = (reg['status'] ?? 'pending').toString();
+                    final statusColor = status == 'approved'
+                        ? AppColors.green
+                        : status == 'rejected'
+                            ? AppColors.error
+                            : AppColors.yellow;
+
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(16),
+                        leading: Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: AppColors.greenLight,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.event_note_rounded, color: AppColors.green),
+                        ),
+                        title: Text(
+                          event['title'] ?? 'Event',
+                          style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 15),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          event['venue'] ?? '',
+                          style: GoogleFonts.inter(color: AppColors.grey400, fontSize: 12),
+                        ),
+                        trailing: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            status[0].toUpperCase() + status.substring(1),
+                            style: GoogleFonts.inter(
+                                color: statusColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+    );
+  }
+}
+
+// ── PROFILE TAB ───────────────────────────────
+class _ProfileTab extends ConsumerStatefulWidget {
+  const _ProfileTab();
+
+  @override
+  ConsumerState<_ProfileTab> createState() => _ProfileTabState();
+}
+
+class _ProfileTabState extends ConsumerState<_ProfileTab> {
+  Map<String, dynamic>? _profile;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
     final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+    try {
+      final p = await Supabase.instance.client
+          .from('student_profiles')
+          .select()
+          .eq('id', user.id)
+          .maybeSingle();
+      if (mounted) setState(() => _profile = p);
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final name = _profile?['name']?.toString() ?? 'Student';
+    final email = Supabase.instance.client.auth.currentUser?.email ?? '';
+    final dept = _profile?['year']?.toString() ?? '';
+    final sem = _profile?['semester']?.toString() ?? '';
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
+            backgroundColor: AppColors.green,
+            expandedHeight: 180,
             pinned: true,
-            expandedHeight: 220,
-            backgroundColor: AppColors.primary,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                decoration: const BoxDecoration(gradient: AppColors.heroGradient),
-                child: Stack(
+                color: AppColors.green,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Positioned(
-                      right: -40,
-                      bottom: -40,
-                      child: Container(
-                        width: 180,
-                        height: 180,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.06),
-                        ),
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: AppColors.yellow,
+                      child: Text(
+                        name.isNotEmpty ? name[0].toUpperCase() : 'S',
+                        style: GoogleFonts.inter(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.black),
                       ),
                     ),
-                    Align(
-                      alignment: Alignment.center,
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 20),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: AppColors.cardGradient1,
-                                border: Border.all(
-                                    color: Colors.white.withOpacity(0.3),
-                                    width: 3),
-                              ),
-                              child: const Icon(Icons.person_rounded,
-                                  color: Colors.white, size: 40),
-                            ),
-                            const SizedBox(height: 12),
-                            const Text(
-                              'Student',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              user?.email ?? '',
-                              style: TextStyle(
-                                  color: Colors.white.withOpacity(0.65),
-                                  fontSize: 13),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    const SizedBox(height: 10),
+                    Text(name,
+                        style: GoogleFonts.inter(
+                            color: AppColors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
@@ -735,48 +775,36 @@ class _ProfileTab extends StatelessWidget {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  _ProfileTile(
-                    icon: Icons.school_outlined,
-                    title: 'Academic Profile',
-                    subtitle: 'View your college details',
-                    onTap: () {},
-                  ),
+                  _InfoCard(label: 'Email', value: email, icon: Icons.email_outlined),
                   const SizedBox(height: 12),
-                  _ProfileTile(
-                    icon: Icons.notifications_outlined,
-                    title: 'Notifications',
-                    subtitle: 'Manage your alerts',
-                    onTap: () {},
-                  ),
-                  const SizedBox(height: 12),
-                  _ProfileTile(
-                    icon: Icons.help_outline_rounded,
-                    title: 'Help & Support',
-                    subtitle: 'Get assistance',
-                    onTap: () {},
-                  ),
-                  const SizedBox(height: 24),
+                  if (dept.isNotEmpty)
+                    _InfoCard(label: 'Department', value: dept, icon: Icons.school_outlined),
+                  if (dept.isNotEmpty) const SizedBox(height: 12),
+                  if (sem.isNotEmpty)
+                    _InfoCard(label: 'Semester', value: 'Semester $sem', icon: Icons.class_outlined),
+                  if (sem.isNotEmpty) const SizedBox(height: 12),
+                  const SizedBox(height: 8),
+                  // Logout
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: () async {
                         await Supabase.instance.client.auth.signOut();
-                        if (context.mounted) context.go('/student/login');
+                        if (context.mounted) context.go('/');
                       },
-                      icon: const Icon(Icons.logout_rounded,
-                          color: AppColors.error),
-                      label: const Text('Sign Out',
-                          style: TextStyle(
+                      icon: const Icon(Icons.logout_rounded, color: AppColors.error, size: 18),
+                      label: Text('Sign Out',
+                          style: GoogleFonts.inter(
                               color: AppColors.error,
-                              fontWeight: FontWeight.bold)),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15)),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.error),
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
+                        side: const BorderSide(color: AppColors.error),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                       ),
                     ),
                   ),
@@ -790,142 +818,58 @@ class _ProfileTab extends StatelessWidget {
   }
 }
 
-class _ProfileTile extends StatelessWidget {
+class _InfoCard extends StatelessWidget {
+  final String label;
+  final String value;
   final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-  const _ProfileTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
+  const _InfoCard({required this.label, required this.value, required this.icon});
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.accentLight,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: AppColors.accent, size: 22),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.grey900,
-                          fontSize: 14)),
-                  Text(subtitle,
-                      style: const TextStyle(
-                          color: AppColors.grey500, fontSize: 12)),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right_rounded, color: AppColors.grey300),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────
-class _EmptyState extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  const _EmptyState(
-      {required this.icon, required this.title, required this.subtitle});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppColors.accentLight,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, size: 48, color: AppColors.accent),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: AppColors.greenLight,
+              borderRadius: BorderRadius.circular(10),
             ),
-            const SizedBox(height: 20),
-            Text(title,
-                style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.grey900)),
-            const SizedBox(height: 8),
-            Text(subtitle,
-                textAlign: TextAlign.center,
-                style:
-                    const TextStyle(color: AppColors.grey500, fontSize: 14)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  final String message;
-  const _ErrorState({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline_rounded,
-                size: 48, color: AppColors.error),
-            const SizedBox(height: 16),
-            Text('Something went wrong',
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: AppColors.grey900)),
-            const SizedBox(height: 8),
-            Text(message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    color: AppColors.grey500, fontSize: 13)),
-          ],
-        ),
+            child: Icon(icon, color: AppColors.green, size: 20),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.grey400,
+                        letterSpacing: 0.5)),
+                Text(value,
+                    style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.black)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
