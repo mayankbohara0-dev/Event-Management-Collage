@@ -48,7 +48,7 @@ class _RegistrationsScreenState extends ConsumerState<RegistrationsScreen> {
     try {
       var query = Supabase.instance.client
           .from('registrations')
-          .select('id, status, registration_number, created_at, events(title), student_profiles(name, roll_number)');
+          .select('id, status, registration_number, created_at, events(title), student_profiles(name, roll_number, enrollment_number, division, year)');
 
       if (_filterStatus != 'all') {
         query = query.eq('status', _filterStatus);
@@ -253,7 +253,12 @@ class _RegistrationsScreenState extends ConsumerState<RegistrationsScreen> {
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         Text(student?['name'] ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.w600)),
-                                        Text(student?['roll_number'] ?? '', style: const TextStyle(fontSize: 12, color: AdminColors.textSecondary)),
+                                        if (student?['enrollment_number'] != null && student!['enrollment_number'].toString().isNotEmpty)
+                                          Text('PRN: ${student['enrollment_number']}', style: const TextStyle(fontSize: 12, color: AdminColors.textSecondary)),
+                                        if (student?['roll_number'] != null && student!['roll_number'].toString().isNotEmpty)
+                                          Text('Roll: ${student['roll_number']}', style: const TextStyle(fontSize: 12, color: AdminColors.textSecondary)),
+                                        if (student?['division'] != null && student!['division'].toString().isNotEmpty)
+                                          Text('Div: ${student['division']}', style: const TextStyle(fontSize: 12, color: AdminColors.textSecondary)),
                                       ],
                                     )),
                                     DataCell(Text(event?['title'] ?? 'Unknown', overflow: TextOverflow.ellipsis)),
