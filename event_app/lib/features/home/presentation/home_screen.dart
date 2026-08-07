@@ -418,7 +418,7 @@ class _EventCard extends StatelessWidget {
     final category = (event['category_id'] ?? 'Event').toString();
 
     return GestureDetector(
-      onTap: () => context.push('/student/event/${event['id']}/register'),
+      onTap: () => context.push('/student/event/${event['id']}'),
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         decoration: BoxDecoration(

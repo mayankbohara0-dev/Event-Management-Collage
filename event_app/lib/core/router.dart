@@ -10,6 +10,7 @@ import '../features/auth/presentation/login_screen.dart' as student_auth;
 import '../features/profile/presentation/profile_onboarding_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/events/presentation/registration_form_screen.dart';
+import '../features/events/presentation/event_details_screen.dart';
 
 // Admin Features
 import '../features/admin/auth/presentation/login_screen.dart' as admin_auth;
@@ -42,6 +43,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/student/home',
         builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: '/student/event/:id',
+        builder: (context, state) {
+          final eventId = state.pathParameters['id']!;
+          return EventDetailsScreen(eventId: eventId);
+        },
       ),
       GoRoute(
         path: '/student/event/:id/register',
