@@ -15,23 +15,50 @@ class ProfileOnboardingScreen extends ConsumerStatefulWidget {
 class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScreen> {
   final _nameController = TextEditingController();
   final _rollController = TextEditingController();
+  final _prnController = TextEditingController();
   final _phoneController = TextEditingController();
-  String? _selectedDepartment;
+  
+  String? _selectedDepartmentId;
+  String? _selectedYear;
   String? _selectedSemester;
-  String? _selectedBloodGroup;
-  bool _isLoading = false;
+  
+  bool _isLoading = true;
+  bool _isSaving = false;
 
-  static const List<String> _departments = [
-    'Computer Science', 'Information Technology', 'Electronics', 'Mechanical',
-    'Civil', 'Chemical', 'Architecture', 'MBA', 'MCA', 'Others'
-  ];
+  List<Map<String, dynamic>> _departments = [];
+  
+  static const List<String> _years = ['1', '2', '3', '4'];
   static const List<String> _semesters = ['1','2','3','4','5','6','7','8'];
-  static const List<String> _bloodGroups = ['A+','A-','B+','B-','O+','O-','AB+','AB-'];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDepartments();
+  }
+
+  Future<void> _fetchDepartments() async {
+    try {
+      final res = await Supabase.instance.client
+          .from('departments')
+          .select('id, name')
+          .order('name');
+      if (mounted) {
+        setState(() {
+          _departments = List<Map<String, dynamic>>.from(res);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching departments: $e');
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
     _rollController.dispose();
+    _prnController.dispose();
     _phoneController.dispose();
     super.dispose();
   }
@@ -43,16 +70,18 @@ class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScree
       );
       return;
     }
-    setState(() => _isLoading = true);
+    setState(() => _isSaving = true);
     try {
       final user = Supabase.instance.client.auth.currentUser!;
       await Supabase.instance.client.from('student_profiles').upsert({
         'id': user.id,
         'name': _nameController.text.trim(),
         'roll_number': _rollController.text.trim().isEmpty ? null : _rollController.text.trim(),
+        'enrollment_number': _prnController.text.trim().isEmpty ? null : _prnController.text.trim(),
         'phone_number': _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+        'department_id': _selectedDepartmentId,
+        'year': _selectedYear == null ? null : int.tryParse(_selectedYear!),
         'semester': _selectedSemester == null ? null : int.tryParse(_selectedSemester!),
-        'blood_group': _selectedBloodGroup,
       });
       if (mounted) context.go('/student/home');
     } catch (error) {
@@ -62,7 +91,7 @@ class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScree
         );
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -131,17 +160,32 @@ class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScree
                     const SizedBox(height: 20),
                     _SectionLabel('Academic Details'),
                     const SizedBox(height: 12),
+                    _field(label: 'PRN NO.', controller: _prnController,
+                        hint: 'e.g. 1234567890', icon: Icons.pin_outlined),
+                    const SizedBox(height: 12),
                     _field(label: 'Roll Number', controller: _rollController,
                         hint: 'e.g. 2023CS001', icon: Icons.badge_outlined),
                     const SizedBox(height: 12),
+                    _isLoading 
+                        ? const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()))
+                        : _dropdown<String>(
+                            label: 'Department',
+                            value: _selectedDepartmentId,
+                            items: _departments.map((d) => d['id'] as String).toList(),
+                            itemLabel: (id) => _departments.firstWhere((d) => d['id'] == id)['name'],
+                            hint: 'Select Department',
+                            icon: Icons.school_outlined,
+                            onChanged: (v) => setState(() => _selectedDepartmentId = v),
+                          ),
+                    const SizedBox(height: 12),
                     _dropdown<String>(
-                      label: 'Department',
-                      value: _selectedDepartment,
-                      items: _departments,
-                      itemLabel: (s) => s,
-                      hint: 'Select Department',
-                      icon: Icons.school_outlined,
-                      onChanged: (v) => setState(() => _selectedDepartment = v),
+                      label: 'Year',
+                      value: _selectedYear,
+                      items: _years,
+                      itemLabel: (s) => '$s${s == '1' ? 'st' : s == '2' ? 'nd' : s == '3' ? 'rd' : 'th'} Year',
+                      hint: 'Select Year',
+                      icon: Icons.calendar_today_outlined,
+                      onChanged: (v) => setState(() => _selectedYear = v),
                     ),
                     const SizedBox(height: 12),
                     _dropdown<String>(
@@ -153,28 +197,18 @@ class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScree
                       icon: Icons.class_outlined,
                       onChanged: (v) => setState(() => _selectedSemester = v),
                     ),
-                    const SizedBox(height: 12),
-                    _dropdown<String>(
-                      label: 'Blood Group',
-                      value: _selectedBloodGroup,
-                      items: _bloodGroups,
-                      itemLabel: (s) => s,
-                      hint: 'Select Blood Group',
-                      icon: Icons.bloodtype_outlined,
-                      onChanged: (v) => setState(() => _selectedBloodGroup = v),
-                    ),
 
                     const SizedBox(height: 32),
                     SizedBox(
                       width: double.infinity,
                       height: 52,
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : _save,
+                        onPressed: _isSaving ? null : _save,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.black,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                         ),
-                        child: _isLoading
+                        child: _isSaving
                             ? const SizedBox(height: 20, width: 20,
                                 child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                             : Text('Continue to Events',

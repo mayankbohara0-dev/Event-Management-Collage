@@ -722,18 +722,23 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
     try {
       final p = await Supabase.instance.client
           .from('student_profiles')
-          .select()
+          .select('*, departments(name)')
           .eq('id', user.id)
           .maybeSingle();
       if (mounted) setState(() => _profile = p);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Error loading profile: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final name = _profile?['name']?.toString() ?? 'Student';
     final email = Supabase.instance.client.auth.currentUser?.email ?? '';
-    final dept = _profile?['year']?.toString() ?? '';
+    final dept = (_profile?['departments'] != null) ? _profile!['departments']['name']?.toString() ?? '' : '';
+    final prn = _profile?['enrollment_number']?.toString() ?? '';
+    final roll = _profile?['roll_number']?.toString() ?? '';
+    final year = _profile?['year']?.toString() ?? '';
     final sem = _profile?['semester']?.toString() ?? '';
 
     return Scaffold(
@@ -780,12 +785,26 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
                 children: [
                   _InfoCard(label: 'Email', value: email, icon: Icons.email_outlined),
                   const SizedBox(height: 12),
-                  if (dept.isNotEmpty)
+                  if (prn.isNotEmpty) ...[
+                    _InfoCard(label: 'PRN NO.', value: prn, icon: Icons.pin_outlined),
+                    const SizedBox(height: 12),
+                  ],
+                  if (roll.isNotEmpty) ...[
+                    _InfoCard(label: 'Roll Number', value: roll, icon: Icons.badge_outlined),
+                    const SizedBox(height: 12),
+                  ],
+                  if (dept.isNotEmpty) ...[
                     _InfoCard(label: 'Department', value: dept, icon: Icons.school_outlined),
-                  if (dept.isNotEmpty) const SizedBox(height: 12),
-                  if (sem.isNotEmpty)
+                    const SizedBox(height: 12),
+                  ],
+                  if (year.isNotEmpty) ...[
+                    _InfoCard(label: 'Year', value: '$year${year == '1' ? 'st' : year == '2' ? 'nd' : year == '3' ? 'rd' : 'th'} Year', icon: Icons.calendar_today_outlined),
+                    const SizedBox(height: 12),
+                  ],
+                  if (sem.isNotEmpty) ...[
                     _InfoCard(label: 'Semester', value: 'Semester $sem', icon: Icons.class_outlined),
-                  if (sem.isNotEmpty) const SizedBox(height: 12),
+                    const SizedBox(height: 12),
+                  ],
                   const SizedBox(height: 8),
                   // Logout
                   SizedBox(
