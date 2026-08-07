@@ -40,7 +40,10 @@ class _DashboardLayoutState extends ConsumerState<DashboardLayout> {
 
   static const double _collapsedWidth = 72;
   static const double _expandedWidth = 220;
-  final List<_NavItem> _navItems = const [
+  // Breakpoint: below this = mobile layout (bottom nav)
+  static const double _mobileBreakpoint = 600;
+
+  static const List<_NavItem> _navItems = [
     _NavItem(
         icon: Icons.dashboard_outlined,
         activeIcon: Icons.dashboard_rounded,
@@ -70,23 +73,32 @@ class _DashboardLayoutState extends ConsumerState<DashboardLayout> {
 
   @override
   Widget build(BuildContext context) {
-    final sidebarWidth =
-        _isSidebarExpanded ? _expandedWidth : _collapsedWidth;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < _mobileBreakpoint;
 
+    if (isMobile) {
+      return _MobileLayout(
+        selectedIndex: _selectedIndex,
+        navItems: _navItems,
+        onNavTap: _onNavTap,
+        onLogout: _logout,
+        child: widget.child,
+      );
+    }
+
+    // Desktop / Tablet — sidebar layout
+    final sidebarWidth = _isSidebarExpanded ? _expandedWidth : _collapsedWidth;
     return Scaffold(
       backgroundColor: AdminColors.bg,
       body: Row(
         children: [
-          // ── Sidebar ──────────────────────────────────────────────
           AnimatedContainer(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeInOut,
             width: sidebarWidth,
             decoration: const BoxDecoration(
               color: AdminColors.sidebar,
-              border: Border(
-                right: BorderSide(color: AdminColors.border, width: 1),
-              ),
+              border: Border(right: BorderSide(color: AdminColors.border, width: 1)),
             ),
             child: Column(
               children: [
@@ -95,9 +107,7 @@ class _DashboardLayoutState extends ConsumerState<DashboardLayout> {
                   height: 70,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: const BoxDecoration(
-                    border: Border(
-                        bottom:
-                            BorderSide(color: AdminColors.border, width: 1)),
+                    border: Border(bottom: BorderSide(color: AdminColors.border, width: 1)),
                   ),
                   child: Row(
                     children: [
@@ -108,8 +118,7 @@ class _DashboardLayoutState extends ConsumerState<DashboardLayout> {
                           gradient: AdminColors.heroGradient,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.event_rounded,
-                            color: Colors.white, size: 20),
+                        child: const Icon(Icons.event_rounded, color: Colors.white, size: 20),
                       ),
                       if (_isSidebarExpanded) ...[
                         const SizedBox(width: 10),
@@ -118,20 +127,14 @@ class _DashboardLayoutState extends ConsumerState<DashboardLayout> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(
-                                'Event Admin',
-                                style: TextStyle(
-                                  color: AdminColors.textPrimary,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              Text(
-                                'Management Portal',
-                                style: TextStyle(
-                                    color: AdminColors.textSecondary,
-                                    fontSize: 11),
-                              ),
+                              Text('Event Admin',
+                                  style: TextStyle(
+                                      color: AdminColors.textPrimary,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14)),
+                              Text('Management Portal',
+                                  style: TextStyle(
+                                      color: AdminColors.textSecondary, fontSize: 11)),
                             ],
                           ),
                         ),
@@ -150,22 +153,19 @@ class _DashboardLayoutState extends ConsumerState<DashboardLayout> {
                     ],
                   ),
                 ),
-
-                // Nav items
                 const SizedBox(height: 12),
+                // Nav items
                 ...List.generate(_navItems.length, (i) {
                   final item = _navItems[i];
                   final isActive = _selectedIndex == i;
                   return Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     child: InkWell(
                       onTap: () => _onNavTap(i),
                       borderRadius: BorderRadius.circular(12),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                         decoration: BoxDecoration(
                           color: isActive
                               ? AdminColors.accent.withOpacity(0.18)
@@ -173,9 +173,7 @@ class _DashboardLayoutState extends ConsumerState<DashboardLayout> {
                           borderRadius: BorderRadius.circular(12),
                           border: isActive
                               ? Border.all(
-                                  color:
-                                      AdminColors.accent.withOpacity(0.3),
-                                  width: 1)
+                                  color: AdminColors.accent.withOpacity(0.3), width: 1)
                               : null,
                         ),
                         child: Row(
@@ -213,18 +211,14 @@ class _DashboardLayoutState extends ConsumerState<DashboardLayout> {
                     ),
                   );
                 }),
-
                 const Spacer(),
-
-                // Bottom: Logout
                 Padding(
                   padding: const EdgeInsets.all(8),
                   child: InkWell(
                     onTap: _logout,
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       decoration: BoxDecoration(
                         color: AdminColors.error.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
@@ -234,18 +228,15 @@ class _DashboardLayoutState extends ConsumerState<DashboardLayout> {
                             ? MainAxisSize.max
                             : MainAxisSize.min,
                         children: [
-                          const Icon(Icons.logout_rounded,
-                              color: AdminColors.error, size: 20),
+                          const Icon(Icons.logout_rounded, color: AdminColors.error, size: 20),
                           if (_isSidebarExpanded) ...[
                             const SizedBox(width: 12),
                             const Expanded(
-                              child: Text(
-                                'Sign Out',
-                                style: TextStyle(
-                                    color: AdminColors.error,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14),
-                              ),
+                              child: Text('Sign Out',
+                                  style: TextStyle(
+                                      color: AdminColors.error,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14)),
                             ),
                           ],
                         ],
@@ -257,12 +248,217 @@ class _DashboardLayoutState extends ConsumerState<DashboardLayout> {
               ],
             ),
           ),
-
-          // ── Main Content ─────────────────────────────────────────
-          Expanded(
-            child: widget.child,
-          ),
+          // Main content
+          Expanded(child: widget.child),
         ],
+      ),
+    );
+  }
+}
+
+// ── MOBILE LAYOUT ─────────────────────────────
+class _MobileLayout extends StatelessWidget {
+  final int selectedIndex;
+  final List<_NavItem> navItems;
+  final void Function(int) onNavTap;
+  final VoidCallback onLogout;
+  final Widget child;
+
+  const _MobileLayout({
+    required this.selectedIndex,
+    required this.navItems,
+    required this.onNavTap,
+    required this.onLogout,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AdminColors.bg,
+      appBar: AppBar(
+        backgroundColor: AdminColors.sidebar,
+        elevation: 0,
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu_rounded, color: AdminColors.textPrimary),
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+          ),
+        ),
+        title: Row(
+          children: [
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                gradient: AdminColors.heroGradient,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.event_rounded, color: Colors.white, size: 16),
+            ),
+            const SizedBox(width: 10),
+            const Text('Event Admin',
+                style: TextStyle(
+                    color: AdminColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16)),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout_rounded, color: AdminColors.error, size: 22),
+            tooltip: 'Sign Out',
+            onPressed: onLogout,
+          ),
+          const SizedBox(width: 8),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: AdminColors.border),
+        ),
+      ),
+      drawer: Drawer(
+        backgroundColor: AdminColors.sidebar,
+        child: SafeArea(
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: AdminColors.border)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        gradient: AdminColors.heroGradient,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.event_rounded, color: Colors.white, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Event Admin',
+                            style: TextStyle(
+                                color: AdminColors.textPrimary,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16)),
+                        Text('Management Portal',
+                            style: TextStyle(
+                                color: AdminColors.textSecondary, fontSize: 12)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              ...List.generate(navItems.length, (i) {
+                final item = navItems[i];
+                final isActive = selectedIndex == i;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.of(context).pop(); // close drawer
+                      onNavTap(i);
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: isActive
+                            ? AdminColors.accent.withOpacity(0.18)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: isActive
+                            ? Border.all(
+                                color: AdminColors.accent.withOpacity(0.3), width: 1)
+                            : null,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isActive ? item.activeIcon : item.icon,
+                            color: isActive ? AdminColors.accent : AdminColors.textSecondary,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 16),
+                          Text(
+                            item.label,
+                            style: TextStyle(
+                              color: isActive
+                                  ? AdminColors.accent
+                                  : AdminColors.textSecondary,
+                              fontWeight:
+                                  isActive ? FontWeight.w700 : FontWeight.w500,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+              const Spacer(),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: InkWell(
+                  onTap: onLogout,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AdminColors.error.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.logout_rounded, color: AdminColors.error, size: 20),
+                        SizedBox(width: 12),
+                        Text('Sign Out',
+                            style: TextStyle(
+                                color: AdminColors.error,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+      body: child,
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: AdminColors.sidebar,
+          border: Border(top: BorderSide(color: AdminColors.border, width: 1)),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: selectedIndex,
+          onTap: onNavTap,
+          backgroundColor: AdminColors.sidebar,
+          selectedItemColor: AdminColors.accent,
+          unselectedItemColor: AdminColors.textSecondary,
+          selectedLabelStyle: const TextStyle(
+              fontSize: 11, fontWeight: FontWeight.w700),
+          unselectedLabelStyle: const TextStyle(fontSize: 11),
+          elevation: 0,
+          items: navItems
+              .map((item) => BottomNavigationBarItem(
+                    icon: Icon(item.icon),
+                    activeIcon: Icon(item.activeIcon),
+                    label: item.label,
+                  ))
+              .toList(),
+        ),
       ),
     );
   }

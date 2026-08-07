@@ -40,11 +40,10 @@ class _EventsTableScreenState extends ConsumerState<EventsTableScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Failed to load events'),
+            content: Text('Failed to load events: $e'),
             backgroundColor: AdminColors.error,
             behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         );
         setState(() => _isLoading = false);
@@ -64,101 +63,100 @@ class _EventsTableScreenState extends ConsumerState<EventsTableScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return Container(
       color: AdminColors.bg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Top Bar ───────────────────────────────────────────────
+          // ── Top Bar ──
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 16 : 28,
+              vertical: isMobile ? 14 : 20,
+            ),
             decoration: const BoxDecoration(
               color: AdminColors.sidebar,
-              border: Border(
-                  bottom: BorderSide(color: AdminColors.border, width: 1)),
+              border: Border(bottom: BorderSide(color: AdminColors.border, width: 1)),
             ),
-            child: Row(
-              children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Events',
-                      style: TextStyle(
-                        color: AdminColors.textPrimary,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.3,
+            child: isMobile
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Events',
+                              style: TextStyle(
+                                  color: AdminColors.textPrimary,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800)),
+                          ElevatedButton.icon(
+                            onPressed: () => context.go('/admin/events/create'),
+                            icon: const Icon(Icons.add_rounded, size: 16),
+                            label: const Text('New'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AdminColors.accent,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                              elevation: 0,
+                              textStyle: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    Text(
-                      'Manage all events',
-                      style: TextStyle(
-                          color: AdminColors.textSecondary, fontSize: 13),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                // Search bar
-                SizedBox(
-                  width: 240,
-                  height: 42,
-                  child: TextField(
-                    style: const TextStyle(
-                        color: AdminColors.textPrimary, fontSize: 14),
-                    onChanged: (v) => setState(() => _searchQuery = v),
-                    decoration: InputDecoration(
-                      hintText: 'Search events...',
-                      hintStyle: const TextStyle(
-                          color: AdminColors.textSecondary, fontSize: 14),
-                      prefixIcon: const Icon(Icons.search_rounded,
-                          color: AdminColors.textSecondary, size: 18),
-                      filled: true,
-                      fillColor: AdminColors.surfaceLight,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            const BorderSide(color: AdminColors.border),
+                      const SizedBox(height: 12),
+                      _SearchBar(onChanged: (v) => setState(() => _searchQuery = v)),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Events',
+                              style: TextStyle(
+                                  color: AdminColors.textPrimary,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800)),
+                          Text('Manage all events',
+                              style: TextStyle(
+                                  color: AdminColors.textSecondary, fontSize: 13)),
+                        ],
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            const BorderSide(color: AdminColors.border),
+                      const Spacer(),
+                      SizedBox(
+                        width: 240,
+                        child: _SearchBar(
+                            onChanged: (v) => setState(() => _searchQuery = v)),
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                            color: AdminColors.accent, width: 1.5),
+                      const SizedBox(width: 16),
+                      ElevatedButton.icon(
+                        onPressed: () => context.go('/admin/events/create'),
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: const Text('Create Event'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AdminColors.accent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          elevation: 0,
+                          textStyle: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
                       ),
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 14),
-                    ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 16),
-                // Create button
-                ElevatedButton.icon(
-                  onPressed: () => context.go('/admin/events/create'),
-                  icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text('Create Event'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AdminColors.accent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    elevation: 0,
-                    textStyle: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 14),
-                  ),
-                ),
-              ],
-            ),
           ),
 
-          // ── Table ─────────────────────────────────────────────────
+          // ── Content ──
           Expanded(
             child: _isLoading
                 ? const Center(
@@ -170,7 +168,7 @@ class _EventsTableScreenState extends ConsumerState<EventsTableScreen> {
                           children: [
                             Container(
                               padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(
+                              decoration: const BoxDecoration(
                                 color: AdminColors.surfaceLight,
                                 shape: BoxShape.circle,
                               ),
@@ -183,137 +181,373 @@ class _EventsTableScreenState extends ConsumerState<EventsTableScreen> {
                                     color: AdminColors.textPrimary,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 8),
+                            TextButton.icon(
+                              onPressed: () => context.go('/admin/events/create'),
+                              icon: const Icon(Icons.add_rounded,
+                                  color: AdminColors.accent, size: 18),
+                              label: const Text('Create your first event',
+                                  style: TextStyle(color: AdminColors.accent)),
+                            ),
                           ],
                         ),
                       )
-                    : Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: AdminColors.surface,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AdminColors.border),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: SingleChildScrollView(
-                              child: DataTable(
-                                headingRowColor:
-                                    WidgetStateProperty.all(AdminColors.surfaceLight),
-                                dataRowColor:
-                                    WidgetStateProperty.resolveWith((states) {
-                                  if (states.contains(WidgetState.hovered)) {
-                                    return AdminColors.accent
-                                        .withOpacity(0.05);
-                                  }
-                                  return Colors.transparent;
-                                }),
-                                dividerThickness: 1,
-                                headingTextStyle: const TextStyle(
-                                  color: AdminColors.textSecondary,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                ),
-                                dataTextStyle: const TextStyle(
-                                  color: AdminColors.textPrimary,
-                                  fontSize: 13,
-                                ),
-                                columns: const [
-                                  DataColumn(
-                                      label: Text('Event Title')),
-                                  DataColumn(label: Text('Start Date')),
-                                  DataColumn(label: Text('Venue')),
-                                  DataColumn(label: Text('Capacity')),
-                                  DataColumn(label: Text('Status')),
-                                  DataColumn(label: Text('Actions')),
-                                ],
-                                rows: _filteredEvents.map((event) {
-                                  final isPublished =
-                                      event['visibility'] == 'published';
-                                  final dateStr = event['start_date'] != null
-                                      ? DateTime.parse(event['start_date'])
-                                          .toLocal()
-                                          .toString()
-                                          .split(' ')[0]
-                                      : 'TBA';
+                    : isMobile
+                        ? _MobileEventList(
+                            events: _filteredEvents,
+                            onRefresh: _fetchEvents,
+                          )
+                        : _DesktopEventTable(events: _filteredEvents),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-                                  return DataRow(cells: [
-                                    DataCell(
-                                      Text(
-                                        event['title'] ?? 'Untitled',
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.w600),
-                                      ),
-                                    ),
-                                    DataCell(Text(dateStr)),
-                                    DataCell(
-                                        Text(event['venue'] ?? '—')),
-                                    DataCell(Text(
-                                        event['max_seats']
-                                                ?.toString() ??
-                                            'Unlimited')),
-                                    DataCell(
-                                      Container(
-                                        padding:
-                                            const EdgeInsets.symmetric(
-                                                horizontal: 10,
-                                                vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: isPublished
-                                              ? AdminColors.success
-                                                  .withOpacity(0.15)
-                                              : AdminColors.textSecondary
-                                                  .withOpacity(0.15),
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                        ),
-                                        child: Text(
-                                          event['visibility']
-                                                  ?.toString()
-                                                  .toUpperCase() ??
-                                              'DRAFT',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
-                                            color: isPublished
-                                                ? AdminColors.success
-                                                : AdminColors.textSecondary,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    DataCell(
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          _ActionBtn(
-                                            icon: Icons.bar_chart_rounded,
-                                            label: 'Responses',
-                                            color: AdminColors.accent,
-                                            onTap: () => context.go(
-                                                '/admin/events/${event['id']}/responses'),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          _ActionBtn(
-                                            icon:
-                                                Icons.edit_document,
-                                            label: 'Builder',
-                                            color: const Color(0xFF3B82F6),
-                                            onTap: () => context.go(
-                                                '/admin/events/${event['id']}/builder'),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ]);
-                                }).toList(),
+// ── SEARCH BAR ────────────────────────────────
+class _SearchBar extends StatelessWidget {
+  final void Function(String) onChanged;
+  const _SearchBar({required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 42,
+      child: TextField(
+        style: const TextStyle(color: AdminColors.textPrimary, fontSize: 14),
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          hintText: 'Search events...',
+          hintStyle:
+              const TextStyle(color: AdminColors.textSecondary, fontSize: 14),
+          prefixIcon: const Icon(Icons.search_rounded,
+              color: AdminColors.textSecondary, size: 18),
+          filled: true,
+          fillColor: AdminColors.surfaceLight,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AdminColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AdminColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AdminColors.accent, width: 1.5),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+        ),
+      ),
+    );
+  }
+}
+
+// ── MOBILE CARD LIST ─────────────────────────
+class _MobileEventList extends StatelessWidget {
+  final List<Map<String, dynamic>> events;
+  final Future<void> Function() onRefresh;
+  const _MobileEventList({required this.events, required this.onRefresh});
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      color: AdminColors.accent,
+      backgroundColor: AdminColors.surface,
+      onRefresh: onRefresh,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: events.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (context, i) {
+          final event = events[i];
+          final isPublished = event['visibility'] == 'published';
+          final dateStr = event['start_date'] != null
+              ? DateTime.parse(event['start_date'])
+                  .toLocal()
+                  .toString()
+                  .split(' ')[0]
+              : 'TBA';
+
+          return Container(
+            decoration: BoxDecoration(
+              color: AdminColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AdminColors.border),
+            ),
+            child: Column(
+              children: [
+                // Colored top strip
+                Container(
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isPublished ? AdminColors.success : AdminColors.textSecondary,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              event['title'] ?? 'Untitled',
+                              style: const TextStyle(
+                                color: AdminColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isPublished
+                                  ? AdminColors.success.withOpacity(0.15)
+                                  : AdminColors.textSecondary.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              event['visibility']?.toString().toUpperCase() ?? 'DRAFT',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: isPublished
+                                    ? AdminColors.success
+                                    : AdminColors.textSecondary,
                               ),
                             ),
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.calendar_today_outlined,
+                              size: 13, color: AdminColors.textSecondary),
+                          const SizedBox(width: 6),
+                          Text(dateStr,
+                              style: const TextStyle(
+                                  color: AdminColors.textSecondary, fontSize: 12)),
+                          const SizedBox(width: 16),
+                          const Icon(Icons.location_on_outlined,
+                              size: 13, color: AdminColors.textSecondary),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              event['venue'] ?? '—',
+                              style: const TextStyle(
+                                  color: AdminColors.textSecondary, fontSize: 12),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.event_seat_outlined,
+                              size: 13, color: AdminColors.textSecondary),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${event['max_seats']?.toString() ?? 'Unlimited'} seats',
+                            style: const TextStyle(
+                                color: AdminColors.textSecondary, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _MobileActionBtn(
+                              icon: Icons.bar_chart_rounded,
+                              label: 'Responses',
+                              color: AdminColors.accent,
+                              onTap: () => context.go(
+                                  '/admin/events/${event['id']}/responses'),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _MobileActionBtn(
+                              icon: Icons.edit_document,
+                              label: 'Form Builder',
+                              color: const Color(0xFF3B82F6),
+                              onTap: () => context.go(
+                                  '/admin/events/${event['id']}/builder'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _MobileActionBtn extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  const _MobileActionBtn(
+      {required this.icon,
+      required this.label,
+      required this.color,
+      required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 16),
+            const SizedBox(width: 6),
+            Text(label,
+                style: TextStyle(
+                    color: color,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── DESKTOP TABLE ─────────────────────────────
+class _DesktopEventTable extends StatelessWidget {
+  final List<Map<String, dynamic>> events;
+  const _DesktopEventTable({required this.events});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AdminColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AdminColors.border),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SingleChildScrollView(
+              child: DataTable(
+                headingRowColor: WidgetStateProperty.all(AdminColors.surfaceLight),
+                dataRowColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.hovered)) {
+                    return AdminColors.accent.withOpacity(0.05);
+                  }
+                  return Colors.transparent;
+                }),
+                dividerThickness: 1,
+                headingTextStyle: const TextStyle(
+                    color: AdminColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13),
+                dataTextStyle: const TextStyle(
+                    color: AdminColors.textPrimary, fontSize: 13),
+                columns: const [
+                  DataColumn(label: Text('Event Title')),
+                  DataColumn(label: Text('Start Date')),
+                  DataColumn(label: Text('Venue')),
+                  DataColumn(label: Text('Capacity')),
+                  DataColumn(label: Text('Status')),
+                  DataColumn(label: Text('Actions')),
+                ],
+                rows: events.map((event) {
+                  final isPublished = event['visibility'] == 'published';
+                  final dateStr = event['start_date'] != null
+                      ? DateTime.parse(event['start_date'])
+                          .toLocal()
+                          .toString()
+                          .split(' ')[0]
+                      : 'TBA';
+
+                  return DataRow(cells: [
+                    DataCell(Text(event['title'] ?? 'Untitled',
+                        style: const TextStyle(fontWeight: FontWeight.w600))),
+                    DataCell(Text(dateStr)),
+                    DataCell(Text(event['venue'] ?? '—')),
+                    DataCell(Text(
+                        event['max_seats']?.toString() ?? 'Unlimited')),
+                    DataCell(
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isPublished
+                              ? AdminColors.success.withOpacity(0.15)
+                              : AdminColors.textSecondary.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          event['visibility']?.toString().toUpperCase() ?? 'DRAFT',
+                          style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: isPublished
+                                  ? AdminColors.success
+                                  : AdminColors.textSecondary),
                         ),
                       ),
+                    ),
+                    DataCell(
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _ActionBtn(
+                            icon: Icons.bar_chart_rounded,
+                            label: 'Responses',
+                            color: AdminColors.accent,
+                            onTap: () => context.go(
+                                '/admin/events/${event['id']}/responses'),
+                          ),
+                          const SizedBox(width: 8),
+                          _ActionBtn(
+                            icon: Icons.edit_document,
+                            label: 'Builder',
+                            color: const Color(0xFF3B82F6),
+                            onTap: () => context.go(
+                                '/admin/events/${event['id']}/builder'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ]);
+                }).toList(),
+              ),
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -324,13 +558,11 @@ class _ActionBtn extends StatelessWidget {
   final String label;
   final Color color;
   final VoidCallback onTap;
-
-  const _ActionBtn({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
+  const _ActionBtn(
+      {required this.icon,
+      required this.label,
+      required this.color,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
