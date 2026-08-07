@@ -41,10 +41,41 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
   final _coordinatorController = TextEditingController();
   final _contactController = TextEditingController();
 
+  final _eligibilityController = TextEditingController();
+  
+  String? _categoryId;
+  List<Map<String, dynamic>> _categories = [];
+
   DateTime? _startDate;
   DateTime? _endDate;
+  TimeOfDay? _startTime;
+  TimeOfDay? _endTime;
+  
   String _visibility = 'draft';
-  bool _isLoading = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchCategories();
+  }
+
+  Future<void> _fetchCategories() async {
+    try {
+      final res = await Supabase.instance.client
+          .from('event_categories')
+          .select('id, name')
+          .order('name');
+      if (mounted) {
+        setState(() {
+          _categories = List<Map<String, dynamic>>.from(res);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   Future<void> _pickDate(bool isStart) async {
     final picked = await showDatePicker(
@@ -55,11 +86,9 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
+            colorScheme: const ColorScheme.light(
               primary: AdminColors.accent,
               onPrimary: Colors.white,
-              surface: AdminColors.surface,
-              onSurface: AdminColors.textPrimary,
             ),
           ),
           child: child!,
@@ -67,10 +96,34 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
       },
     );
     if (picked != null) {
-      setState(() {
-        if (isStart) _startDate = picked;
-        else _endDate = picked;
-      });
+      if (mounted) {
+        final time = await showTimePicker(
+          context: context,
+          initialTime: const TimeOfDay(hour: 9, minute: 0),
+          builder: (context, child) {
+            return Theme(
+              data: Theme.of(context).copyWith(
+                colorScheme: const ColorScheme.light(
+                  primary: AdminColors.accent,
+                  onPrimary: Colors.white,
+                ),
+              ),
+              child: child!,
+            );
+          },
+        );
+        if (time != null) {
+          setState(() {
+            if (isStart) {
+              _startDate = picked;
+              _startTime = time;
+            } else {
+              _endDate = picked;
+              _endTime = time;
+            }
+          });
+        }
+      }
     }
   }
 
@@ -96,8 +149,10 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
             'max_seats': int.tryParse(_maxSeatsController.text) ?? 100,
             'coordinator': _coordinatorController.text.trim(),
             'contact_number': _contactController.text.trim(),
-            'start_date': _startDate!.toIso8601String(),
-            'end_date': _endDate!.toIso8601String(),
+            'eligibility': _eligibilityController.text.trim(),
+            'category_id': _categoryId,
+            'start_date': DateTime(_startDate!.year, _startDate!.month, _startDate!.day, _startTime!.hour, _startTime!.minute).toIso8601String(),
+            'end_date': DateTime(_endDate!.year, _endDate!.month, _endDate!.day, _endTime!.hour, _endTime!.minute).toIso8601String(),
             'visibility': _visibility,
             'created_by': user?.id,
           })
@@ -161,14 +216,25 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
                       const SizedBox(height: 16),
                       _buildTextField(_longDescController, 'Full Description', Icons.notes, maxLines: 4, required: false),
                       const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        value: _categoryId,
+                        decoration: _inputDeco('Category', Icons.category),
+                        dropdownColor: AdminColors.surfaceLight,
+                        items: _categories.map((c) => DropdownMenuItem<String>(
+                          value: c['id'],
+                          child: Text(c['name']),
+                        )).toList(),
+                        onChanged: (v) => setState(() => _categoryId = v),
+                      ),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
                           Expanded(
-                            child: _buildDateBtn('Start Date *', _startDate, true),
+                            child: _buildDateBtn('Start Time *', _startDate, _startTime, true),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
-                            child: _buildDateBtn('End Date *', _endDate, false),
+                            child: _buildDateBtn('End Time *', _endDate, _endTime, false),
                           ),
                         ],
                       ),
@@ -176,8 +242,10 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
                   ),
                   const SizedBox(height: 16),
                   _buildCard(
-                    title: 'Logistics',
+                    title: 'Logistics & Eligibility',
                     children: [
+                      _buildTextField(_eligibilityController, 'Eligibility Criteria', Icons.verified_user, required: false),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
                           Expanded(
@@ -283,11 +351,11 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
     );
   }
 
-  Widget _buildDateBtn(String label, DateTime? date, bool isStart) {
+  Widget _buildDateBtn(String label, DateTime? date, TimeOfDay? time, bool isStart) {
     return OutlinedButton.icon(
       icon: Icon(Icons.calendar_today, color: AdminColors.textSecondary, size: 20),
       label: Text(
-        date == null ? label : '${isStart ? 'Start:' : 'End:'} ${date.toLocal().toString().split(' ')[0]}',
+        date == null ? label : '${date.toLocal().toString().split(' ')[0]} ${time != null ? '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}' : ''}',
         style: TextStyle(color: date == null ? AdminColors.textSecondary : AdminColors.textPrimary),
       ),
       onPressed: () => _pickDate(isStart),
@@ -310,6 +378,7 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
     _maxSeatsController.dispose();
     _coordinatorController.dispose();
     _contactController.dispose();
+    _eligibilityController.dispose();
     super.dispose();
   }
 }

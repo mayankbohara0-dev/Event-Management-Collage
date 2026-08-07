@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:typed_data';
 import '../../../core/design_system.dart';
 
 class ProfileOnboardingScreen extends ConsumerStatefulWidget {
@@ -23,6 +25,10 @@ class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScree
   String? _selectedSemester;
   String? _selectedDivision;
   
+  Uint8List? _avatarBytes;
+  String? _existingAvatarUrl;
+  final ImagePicker _picker = ImagePicker();
+  
   bool _isLoading = true;
   bool _isSaving = false;
 
@@ -40,6 +46,18 @@ class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScree
 
   Future<void> _fetchDepartments() async {
     try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final profileRes = await Supabase.instance.client
+            .from('student_profiles')
+            .select('avatar_url')
+            .eq('id', user.id)
+            .maybeSingle();
+        if (profileRes != null && profileRes['avatar_url'] != null) {
+          if (mounted) setState(() => _existingAvatarUrl = profileRes['avatar_url']);
+        }
+      }
+
       final res = await Supabase.instance.client
           .from('departments')
           .select('id, name')
@@ -51,8 +69,36 @@ class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScree
         });
       }
     } catch (e) {
-      debugPrint('Error fetching departments: $e');
+      debugPrint('Error fetching data: $e');
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      final bytes = await image.readAsBytes();
+      if (mounted) setState(() => _avatarBytes = bytes);
+    }
+  }
+
+  Future<String?> _uploadAvatar() async {
+    if (_avatarBytes == null) return null;
+    final user = Supabase.instance.client.auth.currentUser!;
+    final path = '${user.id}/avatar-${DateTime.now().millisecondsSinceEpoch}.png';
+    
+    try {
+      await Supabase.instance.client.storage
+          .from('avatars')
+          .uploadBinary(
+            path,
+            _avatarBytes!,
+            fileOptions: const FileOptions(contentType: 'image/png', upsert: true),
+          );
+      return Supabase.instance.client.storage.from('avatars').getPublicUrl(path);
+    } catch (e) {
+      debugPrint('Avatar upload error: $e');
+      return null;
     }
   }
 
@@ -75,7 +121,9 @@ class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScree
     setState(() => _isSaving = true);
     try {
       final user = Supabase.instance.client.auth.currentUser!;
-      await Supabase.instance.client.from('student_profiles').upsert({
+      String? newAvatarUrl = await _uploadAvatar();
+      
+      final updateData = {
         'id': user.id,
         'name': _nameController.text.trim(),
         'roll_number': _rollController.text.trim().isEmpty ? null : _rollController.text.trim(),
@@ -85,7 +133,13 @@ class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScree
         'year': _selectedYear == null ? null : int.tryParse(_selectedYear!),
         'semester': _selectedSemester == null ? null : int.tryParse(_selectedSemester!),
         'division': _selectedDivision,
-      });
+      };
+      
+      if (newAvatarUrl != null) {
+        updateData['avatar_url'] = newAvatarUrl;
+      }
+      
+      await Supabase.instance.client.from('student_profiles').upsert(updateData);
       if (mounted) context.go('/student/home');
     } catch (error) {
       if (mounted) {
@@ -151,6 +205,29 @@ class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScree
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 4),
+                    Center(
+                      child: GestureDetector(
+                        onTap: _pickImage,
+                        child: Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.grey100,
+                            border: Border.all(color: AppColors.green, width: 2),
+                            image: _avatarBytes != null
+                                ? DecorationImage(image: MemoryImage(_avatarBytes!), fit: BoxFit.cover)
+                                : (_existingAvatarUrl != null
+                                    ? DecorationImage(image: NetworkImage(_existingAvatarUrl!), fit: BoxFit.cover)
+                                    : null),
+                          ),
+                          child: _avatarBytes == null && _existingAvatarUrl == null
+                              ? const Icon(Icons.add_a_photo_rounded, size: 32, color: AppColors.green)
+                              : null,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
                     _SectionLabel('Personal Information'),
                     const SizedBox(height: 12),
                     _field(label: 'Full Name *', controller: _nameController,

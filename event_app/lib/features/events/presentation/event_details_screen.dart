@@ -66,6 +66,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     final venue = _event!['venue'] ?? 'TBA';
     final coverImage = _event!['cover_image_url'];
     final category = _event!['categories']?['name'] ?? 'General';
+    final eligibility = _event!['eligibility'] ?? '';
     final startDateStr = _event!['start_date'];
     final endDateStr = _event!['end_date'];
     
@@ -168,6 +169,10 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                     ),
                     const SizedBox(height: 12),
                     _InfoTile(icon: Icons.location_on_rounded, label: 'Venue', value: venue),
+                    if (eligibility.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      _InfoTile(icon: Icons.verified_user_rounded, label: 'Eligibility', value: eligibility),
+                    ],
                     
                     const SizedBox(height: 32),
                     

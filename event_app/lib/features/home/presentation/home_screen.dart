@@ -741,6 +741,7 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
     final year = _profile?['year']?.toString() ?? '';
     final sem = _profile?['semester']?.toString() ?? '';
     final div = _profile?['division']?.toString() ?? '';
+    final avatarUrl = _profile?['avatar_url']?.toString();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -759,13 +760,16 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
                     CircleAvatar(
                       radius: 40,
                       backgroundColor: AppColors.yellow,
-                      child: Text(
-                        name.isNotEmpty ? name[0].toUpperCase() : 'S',
-                        style: GoogleFonts.inter(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.black),
-                      ),
+                      backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                      child: avatarUrl == null 
+                          ? Text(
+                              name.isNotEmpty ? name[0].toUpperCase() : 'S',
+                              style: GoogleFonts.inter(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.black),
+                            )
+                          : null,
                     ),
                     const SizedBox(height: 10),
                     Text(name,
