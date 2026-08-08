@@ -15,6 +15,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _totalStudents = 0;
   int _upcomingEvents = 0;
   int _pendingRegistrations = 0;
+  // Registrations per day for the last 7 days (index 0 = oldest, 6 = today)
+  List<double> _weeklyRegs = List.filled(7, 0);
   bool _isLoading = true;
 
   @override
@@ -24,25 +26,50 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Future<void> _fetchStats() async {
+    setState(() => _isLoading = true);
     try {
-      final studentsRes = await Supabase.instance.client
-          .from('student_profiles')
-          .select('id');
-      final eventsRes = await Supabase.instance.client
-          .from('events')
-          .select('id')
-          .eq('visibility', 'published')
-          .gte('start_date', DateTime.now().toIso8601String());
-      final pendingRes = await Supabase.instance.client
-          .from('registrations')
-          .select('id')
-          .eq('status', 'pending');
+      // Compute the 7-day window boundaries (UTC midnight).
+      final now = DateTime.now().toUtc();
+      final todayMidnight = DateTime.utc(now.year, now.month, now.day);
+      final weekAgo = todayMidnight.subtract(const Duration(days: 6));
+
+      final results = await Future.wait([
+        Supabase.instance.client.from('student_profiles').select('id'),
+        Supabase.instance.client
+            .from('events')
+            .select('id')
+            .eq('visibility', 'published')
+            .gte('start_date', DateTime.now().toIso8601String()),
+        Supabase.instance.client
+            .from('registrations')
+            .select('id')
+            .eq('status', 'pending'),
+        // Fetch registrations created in the last 7 days for the chart.
+        Supabase.instance.client
+            .from('registrations')
+            .select('created_at')
+            .gte('created_at', weekAgo.toIso8601String()),
+      ]);
+
+      // Bucket registrations by day-of-week offset (0 = 6 days ago … 6 = today).
+      final weeklyRegs = List<double>.filled(7, 0);
+      final recentRegs = results[3] as List;
+      for (final reg in recentRegs) {
+        final createdAt = DateTime.tryParse(reg['created_at'].toString())?.toUtc();
+        if (createdAt == null) continue;
+        final dayOffset = createdAt
+            .difference(weekAgo)
+            .inDays
+            .clamp(0, 6);
+        weeklyRegs[dayOffset] += 1;
+      }
 
       if (mounted) {
         setState(() {
-          _totalStudents = (studentsRes as List).length;
-          _upcomingEvents = (eventsRes as List).length;
-          _pendingRegistrations = (pendingRes as List).length;
+          _totalStudents = (results[0] as List).length;
+          _upcomingEvents = (results[1] as List).length;
+          _pendingRegistrations = (results[2] as List).length;
+          _weeklyRegs = weeklyRegs;
           _isLoading = false;
         });
       }
@@ -92,10 +119,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 const Spacer(),
                 // Refresh button
                 IconButton(
-                  onPressed: () {
-                    setState(() => _isLoading = true);
-                    _fetchStats();
-                  },
+                  onPressed: _fetchStats,
                   icon: const Icon(Icons.refresh_rounded,
                       color: AdminColors.textSecondary),
                   tooltip: 'Refresh',
@@ -127,7 +151,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
-                              trend: '+12%',
+                              // No made-up trend — show a neutral label
+                              trend: 'All time',
                               trendUp: true,
                             ),
                             const SizedBox(width: 16),
@@ -140,7 +165,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
-                              trend: '+3',
+                              trend: 'Published',
                               trendUp: true,
                             ),
                             const SizedBox(width: 16),
@@ -153,16 +178,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
-                              trend: 'Action needed',
-                              trendUp: false,
+                              trend: _pendingRegistrations == 0
+                                  ? 'All clear'
+                                  : 'Action needed',
+                              trendUp: _pendingRegistrations == 0,
                             ),
                           ],
                         ),
 
                         const SizedBox(height: 28),
 
-                        // Chart
-                        _ChartCard(),
+                        // Chart — real data
+                        _ChartCard(weeklyRegs: _weeklyRegs),
                       ],
                     ),
                   ),
@@ -261,13 +288,28 @@ class _KpiCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// CHART CARD
+// CHART CARD  — real 7-day registrations
 // ─────────────────────────────────────────────
 class _ChartCard extends StatelessWidget {
-  const _ChartCard();
+  /// Registration counts indexed [0]=6 days ago … [6]=today.
+  final List<double> weeklyRegs;
+
+  const _ChartCard({required this.weeklyRegs});
 
   @override
   Widget build(BuildContext context) {
+    final maxY = weeklyRegs.reduce((a, b) => a > b ? a : b);
+    // Ensure a sensible minimum height so the chart isn't flat when there's no data.
+    final chartMaxY = (maxY < 5 ? 5 : maxY + (maxY * 0.2)).ceilToDouble();
+
+    // Build day labels: starting from 6 days ago up to today.
+    final now = DateTime.now();
+    final dayLabels = List.generate(7, (i) {
+      final d = now.subtract(Duration(days: 6 - i));
+      const names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      return names[d.weekday - 1];
+    });
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -296,7 +338,7 @@ class _ChartCard extends StatelessWidget {
                   color: AdminColors.surfaceLight,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text('This Week',
+                child: const Text('Last 7 Days',
                     style: TextStyle(
                         color: AdminColors.textSecondary, fontSize: 12)),
               ),
@@ -308,7 +350,7 @@ class _ChartCard extends StatelessWidget {
             child: BarChart(
               BarChartData(
                 alignment: BarChartAlignment.spaceAround,
-                maxY: 200,
+                maxY: chartMaxY,
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
@@ -323,15 +365,12 @@ class _ChartCard extends StatelessWidget {
                     sideTitles: SideTitles(
                       showTitles: true,
                       getTitlesWidget: (value, meta) {
-                        const titles = [
-                          'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'
-                        ];
-                        if (value.toInt() >= 0 &&
-                            value.toInt() < titles.length) {
+                        final idx = value.toInt();
+                        if (idx >= 0 && idx < dayLabels.length) {
                           return Padding(
                             padding: const EdgeInsets.only(top: 8),
                             child: Text(
-                              titles[value.toInt()],
+                              dayLabels[idx],
                               style: const TextStyle(
                                   color: AdminColors.textSecondary,
                                   fontSize: 12),
@@ -359,15 +398,7 @@ class _ChartCard extends StatelessWidget {
                       sideTitles: SideTitles(showTitles: false)),
                 ),
                 borderData: FlBorderData(show: false),
-                barGroups: [
-                  _bar(0, 50),
-                  _bar(1, 120),
-                  _bar(2, 80),
-                  _bar(3, 150),
-                  _bar(4, 90),
-                  _bar(5, 40),
-                  _bar(6, 180),
-                ],
+                barGroups: List.generate(7, (i) => _bar(i, weeklyRegs[i])),
               ),
             ),
           ),

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:csv/csv.dart';
+import 'dart:convert';
+import 'package:universal_html/html.dart' as html;
 
 class AdminColors {
   static const Color bg = Color(0xFFF7F7F7);
@@ -139,6 +142,40 @@ class _EventResponsesScreenState extends ConsumerState<EventResponsesScreen> {
     }
   }
 
+  void _exportCSV() {
+    if (_registrations.isEmpty) return;
+    
+    List<List<String>> csvData = [
+      ['Student Name', 'Roll Number', 'Submitted At', 'Status', ..._questions.map((q) => q['title'] ?? '')],
+    ];
+    
+    for (var reg in _registrations) {
+      final student = reg['student_profiles'] as Map<String, dynamic>?;
+      final answers = _answers[reg['id']] ?? {};
+      
+      List<String> row = [
+        student?['name'] ?? 'Unknown',
+        student?['roll_number'] ?? student?['enrollment_number'] ?? 'N/A',
+        DateTime.parse(reg['created_at']).toLocal().toString().split(' ')[0],
+        reg['status'] ?? 'pending',
+      ];
+      
+      for (var q in _questions) {
+        row.add(answers[q['id']] ?? '');
+      }
+      csvData.add(row);
+    }
+    
+    final csvString = const CsvEncoder().convert(csvData);
+    final bytes = utf8.encode(csvString);
+    final blob = html.Blob([bytes]);
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    final anchor = html.AnchorElement(href: url)
+      ..setAttribute('download', 'event_responses_${widget.eventId}.csv')
+      ..click();
+    html.Url.revokeObjectUrl(url);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -159,6 +196,19 @@ class _EventResponsesScreenState extends ConsumerState<EventResponsesScreen> {
           onPressed: () => context.go('/admin/events'),
         ),
         actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16, top: 10, bottom: 10),
+            child: ElevatedButton.icon(
+              onPressed: _registrations.isEmpty ? null : _exportCSV,
+              icon: const Icon(Icons.download_rounded, size: 16),
+              label: const Text('Export CSV'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AdminColors.gold,
+                foregroundColor: AdminColors.textPrimary,
+                elevation: 0,
+              ),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 24, top: 10, bottom: 10),
             child: Container(

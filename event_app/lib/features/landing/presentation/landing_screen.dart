@@ -1,13 +1,83 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/design_system.dart';
 
-class LandingScreen extends StatelessWidget {
+class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
 
   @override
+  State<LandingScreen> createState() => _LandingScreenState();
+}
+
+class _LandingScreenState extends State<LandingScreen> {
+  bool _isChecking = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session == null) {
+      if (mounted) setState(() => _isChecking = false);
+      return;
+    }
+
+    final user = session.user;
+    
+    try {
+      // Check if student
+      final studentRes = await Supabase.instance.client
+          .from('student_profiles')
+          .select('id, name')
+          .eq('id', user.id)
+          .maybeSingle();
+          
+      if (studentRes != null) {
+        if (mounted) {
+          if ((studentRes['name'] ?? '').toString().isNotEmpty) {
+            context.go('/student/home');
+          } else {
+            context.go('/student/onboarding');
+          }
+        }
+        return;
+      }
+
+      // Check if admin
+      final adminRes = await Supabase.instance.client
+          .from('admin_profiles')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+
+      if (adminRes != null) {
+        if (mounted) context.go('/admin/dashboard');
+        return;
+      }
+
+    } catch (e) {
+      debugPrint('Auth check error: $e');
+    }
+
+    if (mounted) setState(() => _isChecking = false);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isChecking) {
+      return const Scaffold(
+        backgroundColor: AppColors.white,
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.green),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.white,
       body: SafeArea(

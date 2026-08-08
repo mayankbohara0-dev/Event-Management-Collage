@@ -25,7 +25,8 @@ class AdminColors {
 }
 
 class EventCreateScreen extends ConsumerStatefulWidget {
-  const EventCreateScreen({super.key});
+  final String? eventId;
+  const EventCreateScreen({super.key, this.eventId});
 
   @override
   ConsumerState<EventCreateScreen> createState() => _EventCreateScreenState();
@@ -57,7 +58,49 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchCategories();
+    _fetchCategories().then((_) {
+      if (widget.eventId != null) {
+        _fetchEvent();
+      }
+    });
+  }
+
+  Future<void> _fetchEvent() async {
+    try {
+      final res = await Supabase.instance.client
+          .from('events')
+          .select()
+          .eq('id', widget.eventId!)
+          .maybeSingle();
+
+      if (res != null && mounted) {
+        setState(() {
+          _titleController.text = res['title'] ?? '';
+          _shortDescController.text = res['short_description'] ?? '';
+          _longDescController.text = res['long_description'] ?? '';
+          _venueController.text = res['venue'] ?? '';
+          _maxSeatsController.text = (res['max_seats'] ?? '').toString();
+          _coordinatorController.text = res['coordinator'] ?? '';
+          _contactController.text = res['contact_email'] ?? '';
+          _eligibilityController.text = res['eligibility'] ?? '';
+          _categoryId = res['category_id'];
+          _visibility = res['visibility'] ?? 'draft';
+
+          if (res['start_date'] != null) {
+            final start = DateTime.parse(res['start_date']);
+            _startDate = start;
+            _startTime = TimeOfDay.fromDateTime(start);
+          }
+          if (res['end_date'] != null) {
+            final end = DateTime.parse(res['end_date']);
+            _endDate = end;
+            _endTime = TimeOfDay.fromDateTime(end);
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching event for edit: $e');
+    }
   }
 
   Future<void> _fetchCategories() async {
@@ -139,47 +182,60 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
     setState(() => _isLoading = true);
     try {
       final user = Supabase.instance.client.auth.currentUser;
-      final response = await Supabase.instance.client
-          .from('events')
-          .insert({
-            'title': _titleController.text.trim(),
-            'short_description': _shortDescController.text.trim(),
-            'long_description': _longDescController.text.trim(),
-            'venue': _venueController.text.trim(),
-            'max_seats': int.tryParse(_maxSeatsController.text) ?? 100,
-            'coordinator': _coordinatorController.text.trim(),
-            'contact_number': _contactController.text.trim(),
-            'eligibility': _eligibilityController.text.trim(),
-            'category_id': _categoryId,
-            'start_date': DateTime(_startDate!.year, _startDate!.month, _startDate!.day, _startTime!.hour, _startTime!.minute).toIso8601String(),
-            'end_date': DateTime(_endDate!.year, _endDate!.month, _endDate!.day, _endTime!.hour, _endTime!.minute).toIso8601String(),
-            'visibility': _visibility,
-            'created_by': user?.id,
-          })
-          .select('id')
-          .single();
+      final eventData = {
+        'title': _titleController.text.trim(),
+        'short_description': _shortDescController.text.trim(),
+        'long_description': _longDescController.text.trim(),
+        'venue': _venueController.text.trim(),
+        'max_seats': int.tryParse(_maxSeatsController.text) ?? 100,
+        'coordinator': _coordinatorController.text.trim(),
+        'contact_email': _contactController.text.trim(),
+        'category_id': _categoryId,
+        'eligibility': _eligibilityController.text.trim(),
+        'start_date': DateTime(
+          _startDate!.year, _startDate!.month, _startDate!.day,
+          _startTime!.hour, _startTime!.minute,
+        ).toUtc().toIso8601String(),
+        'end_date': DateTime(
+          _endDate!.year, _endDate!.month, _endDate!.day,
+          _endTime!.hour, _endTime!.minute,
+        ).toUtc().toIso8601String(),
+        'visibility': _visibility,
+        if (widget.eventId == null) 'created_by': user?.id,
+      };
 
-      final eventId = response['id'];
-
-      // Also create a blank registration form for this event
-      await Supabase.instance.client
-          .from('registration_forms')
-          .insert({'event_id': eventId});
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Event created! Now build the registration form.'), backgroundColor: AdminColors.success),
-        );
-        context.go('/admin/events/$eventId/builder');
+      if (widget.eventId != null) {
+        await Supabase.instance.client
+            .from('events')
+            .update(eventData)
+            .eq('id', widget.eventId!);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Event updated successfully!'), backgroundColor: AdminColors.success));
+          context.pop();
+        }
+      } else {
+        final response = await Supabase.instance.client
+            .from('events')
+            .insert(eventData)
+            .select()
+            .single();
+            
+        // Create registration form
+        await Supabase.instance.client
+            .from('registration_forms')
+            .insert({'event_id': response['id']});
+            
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Event created! Now let\'s build the registration form.'), backgroundColor: AdminColors.success));
+          context.go('/admin/events/${response['id']}/builder');
+        }
       }
     } catch (e) {
+      debugPrint('Save error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: AdminColors.error),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error saving event: $e'), backgroundColor: AdminColors.error));
+        setState(() => _isLoading = false);
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -188,16 +244,28 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
     return Scaffold(
       backgroundColor: AdminColors.bg,
       appBar: AppBar(
-        title: const Text('Create New Event', style: TextStyle(fontWeight: FontWeight.bold, color: AdminColors.textPrimary)),
+        title: Row(
+          children: [
+            GestureDetector(
+              onTap: () => context.pop(),
+              child: const Icon(Icons.arrow_back, color: AdminColors.textPrimary),
+            ),
+            const SizedBox(width: 16),
+            Text(
+              widget.eventId != null ? 'Edit Event' : 'Create New Event',
+              style: const TextStyle(
+                color: AdminColors.textPrimary,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
         backgroundColor: AdminColors.sidebar,
         elevation: 1,
-        iconTheme: const IconThemeData(color: AdminColors.textPrimary),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/admin/events'),
-        ),
+        automaticallyImplyLeading: false,
       ),
-      body: SingleChildScrollView(
+      body: _isLoading ? const Center(child: CircularProgressIndicator()) : SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Center(
           child: ConstrainedBox(

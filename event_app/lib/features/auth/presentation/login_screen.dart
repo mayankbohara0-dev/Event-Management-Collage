@@ -35,13 +35,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
+        // New user — always go to onboarding to fill in their info
         if (mounted) context.go('/student/onboarding');
       } else {
-        await Supabase.instance.client.auth.signInWithPassword(
+        final res = await Supabase.instance.client.auth.signInWithPassword(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
-        if (mounted) context.go('/student/onboarding');
+        // Check if this returning user already has a profile
+        if (mounted && res.user != null) {
+          final profile = await Supabase.instance.client
+              .from('student_profiles')
+              .select('id, name')
+              .eq('id', res.user!.id)
+              .maybeSingle();
+          
+          if (mounted) {
+            // If profile exists and has a name, skip onboarding
+            if (profile != null && (profile['name'] ?? '').toString().isNotEmpty) {
+              context.go('/student/home');
+            } else {
+              context.go('/student/onboarding');
+            }
+          }
+        }
       }
     } on AuthException catch (error) {
       if (mounted) {

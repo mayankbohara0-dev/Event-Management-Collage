@@ -8,7 +8,8 @@ import 'dart:typed_data';
 import '../../../core/design_system.dart';
 
 class ProfileOnboardingScreen extends ConsumerStatefulWidget {
-  const ProfileOnboardingScreen({super.key});
+  final bool isEditing;
+  const ProfileOnboardingScreen({super.key, this.isEditing = false});
 
   @override
   ConsumerState<ProfileOnboardingScreen> createState() => _ProfileOnboardingScreenState();
@@ -50,11 +51,41 @@ class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScree
       if (user != null) {
         final profileRes = await Supabase.instance.client
             .from('student_profiles')
-            .select('avatar_url')
+            .select('*')
             .eq('id', user.id)
             .maybeSingle();
-        if (profileRes != null && profileRes['avatar_url'] != null) {
-          if (mounted) setState(() => _existingAvatarUrl = profileRes['avatar_url']);
+            
+        if (profileRes != null) {
+          if (mounted) {
+            setState(() {
+              _existingAvatarUrl = profileRes['avatar_url'];
+              
+              if (profileRes['name'] != null) {
+                _nameController.text = profileRes['name'].toString();
+              }
+              if (profileRes['roll_number'] != null) {
+                _rollController.text = profileRes['roll_number'].toString();
+              }
+              if (profileRes['enrollment_number'] != null) {
+                _prnController.text = profileRes['enrollment_number'].toString();
+              }
+              if (profileRes['phone_number'] != null) {
+                _phoneController.text = profileRes['phone_number'].toString();
+              }
+              if (profileRes['department_id'] != null) {
+                _selectedDepartmentId = profileRes['department_id'].toString();
+              }
+              if (profileRes['year'] != null) {
+                _selectedYear = profileRes['year'].toString();
+              }
+              if (profileRes['semester'] != null) {
+                _selectedSemester = profileRes['semester'].toString();
+              }
+              if (profileRes['division'] != null) {
+                _selectedDivision = profileRes['division'].toString();
+              }
+            });
+          }
         }
       }
 
@@ -121,9 +152,14 @@ class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScree
     setState(() => _isSaving = true);
     try {
       final user = Supabase.instance.client.auth.currentUser!;
-      String? newAvatarUrl = await _uploadAvatar();
-      
-      final updateData = {
+      // Upload new avatar if one was picked, otherwise keep the existing URL
+      String? resolvedAvatarUrl = _existingAvatarUrl;
+      if (_avatarBytes != null) {
+        final uploaded = await _uploadAvatar();
+        if (uploaded != null) resolvedAvatarUrl = uploaded;
+      }
+
+      final updateData = <String, dynamic>{
         'id': user.id,
         'name': _nameController.text.trim(),
         'roll_number': _rollController.text.trim().isEmpty ? null : _rollController.text.trim(),
@@ -133,14 +169,25 @@ class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScree
         'year': _selectedYear == null ? null : int.tryParse(_selectedYear!),
         'semester': _selectedSemester == null ? null : int.tryParse(_selectedSemester!),
         'division': _selectedDivision,
+        'avatar_url': resolvedAvatarUrl,
       };
-      
-      if (newAvatarUrl != null) {
-        updateData['avatar_url'] = newAvatarUrl;
-      }
-      
+
       await Supabase.instance.client.from('student_profiles').upsert(updateData);
-      if (mounted) context.go('/student/home');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile saved successfully!'),
+            backgroundColor: AppColors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        if (widget.isEditing) {
+          context.pop();
+        } else {
+          context.go('/student/home');
+        }
+      }
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -168,32 +215,48 @@ class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScree
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.yellow,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      'EVENT COLLAGE',
-                      style: GoogleFonts.inter(
-                        color: AppColors.black,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.5,
+                  Row(
+                    children: [
+                      if (widget.isEditing)
+                        GestureDetector(
+                          onTap: () => context.pop(),
+                          child: const Padding(
+                            padding: EdgeInsets.only(right: 12),
+                            child: Icon(Icons.arrow_back_rounded, color: AppColors.white, size: 24),
+                          ),
+                        ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.yellow,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'EVENT COLLAGE',
+                          style: GoogleFonts.inter(
+                            color: AppColors.black,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                   const SizedBox(height: 12),
-                  Text("What's your profile?",
-                      style: GoogleFonts.inter(
-                          color: AppColors.white,
-                          fontSize: 26,
-                          fontWeight: FontWeight.w900)),
-                  Text('Help us personalize your experience.',
-                      style: GoogleFonts.inter(
-                          color: AppColors.white.withOpacity(0.8),
-                          fontSize: 13)),
+                  Text(
+                    widget.isEditing ? 'Edit Profile' : "What's your profile?",
+                    style: GoogleFonts.inter(
+                        color: AppColors.white,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900)),
+                  Text(
+                    widget.isEditing
+                        ? 'Update your personal information.'
+                        : 'Help us personalize your experience.',
+                    style: GoogleFonts.inter(
+                        color: AppColors.white.withOpacity(0.8),
+                        fontSize: 13)),
                 ],
               ),
             ),
@@ -301,24 +364,27 @@ class _ProfileOnboardingScreenState extends ConsumerState<ProfileOnboardingScree
                         child: _isSaving
                             ? const SizedBox(height: 20, width: 20,
                                 child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                            : Text('Continue to Events',
+                            : Text(
+                                widget.isEditing ? 'Save Profile' : 'Continue to Events',
                                 style: GoogleFonts.inter(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.white)),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Center(
-                      child: TextButton(
-                        onPressed: () => context.go('/student/home'),
-                        child: Text('Skip for now',
-                            style: GoogleFonts.inter(
-                                color: AppColors.grey400,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500)),
+                    if (!widget.isEditing) ...[
+                      const SizedBox(height: 12),
+                      Center(
+                        child: TextButton(
+                          onPressed: () => context.go('/student/home'),
+                          child: Text('Skip for now',
+                              style: GoogleFonts.inter(
+                                  color: AppColors.grey400,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500)),
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),

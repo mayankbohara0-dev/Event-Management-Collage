@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../../core/design_system.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -15,12 +17,14 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selectedIndex = 0;
 
+  void _goToProfile() => setState(() => _selectedIndex = 2);
+
   @override
   Widget build(BuildContext context) {
-    const pages = [
-      _HomeFeed(),
-      _MyRegistrations(),
-      _ProfileTab(),
+    final pages = [
+      _HomeFeed(onProfileTap: _goToProfile),
+      _MyRegistrations(onProfileTap: _goToProfile),
+      _ProfileTab(onProfileTap: _goToProfile),
     ];
 
     return Scaffold(
@@ -63,9 +67,55 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
+// ── SHARED PROFILE AVATAR BUTTON ────────────────────
+/// A small circular avatar used in every AppBar.
+/// Shows the profile picture if available, otherwise shows initials.
+/// Tapping it navigates to the Profile tab.
+class _ProfileAvatarButton extends StatelessWidget {
+  final Map<String, dynamic>? profile;
+  final VoidCallback onTap;
+  const _ProfileAvatarButton({required this.profile, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final name = profile?['name']?.toString() ?? 'S';
+    final avatarUrl = profile?['avatar_url']?.toString();
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : 'S';
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(right: 16),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white.withOpacity(0.5), width: 2),
+        ),
+        child: CircleAvatar(
+          radius: 18,
+          backgroundColor: AppColors.yellow,
+          backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
+              ? NetworkImage(avatarUrl)
+              : null,
+          child: (avatarUrl == null || avatarUrl.isEmpty)
+              ? Text(
+                  initial,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.black,
+                  ),
+                )
+              : null,
+        ),
+      ),
+    );
+  }
+}
+
 // ── HOME FEED ─────────────────────────────────
 class _HomeFeed extends ConsumerStatefulWidget {
-  const _HomeFeed();
+  final VoidCallback onProfileTap;
+  const _HomeFeed({required this.onProfileTap});
 
   @override
   ConsumerState<_HomeFeed> createState() => _HomeFeedState();
@@ -74,12 +124,12 @@ class _HomeFeed extends ConsumerStatefulWidget {
 class _HomeFeedState extends ConsumerState<_HomeFeed> {
   List<Map<String, dynamic>> _events = [];
   List<Map<String, dynamic>> _filtered = [];
+  List<Map<String, dynamic>> _categories = [];
   bool _isLoading = true;
   String _selectedCategory = 'All';
   final _searchController = TextEditingController();
   Map<String, dynamic>? _profile;
-
-  static const List<String> _categories = ['All', 'Tech', 'Cultural', 'Sports', 'Academic', 'Workshop'];
+  int _attendedCount = 0;
 
   @override
   void initState() {
@@ -98,20 +148,35 @@ class _HomeFeedState extends ConsumerState<_HomeFeed> {
     try {
       final user = Supabase.instance.client.auth.currentUser;
       if (user != null) {
-        final p = await Supabase.instance.client
+        // Run profile and attendance count in parallel with explicit typed futures.
+        final profileFuture = Supabase.instance.client
             .from('student_profiles')
-            .select()
+            .select('*, avatar_url')
             .eq('id', user.id)
             .maybeSingle();
-        _profile = p;
+        final attendanceFuture = Supabase.instance.client
+            .from('attendance')
+            .select('id')
+            .eq('student_id', user.id);
+        final profileRes = await profileFuture;
+        final attendanceRes = await attendanceFuture;
+        _profile = profileRes;
+        _attendedCount = (attendanceRes as List).length;
       }
+      // Fetch categories from DB
+      final cats = await Supabase.instance.client
+          .from('event_categories')
+          .select('id, name')
+          .order('name');
+      // Fetch events with category name join
       final events = await Supabase.instance.client
           .from('events')
-          .select('id, title, short_description, long_description, start_date, end_date, venue, max_seats, visibility, category_id')
+          .select('id, title, short_description, start_date, end_date, venue, cover_image_url, category_id, event_categories(name)')
           .eq('visibility', 'published')
           .order('start_date', ascending: true);
       if (mounted) {
         setState(() {
+          _categories = List<Map<String, dynamic>>.from(cats);
           _events = List<Map<String, dynamic>>.from(events);
           _filtered = _events;
           _isLoading = false;
@@ -127,7 +192,10 @@ class _HomeFeedState extends ConsumerState<_HomeFeed> {
       _selectedCategory = cat;
       _filtered = cat == 'All'
           ? _events
-          : _events.where((e) => (e['category'] ?? '') == cat).toList();
+          : _events.where((e) {
+              final catName = e['event_categories']?['name']?.toString() ?? '';
+              return catName == cat;
+            }).toList();
     });
   }
 
@@ -169,17 +237,10 @@ class _HomeFeedState extends ConsumerState<_HomeFeed> {
                                     fontSize: 13)),
                           ],
                         ),
-                        GestureDetector(
-                          onTap: () {},
-                          child: Container(
-                            width: 42,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              color: AppColors.white.withOpacity(0.2),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.notifications_outlined, color: AppColors.white, size: 22),
-                          ),
+                        // Avatar in app bar — taps to Profile tab
+                        _ProfileAvatarButton(
+                          profile: _profile,
+                          onTap: widget.onProfileTap,
                         ),
                       ],
                     ),
@@ -226,11 +287,14 @@ class _HomeFeedState extends ConsumerState<_HomeFeed> {
             actionsIconTheme: const IconThemeData(color: AppColors.white),
           ),
 
-          // ── Rewards / Points Card ──
+          // ── Points / Rewards card ──
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: _PointsCard(profile: _profile),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+              child: _PointsCard(
+                profile: _profile,
+                attendedCount: _attendedCount,
+              ),
             ),
           ),
 
@@ -252,10 +316,10 @@ class _HomeFeedState extends ConsumerState<_HomeFeed> {
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _categories.length,
+                    itemCount: _categories.length + 1,
                     separatorBuilder: (_, __) => const SizedBox(width: 8),
                     itemBuilder: (_, i) {
-                      final cat = _categories[i];
+                      final cat = i == 0 ? 'All' : _categories[i - 1]['name'].toString();
                       final selected = _selectedCategory == cat;
                       return GestureDetector(
                         onTap: () => _filter(cat),
@@ -287,8 +351,25 @@ class _HomeFeedState extends ConsumerState<_HomeFeed> {
 
           // ── Loading / Events ──
           if (_isLoading)
-            const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator(color: AppColors.green)),
+            SliverFillRemaining(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: 3,
+                itemBuilder: (_, __) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Shimmer.fromColors(
+                    baseColor: AppColors.grey100,
+                    highlightColor: AppColors.white,
+                    child: Container(
+                      height: 250,
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             )
           else if (_filtered.isEmpty)
             SliverFillRemaining(
@@ -296,9 +377,16 @@ class _HomeFeedState extends ConsumerState<_HomeFeed> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.event_busy_outlined, size: 64, color: AppColors.grey200),
+                    Image.network(
+                      'https://illustrations.popsy.co/amber/surreal-hourglass.svg',
+                      width: 150,
+                      height: 150,
+                      errorBuilder: (context, error, stackTrace) => const Icon(Icons.event_busy_outlined, size: 64, color: AppColors.grey200),
+                    ),
                     const SizedBox(height: 16),
-                    Text('No events found', style: GoogleFonts.inter(color: AppColors.grey400, fontSize: 16, fontWeight: FontWeight.w600)),
+                    Text('No events found', style: GoogleFonts.inter(color: AppColors.grey800, fontSize: 18, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 8),
+                    Text('Check back later or adjust filters', style: GoogleFonts.inter(color: AppColors.grey400, fontSize: 14)),
                   ],
                 ),
               ),
@@ -321,11 +409,14 @@ class _HomeFeedState extends ConsumerState<_HomeFeed> {
 // ── POINTS CARD ───────────────────────────────
 class _PointsCard extends StatelessWidget {
   final Map<String, dynamic>? profile;
-  const _PointsCard({this.profile});
+  /// Number of events the student has actually checked in to.
+  final int attendedCount;
+
+  const _PointsCard({this.profile, required this.attendedCount});
 
   @override
   Widget build(BuildContext context) {
-    final regCount = 0;
+    final points = attendedCount * 100;
     return Container(
       decoration: BoxDecoration(
         gradient: AppColors.heroGradient,
@@ -368,15 +459,19 @@ class _PointsCard extends StatelessWidget {
                                 color: AppColors.black)),
                       ),
                       const SizedBox(height: 10),
-                      Text('${regCount * 100} pts',
+                      Text('$points pts',
                           style: GoogleFonts.inter(
                               color: AppColors.white,
                               fontSize: 32,
                               fontWeight: FontWeight.w900)),
-                      Text('Earn 100 pts per event attended',
-                          style: GoogleFonts.inter(
-                              color: AppColors.white.withOpacity(0.75),
-                              fontSize: 12)),
+                      Text(
+                        attendedCount == 0
+                            ? 'Attend events to earn points'
+                            : 'From $attendedCount event${attendedCount == 1 ? '' : 's'} attended',
+                        style: GoogleFonts.inter(
+                            color: AppColors.white.withOpacity(0.75),
+                            fontSize: 12),
+                      ),
                     ],
                   ),
                 ),
@@ -388,7 +483,7 @@ class _PointsCard extends StatelessWidget {
                         color: AppColors.yellow,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text('View All',
+                      child: Text('My Events',
                           style: GoogleFonts.inter(
                               color: AppColors.black,
                               fontSize: 13,
@@ -415,7 +510,9 @@ class _EventCard extends StatelessWidget {
     final date = event['start_date'] != null
         ? DateTime.tryParse(event['start_date'].toString())
         : null;
-    final category = (event['category_id'] ?? 'Event').toString();
+    // Use the joined category name, not the UUID
+    final categoryName = event['event_categories']?['name']?.toString() ?? 'General';
+    final coverImage = event['cover_image_url']?.toString();
 
     return GestureDetector(
       onTap: () => context.push('/student/event/${event['id']}'),
@@ -435,13 +532,23 @@ class _EventCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top color banner
-            Container(
-              height: 8,
-              decoration: BoxDecoration(
-                color: _categoryColor(category),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              ),
+            // Cover Image or colored banner
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              child: coverImage != null && coverImage.isNotEmpty
+                  ? Image.network(
+                      coverImage,
+                      height: 160,
+                      width: double.infinity,
+                      cacheWidth: 800,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return _buildImagePlaceholder(categoryName, event['title'] ?? '');
+                      },
+                      errorBuilder: (_, __, ___) => _buildImagePlaceholder(categoryName, event['title'] ?? ''),
+                    )
+                  : _buildImagePlaceholder(categoryName, event['title'] ?? ''),
             ),
             Padding(
               padding: const EdgeInsets.all(16),
@@ -453,13 +560,13 @@ class _EventCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: _categoryColor(category).withOpacity(0.12),
+                          color: _categoryColor(categoryName).withOpacity(0.12),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          category.toUpperCase(),
+                          categoryName.toUpperCase(),
                           style: GoogleFonts.inter(
-                              color: _categoryColor(category),
+                              color: _categoryColor(categoryName),
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.5),
@@ -504,12 +611,15 @@ class _EventCard extends StatelessWidget {
                       if ((event['venue'] ?? '').toString().isNotEmpty) ...[
                         const Icon(Icons.location_on_rounded, size: 14, color: AppColors.grey400),
                         const SizedBox(width: 4),
-                        Text(
-                          event['venue'].toString(),
-                          style: GoogleFonts.inter(
-                              color: AppColors.grey400,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500),
+                        Expanded(
+                          child: Text(
+                            event['venue'].toString(),
+                            style: GoogleFonts.inter(
+                                color: AppColors.grey400,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
                       const Spacer(),
@@ -520,7 +630,7 @@ class _EventCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          'Register',
+                          'View Event',
                           style: GoogleFonts.inter(
                               color: AppColors.white,
                               fontSize: 13,
@@ -538,8 +648,100 @@ class _EventCard extends StatelessWidget {
     );
   }
 
+  Widget _buildImagePlaceholder(String categoryName, String title) {
+    final color = _categoryColor(categoryName);
+    final icon = _categoryIcon(categoryName);
+    return Container(
+      height: 160,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [color, color.withOpacity(0.7)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Decorative circle
+          Positioned(
+            right: -30,
+            top: -30,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.1),
+              ),
+            ),
+          ),
+          Positioned(
+            left: -20,
+            bottom: -20,
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.08),
+              ),
+            ),
+          ),
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, color: Colors.white.withOpacity(0.9), size: 40),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _categoryIcon(String cat) {
+    switch (cat.toLowerCase()) {
+      case 'hackathon':
+      case 'tech':
+        return Icons.code_rounded;
+      case 'cultural':
+        return Icons.celebration_rounded;
+      case 'sports':
+        return Icons.sports_rounded;
+      case 'academic':
+      case 'seminar':
+        return Icons.school_rounded;
+      case 'workshop':
+        return Icons.build_rounded;
+      case 'competition':
+        return Icons.emoji_events_rounded;
+      case 'music':
+        return Icons.music_note_rounded;
+      default:
+        return Icons.event_rounded;
+    }
+  }
+
   Color _categoryColor(String cat) {
     switch (cat.toLowerCase()) {
+      case 'hackathon':
       case 'tech':
         return const Color(0xFF0077FF);
       case 'cultural':
@@ -547,6 +749,7 @@ class _EventCard extends StatelessWidget {
       case 'sports':
         return const Color(0xFF00C853);
       case 'academic':
+      case 'seminar':
         return const Color(0xFF7C3AED);
       case 'workshop':
         return const Color(0xFFFF8C00);
@@ -563,7 +766,8 @@ class _EventCard extends StatelessWidget {
 
 // ── MY REGISTRATIONS ──────────────────────────
 class _MyRegistrations extends ConsumerStatefulWidget {
-  const _MyRegistrations();
+  final VoidCallback onProfileTap;
+  const _MyRegistrations({required this.onProfileTap});
 
   @override
   ConsumerState<_MyRegistrations> createState() => _MyRegistrationsState();
@@ -571,6 +775,7 @@ class _MyRegistrations extends ConsumerStatefulWidget {
 
 class _MyRegistrationsState extends ConsumerState<_MyRegistrations> {
   List<Map<String, dynamic>> _registrations = [];
+  Map<String, dynamic>? _profile;
   bool _isLoading = true;
 
   @override
@@ -584,18 +789,30 @@ class _MyRegistrationsState extends ConsumerState<_MyRegistrations> {
     try {
       final user = Supabase.instance.client.auth.currentUser;
       if (user == null) return;
-      final data = await Supabase.instance.client
-          .from('registrations')
-          .select('*, events(title, start_date, venue)')
-          .eq('student_id', user.id)
-          .order('created_at', ascending: false);
+
+      // Load profile and registrations in parallel
+      final results = await Future.wait([
+        Supabase.instance.client
+            .from('student_profiles')
+            .select('name, avatar_url')
+            .eq('id', user.id)
+            .maybeSingle(),
+        Supabase.instance.client
+            .from('registrations')
+            .select('*, events(title, start_date, venue, cover_image_url)')
+            .eq('student_id', user.id)
+            .order('created_at', ascending: false),
+      ]);
+
       if (mounted) {
         setState(() {
-          _registrations = List<Map<String, dynamic>>.from(data);
+          _profile = results[0] as Map<String, dynamic>?;
+          _registrations = List<Map<String, dynamic>>.from(results[1] as List);
           _isLoading = false;
         });
       }
-    } catch (_) {
+    } catch (e) {
+      debugPrint('My Events load error: $e');
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -609,24 +826,50 @@ class _MyRegistrationsState extends ConsumerState<_MyRegistrations> {
         elevation: 0,
         title: Text('My Events', style: GoogleFonts.inter(color: AppColors.white, fontWeight: FontWeight.w800)),
         centerTitle: false,
+        actions: [
+          // Use cached _profile — no FutureBuilder needed
+          _ProfileAvatarButton(
+            profile: _profile,
+            onTap: widget.onProfileTap,
+          ),
+        ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.green))
+          ? ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: 4,
+              itemBuilder: (_, __) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Shimmer.fromColors(
+                  baseColor: AppColors.grey100,
+                  highlightColor: AppColors.white,
+                  child: Container(
+                    height: 80,
+                    decoration: BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+              ),
+            )
           : _registrations.isEmpty
               ? Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.calendar_today_outlined, size: 64, color: AppColors.grey200),
+                      Image.network(
+                        'https://illustrations.popsy.co/amber/falling.svg',
+                        width: 150,
+                        height: 150,
+                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.calendar_today_outlined, size: 64, color: AppColors.grey200),
+                      ),
                       const SizedBox(height: 16),
                       Text("You haven't registered yet",
                           style: GoogleFonts.inter(
-                              color: AppColors.grey400,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600)),
+                              color: AppColors.grey800,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
                       Text('Find events on the Explore tab',
-                          style: GoogleFonts.inter(color: AppColors.grey400, fontSize: 13)),
+                          style: GoogleFonts.inter(color: AppColors.grey400, fontSize: 14)),
                     ],
                   ),
                 )
@@ -677,19 +920,41 @@ class _MyRegistrationsState extends ConsumerState<_MyRegistrations> {
                           event['venue'] ?? '',
                           style: GoogleFonts.inter(color: AppColors.grey400, fontSize: 12),
                         ),
-                        trailing: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: statusColor.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            status[0].toUpperCase() + status.substring(1),
-                            style: GoogleFonts.inter(
-                                color: statusColor,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700),
-                          ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Status badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: statusColor.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                status[0].toUpperCase() + status.substring(1),
+                                style: GoogleFonts.inter(
+                                    color: statusColor,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            // QR Ticket button — always visible
+                            IconButton(
+                              icon: Icon(
+                                Icons.qr_code_rounded,
+                                color: status == 'rejected'
+                                    ? AppColors.grey300
+                                    : AppColors.green,
+                              ),
+                              tooltip: status == 'rejected'
+                                  ? 'Registration rejected'
+                                  : 'View Ticket',
+                              onPressed: status == 'rejected'
+                                  ? null
+                                  : () => _showTicketDialog(context, reg, event, status, statusColor),
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -697,11 +962,250 @@ class _MyRegistrationsState extends ConsumerState<_MyRegistrations> {
                 ),
     );
   }
+
+  void _showTicketDialog(
+    BuildContext context,
+    Map<String, dynamic> reg,
+    Map<String, dynamic> event,
+    String status,
+    Color statusColor,
+  ) {
+    // Use qr_code_data if available, otherwise fall back to registration ID
+    final qrData = reg['qr_code_data']?.toString().isNotEmpty == true
+        ? reg['qr_code_data'].toString()
+        : reg['id']?.toString() ?? 'NO_DATA';
+
+    final eventTitle = event['title']?.toString() ?? 'Event';
+    final venue = event['venue']?.toString() ?? '';
+    final dateStr = event['start_date'] != null
+        ? () {
+            final d = DateTime.tryParse(event['start_date'].toString());
+            if (d == null) return '';
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            return '${months[d.month - 1]} ${d.day}, ${d.year}';
+          }()
+        : '';
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.black54,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── Green header ──
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+                decoration: BoxDecoration(
+                  color: status == 'pending'
+                      ? const Color(0xFFFFA000)
+                      : AppColors.green,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      status == 'approved'
+                          ? Icons.confirmation_number_rounded
+                          : Icons.hourglass_top_rounded,
+                      color: Colors.white,
+                      size: 36,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      status == 'approved' ? 'Your Ticket' : 'Registration Pending',
+                      style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.25),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        status.toUpperCase(),
+                        style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.2),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Dashed divider ──
+              CustomPaint(
+                size: const Size(double.infinity, 24),
+                painter: _DashedDividerPainter(),
+              ),
+
+              // ── QR Code ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: QrImageView(
+                  data: qrData,
+                  version: QrVersions.auto,
+                  size: 200.0,
+                  eyeStyle: QrEyeStyle(
+                    eyeShape: QrEyeShape.square,
+                    color: status == 'pending'
+                        ? const Color(0xFFFFA000)
+                        : AppColors.green,
+                  ),
+                  dataModuleStyle: QrDataModuleStyle(
+                    dataModuleShape: QrDataModuleShape.square,
+                    color: status == 'pending'
+                        ? const Color(0xFFFFA000)
+                        : AppColors.green,
+                  ),
+                ),
+              ),
+
+              // ── Event details ──
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                child: Column(
+                  children: [
+                    Text(
+                      eventTitle,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.black),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (dateStr.isNotEmpty || venue.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      if (dateStr.isNotEmpty)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.calendar_today_rounded,
+                                size: 13, color: AppColors.grey400),
+                            const SizedBox(width: 4),
+                            Text(dateStr,
+                                style: GoogleFonts.inter(
+                                    color: AppColors.grey400, fontSize: 13)),
+                          ],
+                        ),
+                      if (venue.isNotEmpty)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.location_on_outlined,
+                                size: 13, color: AppColors.grey400),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                venue,
+                                style: GoogleFonts.inter(
+                                    color: AppColors.grey400, fontSize: 13),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                    const SizedBox(height: 12),
+                    Text(
+                      status == 'approved'
+                          ? 'Show this QR at the entrance to check in.'
+                          : 'QR will be activated once your registration is approved.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                          color: AppColors.grey400, fontSize: 12, height: 1.4),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Close button ──
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    style: TextButton.styleFrom(
+                      backgroundColor: AppColors.greenLight,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: Text('Close',
+                        style: GoogleFonts.inter(
+                            color: AppColors.green,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Paints a dashed horizontal line for the ticket perforation effect
+class _DashedDividerPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    const dashWidth = 8.0;
+    const dashSpace = 5.0;
+    const circleRadius = 12.0;
+
+    final paint = Paint()
+      ..color = const Color(0xFFEEEEEE)
+      ..style = PaintingStyle.fill;
+
+    // Left circle cutout
+    canvas.drawCircle(Offset(-circleRadius, size.height / 2), circleRadius, paint);
+    // Right circle cutout
+    canvas.drawCircle(Offset(size.width + circleRadius, size.height / 2), circleRadius, paint);
+
+    // Dashed line
+    final linePaint = Paint()
+      ..color = const Color(0xFFDDDDDD)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    double startX = 0;
+    while (startX < size.width) {
+      canvas.drawLine(
+        Offset(startX, size.height / 2),
+        Offset(startX + dashWidth, size.height / 2),
+        linePaint,
+      );
+      startX += dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_) => false;
 }
 
 // ── PROFILE TAB ───────────────────────────────
 class _ProfileTab extends ConsumerStatefulWidget {
-  const _ProfileTab();
+  final VoidCallback onProfileTap;
+  const _ProfileTab({required this.onProfileTap});
 
   @override
   ConsumerState<_ProfileTab> createState() => _ProfileTabState();
@@ -749,27 +1253,60 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
         slivers: [
           SliverAppBar(
             backgroundColor: AppColors.green,
-            expandedHeight: 180,
+            expandedHeight: 200,
             pinned: true,
+            actions: [
+              // Small avatar stays visible when bar is collapsed
+              _ProfileAvatarButton(
+                profile: _profile,
+                onTap: widget.onProfileTap,
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 color: AppColors.green,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundColor: AppColors.yellow,
-                      backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                      child: avatarUrl == null 
-                          ? Text(
-                              name.isNotEmpty ? name[0].toUpperCase() : 'S',
-                              style: GoogleFonts.inter(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.black),
-                            )
-                          : null,
+                    // Camera/edit overlay on avatar
+                    GestureDetector(
+                      onTap: () async {
+                        await context.push('/student/edit-profile');
+                        if (mounted) _load();
+                      },
+                      child: Stack(
+                        children: [
+                          CircleAvatar(
+                            radius: 44,
+                            backgroundColor: AppColors.yellow,
+                            backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                            child: avatarUrl == null
+                                ? Text(
+                                    name.isNotEmpty ? name[0].toUpperCase() : 'S',
+                                    style: GoogleFonts.inter(
+                                        fontSize: 34,
+                                        fontWeight: FontWeight.w900,
+                                        color: AppColors.black),
+                                  )
+                                : null,
+                          ),
+                          Positioned(
+                            bottom: 2,
+                            right: 2,
+                            child: Container(
+                              width: 26,
+                              height: 26,
+                              decoration: BoxDecoration(
+                                color: AppColors.green,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                              ),
+                              child: const Icon(Icons.camera_alt_rounded,
+                                  size: 13, color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Text(name,
@@ -815,6 +1352,30 @@ class _ProfileTabState extends ConsumerState<_ProfileTab> {
                     const SizedBox(height: 12),
                   ],
                   const SizedBox(height: 8),
+                  // Edit Profile
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        await context.push('/student/edit-profile');
+                        // Reload profile data when returning from edit
+                        if (mounted) _load();
+                      },
+                      icon: const Icon(Icons.edit_rounded, size: 18),
+                      label: Text('Edit Profile',
+                          style: GoogleFonts.inter(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.green,
+                        foregroundColor: AppColors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   // Logout
                   SizedBox(
                     width: double.infinity,
