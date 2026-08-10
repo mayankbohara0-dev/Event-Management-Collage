@@ -31,16 +31,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       if (_isSignUp) {
-        await Supabase.instance.client.auth.signUp(
+        final res = await Supabase.instance.client.auth.signUp(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
-        // Send user to verify-email screen — they must confirm before signing in
         if (mounted) {
-          context.go(
-            '/auth/verify-email',
-            extra: _emailController.text.trim(),
-          );
+          if (res.session != null) {
+            // Auto-confirm is ON (or they are somehow already logged in)
+            context.go('/student/onboarding');
+          } else {
+            // Send user to verify-email screen — they must confirm before signing in
+            context.go(
+              '/auth/verify-email',
+              extra: _emailController.text.trim(),
+            );
+          }
         }
       } else {
         final res = await Supabase.instance.client.auth.signInWithPassword(
@@ -69,6 +74,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(error.message), backgroundColor: AppColors.error),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.toString()), backgroundColor: AppColors.error),
         );
       }
     } finally {

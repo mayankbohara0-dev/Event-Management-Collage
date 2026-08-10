@@ -78,6 +78,13 @@ class _LandingScreenState extends State<LandingScreen> {
         if (mounted) context.go('/admin/dashboard');
         return;
       }
+      
+      // If user is authenticated but not found in either table (e.g. just signed up),
+      // route them to onboarding.
+      if (mounted) {
+        context.go('/student/onboarding');
+        return;
+      }
 
     } catch (e) {
       debugPrint('Auth check error: $e');
