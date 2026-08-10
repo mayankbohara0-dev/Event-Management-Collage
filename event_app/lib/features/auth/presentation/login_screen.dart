@@ -35,8 +35,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
-        // New user — always go to onboarding to fill in their info
-        if (mounted) context.go('/student/onboarding');
+        // Send user to verify-email screen — they must confirm before signing in
+        if (mounted) {
+          context.go(
+            '/auth/verify-email',
+            extra: _emailController.text.trim(),
+          );
+        }
       } else {
         final res = await Supabase.instance.client.auth.signInWithPassword(
           email: _emailController.text.trim(),

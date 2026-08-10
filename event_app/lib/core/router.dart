@@ -13,6 +13,7 @@ import '../features/events/presentation/registration_form_screen.dart';
 import '../features/events/presentation/event_details_screen.dart';
 import '../features/auth/presentation/forgot_password_screen.dart';
 import '../features/auth/presentation/reset_password_screen.dart';
+import '../features/auth/presentation/email_verification_screen.dart';
 
 // Admin Features
 import '../features/admin/auth/presentation/login_screen.dart' as admin_auth;
@@ -44,7 +45,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // ── Unauthenticated user ─────────────────────────────────────────
       if (session == null) {
         // Allow public routes through
-        final publicRoutes = ['/', '/student/login', '/admin/login', '/auth/forgot-password', '/auth/reset-password'];
+        final publicRoutes = ['/', '/student/login', '/admin/login', '/auth/forgot-password', '/auth/reset-password', '/auth/verify-email'];
         if (publicRoutes.contains(path)) return null;
         // Bounce everything else back to landing
         return '/';
@@ -108,6 +109,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/auth/reset-password',
         builder: (context, state) => const ResetPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/auth/verify-email',
+        builder: (context, state) {
+          final email = (state.extra as String?) ?? '';
+          return EmailVerificationScreen(email: email);
+        },
       ),
 
       // ── Detail/full-screen admin routes (no sidebar shell) ──────────
