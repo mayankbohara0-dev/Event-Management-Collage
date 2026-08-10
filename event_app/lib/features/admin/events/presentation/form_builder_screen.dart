@@ -2,29 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
+import '../../admin_colors.dart';
 
-// ─────────────────────────────────────────────
-// Admin Design Tokens
-// ─────────────────────────────────────────────
-class AdminColors {
-  static const Color bg = Color(0xFFF7F7F7);
-  static const Color sidebar = Color(0xFFFFFFFF);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceLight = Color(0xFFF9FAFB);
-  static const Color accent = Color(0xFF00843D);
-  static const Color gold = Color(0xFFFFB700);
-  static const Color success = Color(0xFF00843D);
-  static const Color error = Color(0xFFE31837);
-  static const Color textPrimary = Color(0xFF111111);
-  static const Color textSecondary = Color(0xFF616161);
-  static const Color border = Color(0xFFE5E5E5);
-
-  static const LinearGradient heroGradient = LinearGradient(
-    colors: [Color(0xFF006630), Color(0xFF00843D)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-}
 
 // ---------- Data Model ----------
 class FormQuestionDraft {
@@ -342,7 +321,16 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen>
         backgroundColor: AdminColors.sidebar,
         elevation: 1,
         iconTheme: const IconThemeData(color: AdminColors.textPrimary),
-        leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.go('/admin/events')),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/admin/events');
+            }
+          },
+        ),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -1007,6 +995,28 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen>
                   ),
                 ],
               ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _isSaving ? null : () async {
+                    await _saveForm();
+                    if (mounted) context.go('/admin/events');
+                  },
+                  icon: _isSaving
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Icon(Icons.check_circle_outline, size: 22),
+                  label: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Text('Save Form & Finish', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AdminColors.accent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
               const SizedBox(height: 48),
             ],
           ),
@@ -1040,10 +1050,12 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen>
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min, // FIX: Prevent unbounded height
               children: [
                 Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AdminColors.textPrimary)),
                 const SizedBox(height: 4),

@@ -5,26 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:csv/csv.dart';
 import 'dart:convert';
 import 'package:universal_html/html.dart' as html;
+import '../../admin_colors.dart';
 
-class AdminColors {
-  static const Color bg = Color(0xFFF7F7F7);
-  static const Color sidebar = Color(0xFFFFFFFF);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceLight = Color(0xFFF9FAFB);
-  static const Color accent = Color(0xFF00843D);
-  static const Color gold = Color(0xFFFFB700);
-  static const Color success = Color(0xFF00843D);
-  static const Color error = Color(0xFFE31837);
-  static const Color textPrimary = Color(0xFF111111);
-  static const Color textSecondary = Color(0xFF616161);
-  static const Color border = Color(0xFFE5E5E5);
-
-  static const LinearGradient heroGradient = LinearGradient(
-    colors: [Color(0xFF006630), Color(0xFF00843D)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-}
 
 class EventResponsesScreen extends ConsumerStatefulWidget {
   final String eventId;
@@ -170,7 +152,7 @@ class _EventResponsesScreenState extends ConsumerState<EventResponsesScreen> {
     final bytes = utf8.encode(csvString);
     final blob = html.Blob([bytes]);
     final url = html.Url.createObjectUrlFromBlob(blob);
-    final anchor = html.AnchorElement(href: url)
+    html.AnchorElement(href: url)
       ..setAttribute('download', 'event_responses_${widget.eventId}.csv')
       ..click();
     html.Url.revokeObjectUrl(url);
@@ -193,7 +175,13 @@ class _EventResponsesScreenState extends ConsumerState<EventResponsesScreen> {
         iconTheme: const IconThemeData(color: AdminColors.textPrimary),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/admin/events'),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/admin/events');
+            }
+          },
         ),
         actions: [
           Padding(

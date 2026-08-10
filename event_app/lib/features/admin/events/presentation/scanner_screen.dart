@@ -91,7 +91,13 @@ class _ScannerScreenState extends State<ScannerScreen> {
         title: Text('Scan Tickets', style: TextStyle(color: AppColors.white)),
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: AppColors.white),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/admin/events');
+            }
+          },
         ),
       ),
       body: Stack(

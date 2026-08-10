@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
-import '../../dashboard/presentation/dashboard_layout.dart';
+import '../../admin_colors.dart';
 
 // ── Status filter tabs ──────────────────────────
 enum _StatusFilter { all, published, draft, archived }
@@ -1082,6 +1082,14 @@ class _DesktopEventTable extends StatelessWidget {
                                   color: AdminColors.gold,
                                   onTap: () => context.go(
                                       '/admin/events/${event['id']}/edit'),
+                                ),
+                                const SizedBox(width: 6),
+                                _ActionBtn(
+                                  icon: Icons.star_rounded,
+                                  label: 'Feedback',
+                                  color: Colors.amber,
+                                  onTap: () => context.go(
+                                      '/admin/events/${event['id']}/feedback'),
                                 ),
                                 const SizedBox(width: 6),
                                 _ActionBtn(

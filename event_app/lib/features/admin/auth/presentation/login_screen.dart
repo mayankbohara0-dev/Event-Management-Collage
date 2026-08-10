@@ -3,28 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/design_system.dart';
+import '../../admin_colors.dart';
 
-// Admin palette — dark professional
-class AdminColors {
-  static const Color bg = Color(0xFFF7F7F7);
-  static const Color sidebar = Color(0xFFFFFFFF);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceLight = Color(0xFFF9FAFB);
-  static const Color accent = Color(0xFF00843D);
-  static const Color gold = Color(0xFFFFB700);
-  static const Color success = Color(0xFF00843D);
-  static const Color error = Color(0xFFE31837);
-  static const Color textPrimary = Color(0xFF111111);
-  static const Color textSecondary = Color(0xFF616161);
-  static const Color border = Color(0xFFE5E5E5);
-
-  static const LinearGradient heroGradient = LinearGradient(
-    colors: [Color(0xFF006630), Color(0xFF00843D)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-}
 
 class AdminLoginScreen extends ConsumerStatefulWidget {
   const AdminLoginScreen({super.key});

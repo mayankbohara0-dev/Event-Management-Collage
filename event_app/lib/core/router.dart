@@ -11,6 +11,8 @@ import '../features/profile/presentation/profile_onboarding_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/events/presentation/registration_form_screen.dart';
 import '../features/events/presentation/event_details_screen.dart';
+import '../features/auth/presentation/forgot_password_screen.dart';
+import '../features/auth/presentation/reset_password_screen.dart';
 
 // Admin Features
 import '../features/admin/auth/presentation/login_screen.dart' as admin_auth;
@@ -21,7 +23,11 @@ import '../features/admin/events/presentation/event_create_screen.dart';
 import '../features/admin/events/presentation/form_builder_screen.dart';
 import '../features/admin/events/presentation/event_responses_screen.dart';
 import '../features/admin/events/presentation/scanner_screen.dart';
+import '../features/admin/events/presentation/event_feedback_screen.dart';
 import '../features/admin/registrations/presentation/registrations_screen.dart';
+import '../features/admin/users/presentation/users_screen.dart';
+import '../features/admin/notifications/presentation/admin_notifications_screen.dart';
+import '../features/notifications/presentation/notifications_screen.dart';
 
 import 'providers.dart';
 
@@ -31,63 +37,21 @@ final routerProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     initialLocation: '/',
-    redirect: (context, state) async {
+    redirect: (context, state) {
       final session = Supabase.instance.client.auth.currentSession;
       final path = state.matchedLocation;
 
       // ── Unauthenticated user ─────────────────────────────────────────
       if (session == null) {
         // Allow public routes through
-        final publicRoutes = ['/', '/student/login', '/admin/login'];
+        final publicRoutes = ['/', '/student/login', '/admin/login', '/auth/forgot-password', '/auth/reset-password'];
         if (publicRoutes.contains(path)) return null;
         // Bounce everything else back to landing
         return '/';
       }
 
-      // ── Authenticated user ───────────────────────────────────────────
-      final userId = session.user.id;
-      final client = Supabase.instance.client;
-
-      // Determine role by checking which profile table has a row for this user.
-      final isAdmin = await client
-          .from('admin_profiles')
-          .select('id')
-          .eq('id', userId)
-          .maybeSingle()
-          .then((r) => r != null);
-
-      final isStudent = !isAdmin &&
-          await client
-              .from('student_profiles')
-              .select('id')
-              .eq('id', userId)
-              .maybeSingle()
-              .then((r) => r != null);
-
-      // --- Admin trying to access student/public routes ---
-      if (isAdmin) {
-        if (path == '/' || path == '/admin/login' || path == '/student/login') {
-          return '/admin/dashboard';
-        }
-        // Block admins from student-only routes
-        if (path.startsWith('/student/')) return '/admin/dashboard';
-        return null; // allow all /admin/** routes
-      }
-
-      // --- Student trying to access admin routes ---
-      if (isStudent) {
-        if (path == '/' || path == '/student/login' || path == '/admin/login') {
-          return '/student/home';
-        }
-        if (path.startsWith('/admin/')) return '/student/home';
-        return null; // allow all /student/** routes
-      }
-
-      // --- Logged in but no profile yet (new sign-up edge case) ---
-      // Send to student onboarding if they hit a non-login route
-      if (path != '/student/onboarding' && path != '/student/login') {
-        return '/student/onboarding';
-      }
+      // ── Authenticated: let LandingScreen handle role-based redirect ──
+      // Allow everything through — individual screens protect themselves.
       return null;
     },
     routes: [
@@ -114,6 +78,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const HomeScreen(),
       ),
       GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationsScreen(),
+      ),
+      GoRoute(
         path: '/student/event/:id',
         builder: (context, state) {
           final eventId = state.pathParameters['id']!;
@@ -133,9 +101,60 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/admin/login',
         builder: (context, state) => const admin_auth.AdminLoginScreen(),
       ),
+      GoRoute(
+        path: '/auth/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/auth/reset-password',
+        builder: (context, state) => const ResetPasswordScreen(),
+      ),
+
+      // ── Detail/full-screen admin routes (no sidebar shell) ──────────
+      // These screens have their own Scaffold + AppBar so they must live
+      // outside the ShellRoute to avoid double-Scaffold issues.
+      GoRoute(
+        path: '/admin/events/create',
+        builder: (context, state) => const EventCreateScreen(),
+      ),
+      GoRoute(
+        path: '/admin/events/:eventId/edit',
+        builder: (context, state) => EventCreateScreen(
+          eventId: state.pathParameters['eventId'],
+        ),
+      ),
+      GoRoute(
+        path: '/admin/events/:id/scanner',
+        builder: (context, state) => ScannerScreen(
+          eventId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/admin/events/:id/feedback',
+        builder: (context, state) => EventFeedbackScreen(
+          eventId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/admin/events/:eventId/builder',
+        builder: (context, state) => FormBuilderScreen(
+          eventId: state.pathParameters['eventId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/admin/events/:eventId/responses',
+        builder: (context, state) => EventResponsesScreen(
+          eventId: state.pathParameters['eventId']!,
+        ),
+      ),
+
+      // ── Shell routes (sidebar layout) ───────────────────────────────
       ShellRoute(
         builder: (context, state, child) {
-          return DashboardLayout(child: child);
+          return DashboardLayout(
+            currentLocation: state.matchedLocation,
+            child: child,
+          );
         },
         routes: [
           GoRoute(
@@ -147,36 +166,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const EventsTableScreen(),
           ),
           GoRoute(
-            path: '/admin/events/create',
-            builder: (context, state) => const EventCreateScreen(),
-          ),
-          GoRoute(
-            path: '/admin/events/:eventId/edit',
-            builder: (context, state) => EventCreateScreen(
-              eventId: state.pathParameters['eventId'],
-            ),
-          ),
-          GoRoute(
-            path: '/admin/events/:eventId/scanner',
-            builder: (context, state) => ScannerScreen(
-              eventId: state.pathParameters['eventId']!,
-            ),
-          ),
-          GoRoute(
-            path: '/admin/events/:eventId/builder',
-            builder: (context, state) => FormBuilderScreen(
-              eventId: state.pathParameters['eventId']!,
-            ),
-          ),
-          GoRoute(
-            path: '/admin/events/:eventId/responses',
-            builder: (context, state) => EventResponsesScreen(
-              eventId: state.pathParameters['eventId']!,
-            ),
-          ),
-          GoRoute(
             path: '/admin/registrations',
             builder: (context, state) => const RegistrationsScreen(),
+          ),
+          GoRoute(
+            path: '/admin/users',
+            builder: (context, state) => const UsersScreen(),
+          ),
+          GoRoute(
+            path: '/admin/notifications',
+            builder: (context, state) => const AdminNotificationsScreen(),
           ),
         ],
       ),

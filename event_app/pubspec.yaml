@@ -47,6 +47,8 @@ dependencies:
   csv: ^8.0.0
   add_2_calendar: ^3.1.1
   universal_html: ^2.3.0
+  firebase_core: ^4.13.0
+  firebase_messaging: ^16.5.0
 
 dev_dependencies:
   flutter_test:

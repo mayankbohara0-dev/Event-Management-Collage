@@ -130,6 +130,7 @@ class _HomeFeedState extends ConsumerState<_HomeFeed> {
   final _searchController = TextEditingController();
   Map<String, dynamic>? _profile;
   int _attendedCount = 0;
+  int _unreadNotifications = 0;
 
   @override
   void initState() {
@@ -158,10 +159,19 @@ class _HomeFeedState extends ConsumerState<_HomeFeed> {
             .from('attendance')
             .select('id')
             .eq('student_id', user.id);
+        final notifsFuture = Supabase.instance.client
+            .from('notifications')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('is_read', false);
+            
         final profileRes = await profileFuture;
         final attendanceRes = await attendanceFuture;
+        final notifsRes = await notifsFuture;
+        
         _profile = profileRes;
         _attendedCount = (attendanceRes as List).length;
+        _unreadNotifications = (notifsRes as List).length;
       }
       // Fetch categories from DB
       final cats = await Supabase.instance.client
@@ -237,10 +247,47 @@ class _HomeFeedState extends ConsumerState<_HomeFeed> {
                                     fontSize: 13)),
                           ],
                         ),
-                        // Avatar in app bar — taps to Profile tab
-                        _ProfileAvatarButton(
-                          profile: _profile,
-                          onTap: widget.onProfileTap,
+                        Row(
+                          children: [
+                            // Notification Bell
+                            GestureDetector(
+                              onTap: () => context.push('/notifications').then((_) => _loadData()),
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.only(right: 12),
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+                                    ),
+                                    child: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 20),
+                                  ),
+                                  if (_unreadNotifications > 0)
+                                    Positioned(
+                                      right: 12,
+                                      top: 0,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.red,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Text(
+                                          _unreadNotifications.toString(),
+                                          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            // Avatar in app bar — taps to Profile tab
+                            _ProfileAvatarButton(
+                              profile: _profile,
+                              onTap: widget.onProfileTap,
+                            ),
+                          ],
                         ),
                       ],
                     ),

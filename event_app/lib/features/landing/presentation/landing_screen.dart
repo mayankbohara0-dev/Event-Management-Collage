@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../../core/design_system.dart';
 
 class LandingScreen extends StatefulWidget {
@@ -36,7 +37,32 @@ class _LandingScreenState extends State<LandingScreen> {
           .select('id, name')
           .eq('id', user.id)
           .maybeSingle();
-          
+
+      // Check if admin
+      final adminRes = await Supabase.instance.client
+          .from('admin_profiles')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+
+      // ── Setup FCM Token ──
+      try {
+        final fcm = FirebaseMessaging.instance;
+        final settings = await fcm.requestPermission();
+        if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+          final token = await fcm.getToken();
+          if (token != null) {
+            if (studentRes != null) {
+              await Supabase.instance.client.from('student_profiles').update({'fcm_token': token}).eq('id', user.id);
+            } else if (adminRes != null) {
+              await Supabase.instance.client.from('admin_profiles').update({'fcm_token': token}).eq('id', user.id);
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('FCM setup error: $e');
+      }
+
       if (studentRes != null) {
         if (mounted) {
           if ((studentRes['name'] ?? '').toString().isNotEmpty) {
@@ -47,13 +73,6 @@ class _LandingScreenState extends State<LandingScreen> {
         }
         return;
       }
-
-      // Check if admin
-      final adminRes = await Supabase.instance.client
-          .from('admin_profiles')
-          .select('id')
-          .eq('id', user.id)
-          .maybeSingle();
 
       if (adminRes != null) {
         if (mounted) context.go('/admin/dashboard');

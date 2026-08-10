@@ -183,7 +183,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 32),
+
+                    if (!_isSignUp) ...[
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () => context.push('/auth/forgot-password'),
+                          child: Text(
+                            'Forgot Password?',
+                            style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.green),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ] else ...[
+                      const SizedBox(height: 32),
+                    ],
                     // CTA
                     SizedBox(
                       width: double.infinity,
