@@ -28,11 +28,11 @@
   <meta name="twitter:image" content="assets/brand/og-image.png" />
 
   <!-- Modular CSS Architecture -->
-  <link rel="stylesheet" href="css/tokens.css" />
-  <link rel="stylesheet" href="css/base.css" />
-  <link rel="stylesheet" href="css/components.css" />
-  <link rel="stylesheet" href="css/animations.css" />
-  <link rel="stylesheet" href="css/sections.css" />
+  <link rel="stylesheet" href="css/tokens.css?v=2.0.0" />
+  <link rel="stylesheet" href="css/base.css?v=2.0.0" />
+  <link rel="stylesheet" href="css/components.css?v=2.0.0" />
+  <link rel="stylesheet" href="css/animations.css?v=2.0.0" />
+  <link rel="stylesheet" href="css/sections.css?v=2.0.0" />
 
   <!-- JSON-LD Structured Data -->
   <script type="application/ld+json">
@@ -103,12 +103,12 @@
           </svg>
         </button>
 
-        <a href="#download" class="btn btn-lime">
+        <a href="#download" class="btn btn-lime nav-btn-desktop">
           <span>Get the app</span>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
 
-        <button class="nav-mobile-toggle" id="mobile-nav-toggle" aria-label="Open navigation menu">
+        <button class="nav-mobile-toggle" id="mobile-nav-toggle" aria-label="Open navigation menu" aria-expanded="false">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
       </div>
@@ -116,13 +116,50 @@
   </header>
 
   <!-- Mobile Fullscreen Menu -->
-  <div class="mobile-nav-overlay" id="mobile-nav-menu" style="display:none;">
-    <a href="#features" class="mobile-nav-link">Features</a>
-    <a href="#how-it-works" class="mobile-nav-link">How It Works</a>
-    <a href="#leaderboard" class="mobile-nav-link">Leaderboard</a>
-    <a href="#organizers" class="mobile-nav-link">For Organizers</a>
-    <a href="#faq" class="mobile-nav-link">FAQ</a>
-    <a href="#download" class="btn btn-lime btn-lg" style="margin-top:24px;">Get the app 🍋</a>
+  <div class="mobile-nav-overlay" id="mobile-nav-menu" aria-hidden="true">
+    <div class="mobile-nav-container">
+      <div class="mobile-nav-header">
+        <a href="#hero" class="nav-brand mobile-brand" title="Zest - Home">
+          <div class="nav-logo-box">
+            <img src="assets/brand/logo-mark-small.svg" alt="Zest Mark" width="40" height="40" />
+          </div>
+          <span class="nav-wordmark">zest</span>
+        </a>
+        <button class="mobile-nav-close" id="mobile-nav-close" aria-label="Close navigation menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <nav class="mobile-nav-body" aria-label="Mobile Navigation Links">
+        <a href="#features" class="mobile-nav-link">
+          <span>Features</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+        <a href="#how-it-works" class="mobile-nav-link">
+          <span>How It Works</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+        <a href="#leaderboard" class="mobile-nav-link">
+          <span>Leaderboard</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+        <a href="#organizers" class="mobile-nav-link">
+          <span>For Organizers</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+        <a href="#faq" class="mobile-nav-link">
+          <span>FAQ</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+      </nav>
+
+      <div class="mobile-nav-footer">
+        <a href="https://github.com/mayankbohara0-dev/Event-Management-Collage/releases/latest/download/app-release.apk" class="btn btn-lime btn-lg mobile-cta-btn">
+          <span>Download Android APK 🍋</span>
+        </a>
+        <p class="mobile-nav-note">Version 2.0.0 • Free for college students</p>
+      </div>
+    </div>
   </div>
 
   <main id="main-content">
@@ -230,9 +267,9 @@
                   <div style="font-size:16px; font-weight:800;">Citrus Hack 2026</div>
                 </div>
                 <div style="padding:12px;">
-                  <div style="display:flex; justify-content:space-between; font-size:11px; color:#9B9DA8; margin-bottom:10px;">
-                    <span>📍 Auditorium Hall A</span>
-                    <span>⏳ 14 Seats left</span>
+                  <div style="display:flex; justify-content:space-between; align-items:center; font-size:10.5px; color:#9B9DA8; margin-bottom:10px; gap:6px;">
+                    <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📍 Audi Hall A</span>
+                    <span style="white-space:nowrap; font-weight:700; color:#B8FF1A;">⏳ 14 Seats left</span>
                   </div>
                   <div style="background:#B8FF1A; color:#141416; text-align:center; padding:8px; border-radius:99px; font-size:12px; font-weight:800;">Claim Pass 🎟️</div>
                 </div>

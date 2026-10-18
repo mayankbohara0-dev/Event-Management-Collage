@@ -14,6 +14,8 @@ html {
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 body {
@@ -22,8 +24,10 @@ body {
   background-color: var(--color-offwhite);
   line-height: 1.5;
   overflow-x: hidden;
+  width: 100%;
   position: relative;
   min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Subtle Film Grain Noise Overlay (4% opacity) */

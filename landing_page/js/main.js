@@ -58,23 +58,51 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ── 2. Mobile Nav Fullscreen Toggle ──────────────────────────────────────
   const mobileNavToggle = document.getElementById("mobile-nav-toggle");
+  const mobileNavClose = document.getElementById("mobile-nav-close");
   const mobileNavMenu = document.getElementById("mobile-nav-menu");
   const mobileNavLinks = document.querySelectorAll(".mobile-nav-link");
 
-  if (mobileNavToggle && mobileNavMenu) {
-    mobileNavToggle.addEventListener("click", () => {
-      const isOpen = mobileNavMenu.classList.toggle("open");
-      mobileNavToggle.setAttribute("aria-expanded", isOpen);
-      document.body.style.overflow = isOpen ? "hidden" : "";
-    });
+  function openMobileNav() {
+    if (!mobileNavMenu) return;
+    mobileNavMenu.classList.add("open");
+    mobileNavMenu.setAttribute("aria-hidden", "false");
+    if (mobileNavToggle) mobileNavToggle.setAttribute("aria-expanded", "true");
+    document.body.style.overflow = "hidden";
+  }
 
-    mobileNavLinks.forEach((link) => {
-      link.addEventListener("click", () => {
-        mobileNavMenu.classList.remove("open");
-        document.body.style.overflow = "";
-      });
+  function closeMobileNav() {
+    if (!mobileNavMenu) return;
+    mobileNavMenu.classList.remove("open");
+    mobileNavMenu.setAttribute("aria-hidden", "true");
+    if (mobileNavToggle) mobileNavToggle.setAttribute("aria-expanded", "false");
+    document.body.style.overflow = "";
+  }
+
+  if (mobileNavToggle) {
+    mobileNavToggle.addEventListener("click", () => {
+      const isOpen = mobileNavMenu && mobileNavMenu.classList.contains("open");
+      if (isOpen) {
+        closeMobileNav();
+      } else {
+        openMobileNav();
+      }
     });
   }
+
+  if (mobileNavClose) {
+    mobileNavClose.addEventListener("click", closeMobileNav);
+  }
+
+  mobileNavLinks.forEach((link) => {
+    link.addEventListener("click", closeMobileNav);
+  });
+
+  // Close on Escape
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && mobileNavMenu && mobileNavMenu.classList.contains("open")) {
+      closeMobileNav();
+    }
+  });
 
   // ── 3. FAQ Accordion ─────────────────────────────────────────────────────
   const faqItems = document.querySelectorAll(".faq-item");
