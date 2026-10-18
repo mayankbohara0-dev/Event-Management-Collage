@@ -1,8 +1,77 @@
 -- ==============================================================================
--- 🍋 Zest Migration 10: Performance Indexes & Seat Limit Concurrency Guard
+-- 🍋 Zest Migration 10: Performance Indexes, Feedback/Notification Tables & Seat Limits
+-- Self-healing: Creates any missing tables/columns before adding indexes & triggers
 -- ==============================================================================
 
--- 1. High Performance Indexes
+-- ── 0. Ensure Required Columns on Profiles ───────────────────────────────────
+ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+ALTER TABLE admin_profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+
+ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS fcm_token TEXT;
+ALTER TABLE admin_profiles ADD COLUMN IF NOT EXISTS fcm_token TEXT;
+
+ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS points INTEGER DEFAULT 60;
+
+-- ── 1. Ensure Notifications Table Exists ──────────────────────────────────────
+CREATE TABLE IF NOT EXISTS notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    type TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT false,
+    link_id UUID,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'notifications' AND policyname = 'Users can view their own notifications') THEN
+        CREATE POLICY "Users can view their own notifications" ON notifications FOR SELECT USING (auth.uid() = user_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'notifications' AND policyname = 'Users can update their own notifications') THEN
+        CREATE POLICY "Users can update their own notifications" ON notifications FOR UPDATE USING (auth.uid() = user_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'notifications' AND policyname = 'Admins can view all notifications') THEN
+        CREATE POLICY "Admins can view all notifications" ON notifications FOR SELECT USING (EXISTS (SELECT 1 FROM admin_profiles WHERE admin_profiles.id = auth.uid()));
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'notifications' AND policyname = 'Admins can insert notifications') THEN
+        CREATE POLICY "Admins can insert notifications" ON notifications FOR INSERT WITH CHECK (EXISTS (SELECT 1 FROM admin_profiles WHERE admin_profiles.id = auth.uid()));
+    END IF;
+END $$;
+
+-- ── 2. Ensure Event Feedback Table Exists ─────────────────────────────────────
+CREATE TABLE IF NOT EXISTS event_feedback (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    student_id UUID NOT NULL REFERENCES student_profiles(id) ON DELETE CASCADE,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    review TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE (event_id, student_id)
+);
+
+ALTER TABLE event_feedback ENABLE ROW LEVEL SECURITY;
+
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'event_feedback' AND policyname = 'Students can insert their own feedback') THEN
+        CREATE POLICY "Students can insert their own feedback" ON event_feedback FOR INSERT WITH CHECK (auth.uid() = student_id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'event_feedback' AND policyname = 'Anyone can view feedback') THEN
+        CREATE POLICY "Anyone can view feedback" ON event_feedback FOR SELECT USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'event_feedback' AND policyname = 'Admins can view all feedback') THEN
+        CREATE POLICY "Admins can view all feedback" ON event_feedback FOR SELECT USING (EXISTS (SELECT 1 FROM admin_profiles WHERE admin_profiles.id = auth.uid()));
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'event_feedback' AND policyname = 'Admins can delete feedback') THEN
+        CREATE POLICY "Admins can delete feedback" ON event_feedback FOR DELETE USING (EXISTS (SELECT 1 FROM admin_profiles WHERE admin_profiles.id = auth.uid()));
+    END IF;
+END $$;
+
+-- ── 3. High Performance Indexes ───────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_registrations_event_id ON registrations(event_id);
 CREATE INDEX IF NOT EXISTS idx_registrations_student_id ON registrations(student_id);
 CREATE INDEX IF NOT EXISTS idx_registrations_event_status ON registrations(event_id, status);
@@ -19,7 +88,7 @@ CREATE INDEX IF NOT EXISTS idx_attendance_event_student ON attendance(event_id, 
 CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON notifications(user_id, is_read);
 CREATE INDEX IF NOT EXISTS idx_event_feedback_event_id ON event_feedback(event_id);
 
--- 2. Concurrency-Safe Seat Limit Enforcement Trigger
+-- ── 4. Concurrency-Safe Seat Limit Enforcement Trigger ────────────────────────
 -- Prevents overbooking race conditions when multiple students register simultaneously
 CREATE OR REPLACE FUNCTION check_event_seat_limit()
 RETURNS TRIGGER AS $$
@@ -66,7 +135,7 @@ BEFORE INSERT ON registrations
 FOR EACH ROW
 EXECUTE FUNCTION check_event_seat_limit();
 
--- 3. Zest Helper View: Fast Event Availability
+-- ── 5. Zest Helper View: Fast Event Availability ──────────────────────────────
 CREATE OR REPLACE VIEW event_availability_view AS
 SELECT 
     e.id AS event_id,
