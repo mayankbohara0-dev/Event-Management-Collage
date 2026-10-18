@@ -119,78 +119,8 @@
     });
   });
 
-  // ── 3. Book a Demo Modal Logic ───────────────────────────────────────────
-  const modal = document.getElementById("demo-modal");
-  const openButtons = document.querySelectorAll("[data-open-demo]");
-  const closeButtons = document.querySelectorAll("[data-close-demo]");
 
-  if (modal) {
-    let lastActiveElement = null;
-
-    function openModal() {
-      lastActiveElement = document.activeElement;
-      modal.classList.add("open");
-      document.body.style.overflow = "hidden";
-      const firstInput = modal.querySelector("input");
-      if (firstInput) setTimeout(() => firstInput.focus(), 100);
-    }
-
-    function closeModal() {
-      modal.classList.remove("open");
-      document.body.style.overflow = "";
-      if (lastActiveElement) lastActiveElement.focus();
-    }
-
-    openButtons.forEach((btn) => btn.addEventListener("click", openModal));
-    closeButtons.forEach((btn) => btn.addEventListener("click", closeModal));
-
-    // Close on backdrop click
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) closeModal();
-    });
-
-    // Close on Escape key + Trap Tab Focus
-    window.addEventListener("keydown", (e) => {
-      if (!modal.classList.contains("open")) return;
-      if (e.key === "Escape") {
-        closeModal();
-      } else if (e.key === "Tab") {
-        const focusables = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-        if (focusables.length === 0) return;
-        const first = focusables[0];
-        const last = focusables[focusables.length - 1];
-        if (e.shiftKey && document.activeElement === first) {
-          last.focus();
-          e.preventDefault();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          first.focus();
-          e.preventDefault();
-        }
-      }
-    });
-
-    const demoForm = document.getElementById("demo-form");
-    if (demoForm) {
-      demoForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const submitBtn = demoForm.querySelector("button[type='submit']");
-        if (submitBtn) {
-          submitBtn.textContent = "Demo Request Sent! 🍋";
-          submitBtn.disabled = true;
-        }
-        setTimeout(() => {
-          closeModal();
-          if (submitBtn) {
-            submitBtn.textContent = "Submit Request";
-            submitBtn.disabled = false;
-          }
-          demoForm.reset();
-        }, 1500);
-      });
-    }
-  }
-
-  // ── 4. Copy-to-Clipboard Share Button ────────────────────────────────────
+  // ── 3. Copy-to-Clipboard Share Button ────────────────────────────────────
   const copyButtons = document.querySelectorAll("[data-copy-link]");
   copyButtons.forEach((btn) => {
     btn.addEventListener("click", async () => {
