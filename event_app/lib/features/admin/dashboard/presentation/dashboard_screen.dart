@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
@@ -34,9 +33,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       _errorMessage = null;
     });
     try {
-      final now = DateTime.now().toUtc();
-      final todayMidnight = DateTime.utc(now.year, now.month, now.day);
-      final weekAgo = todayMidnight.subtract(const Duration(days: 6));
 
       final results = await Future.wait([
         // 0 — total students

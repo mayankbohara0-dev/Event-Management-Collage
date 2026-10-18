@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../core/design_system.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../../../core/widgets/zest_button.dart';
 
 class FeedbackDialog extends StatefulWidget {
   final String eventId;
@@ -28,7 +30,10 @@ class _FeedbackDialogState extends State<FeedbackDialog> {
   Future<void> _submitFeedback() async {
     if (_rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a rating!'), backgroundColor: AppColors.error),
+        const SnackBar(
+          content: Text('Please select a star rating first! ⭐'),
+          backgroundColor: AppColors.error,
+        ),
       );
       return;
     }
@@ -48,13 +53,19 @@ class _FeedbackDialogState extends State<FeedbackDialog> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Thank you for your feedback!'), backgroundColor: AppColors.green),
+          const SnackBar(
+            content: Text('Thanks for your review! +10 Zest Points earned 🍋'),
+            backgroundColor: AppColors.lime,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to submit feedback (you may have already reviewed this event)'), backgroundColor: AppColors.error),
+          const SnackBar(
+            content: Text('You have already submitted feedback for this event.'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     } finally {
@@ -73,80 +84,88 @@ class _FeedbackDialogState extends State<FeedbackDialog> {
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
         decoration: const BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          color: AppColors.ink,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl2)),
+          border: Border(
+            top: BorderSide(color: AppColors.borderDark, width: 1.5),
+            left: BorderSide(color: AppColors.borderDark, width: 1.5),
+            right: BorderSide(color: AppColors.borderDark, width: 1.5),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.grey300, borderRadius: BorderRadius.circular(2))),
+            Container(
+              width: 44,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.borderDark,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Rate the Experience 🍋',
+              style: AppTextStyles.title20.copyWith(color: AppColors.paper),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'How was the event? Your review helps future organizers!',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.body14.copyWith(color: AppColors.grey400),
+            ),
             const SizedBox(height: 24),
-            Text(
-              'How was the event?',
-              style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.black),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Tap a star to rate it.',
-              style: GoogleFonts.inter(fontSize: 14, color: AppColors.grey400),
-            ),
-            const SizedBox(height: 32),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(5, (index) {
+                final isSelected = _rating > index;
                 return GestureDetector(
                   onTap: () => setState(() => _rating = index + 1),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
                     child: AnimatedScale(
-                      scale: _rating > index ? 1.1 : 1.0,
+                      scale: isSelected ? 1.15 : 1.0,
                       duration: const Duration(milliseconds: 150),
                       child: Icon(
-                        _rating > index ? Icons.star_rounded : Icons.star_border_rounded,
-                        color: Colors.amber,
-                        size: 48,
+                        isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
+                        color: isSelected ? AppColors.lime : AppColors.borderDark,
+                        size: 44,
                       ),
                     ),
                   ),
                 );
               }),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
             TextField(
               controller: _reviewController,
               maxLines: 3,
+              style: AppTextStyles.body15.copyWith(color: AppColors.paper),
               decoration: InputDecoration(
-                hintText: 'What did you like? What could be better?',
-                hintStyle: GoogleFonts.inter(color: AppColors.grey400),
+                hintText: 'What did you love? Any ideas for improvement?',
+                hintStyle: AppTextStyles.body14.copyWith(color: AppColors.grey400),
                 filled: true,
-                fillColor: AppColors.grey100,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                fillColor: AppColors.surfaceCard,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  borderSide: const BorderSide(color: AppColors.borderDark),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  borderSide: const BorderSide(color: AppColors.lime, width: 1.5),
+                ),
                 contentPadding: const EdgeInsets.all(16),
               ),
             ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              height: 54,
-              child: ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitFeedback,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.green,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 0,
-                ),
-                child: _isSubmitting
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : Text(
-                        'Submit Feedback',
-                        style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-              ),
+            const SizedBox(height: 24),
+            ZestButton(
+              label: 'Submit Feedback 🚀',
+              variant: ZestButtonVariant.primary,
+              isLoading: _isSubmitting,
+              onPressed: _submitFeedback,
             ),
-            const SizedBox(height: 16),
           ],
         ),
       ),

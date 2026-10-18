@@ -119,7 +119,7 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                       color: AdminColors.gold,
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Text('ADMIN PORTAL',
+                    child: Text('ZEST ADMIN',
                         style: GoogleFonts.inter(
                             color: Colors.black,
                             fontSize: 12,
@@ -127,14 +127,14 @@ class _AdminLoginScreenState extends ConsumerState<AdminLoginScreen> {
                             letterSpacing: 1.5)),
                   ),
                   const SizedBox(height: 12),
-                  Text('Welcome Back, Admin',
+                  Text('Welcome Back, Admin 👨‍💻',
                       style: GoogleFonts.inter(
                           color: Colors.white,
                           fontSize: 26,
                           fontWeight: FontWeight.w900)),
-                  Text('Sign in to manage the portal.',
+                  Text('Sign in to manage Zest events.',
                       style: GoogleFonts.inter(
-                          color: Colors.white.withOpacity(0.7), fontSize: 13)),
+                          color: Colors.white.withValues(alpha: 0.7), fontSize: 13)),
                   const SizedBox(height: 8),
                 ],
               ),

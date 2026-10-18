@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="100%" height="100%">
+  <defs>
+    <linearGradient id="limeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C2FF3A" />
+      <stop offset="100%" stop-color="#7DFF2A" />
+    </linearGradient>
+    <clipPath id="squircleClip">
+      <rect width="1024" height="1024" rx="0" ry="0" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#squircleClip)">
+    <rect width="1024" height="1024" fill="url(#limeGrad)" />
+    <!-- 4-point Sparkle -->
+    <path d="M 250 176 Q 250 227 302 227 Q 250 227 250 278 Q 250 227 198 227 Q 250 227 250 176 Z" fill="#141416" />
+    <!-- Giant Cropped Z bleeding off bottom-right -->
+    <path d="M 208 278 L 1024 278 L 1024 494 L 533 888 L 1024 888 L 1024 1024 L 198 1024 L 198 898 Q 198 888 208 888 L 728 469 L 208 469 Q 198 469 198 459 L 198 288 Q 198 278 208 278 Z" fill="#141416" />
+  </g>
+</svg>

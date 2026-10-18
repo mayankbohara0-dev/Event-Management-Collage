@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 
 import 'core/env.dart';
@@ -25,35 +24,35 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // Green status bar to match design
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: AppColors.white,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Color(0xFFF7F6F3),
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
 
   await Supabase.initialize(
     url: Env.supabaseUrl,
-    anonKey: Env.supabaseAnonKey,
+    publishableKey: Env.supabaseAnonKey,
   );
 
-  runApp(const ProviderScope(child: EventApp()));
+  runApp(const ProviderScope(child: ZestApp()));
 }
 
-class EventApp extends ConsumerWidget {
-  const EventApp({super.key});
+class ZestApp extends ConsumerWidget {
+  const ZestApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
-      title: 'Event Collage',
+      title: 'Zest',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.studentTheme,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
       routerConfig: router,
     );
   }

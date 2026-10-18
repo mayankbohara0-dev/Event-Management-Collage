@@ -1,234 +1,1007 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Event Collage – Your Campus Event Hub</title>
-  <meta name="description" content="Event Collage is a smart college event management app. Discover events, RSVP, scan QR codes, and earn attendance points. Download the Android app now." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <title>Zest — Add some zest to your campus life.</title>
+  <meta name="description" content="Zest is the bold, fast college event app. Discover fests, hackathons, and club workshops. Register in 1-tap, scan with offline QR passes, and earn verified certificates." />
+  <meta name="theme-color" content="#B8FF1A" />
+
+  <!-- Self-Hosted Offline Fonts -->
+  <link rel="preload" href="fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="fonts/inter.woff2" as="font" type="font/woff2" crossorigin />
+
+  <!-- Favicon Set -->
+  <link rel="icon" type="image/svg+xml" href="assets/brand/logo-mark-small.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32.png" />
+  <link rel="apple-touch-icon" href="assets/brand/apple-touch-icon-180.png" />
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Open Graph / Twitter Meta -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Zest — Add some zest to your campus life." />
+  <meta property="og:description" content="Discover campus events, register in 1-tap, scan QR tickets, and earn rewards." />
+  <meta property="og:image" content="assets/brand/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Zest — Add some zest to your campus life." />
+  <meta name="twitter:description" content="The campus event platform built for zero FOMO." />
+  <meta name="twitter:image" content="assets/brand/og-image.png" />
+
+  <!-- Modular CSS Architecture -->
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+  <link rel="stylesheet" href="css/sections.css" />
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "MobileApplication",
+    "name": "Zest",
+    "operatingSystem": "Android, iOS",
+    "applicationCategory": "College Event Platform",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "description": "Add some zest to your campus life. Discover events, register in one tap, and earn verified certificates."
+  }
+  </script>
 </head>
 <body>
 
-  <!-- NAV -->
-  <nav class="navbar">
-    <div class="nav-inner">
-      <div class="nav-logo">
-        <img src="logo.png" alt="Event Collage Logo" class="nav-logo-img" />
-        <span class="nav-logo-text">Event Collage</span>
-      </div>
-      <div class="nav-links">
-        <a href="#features">Features</a>
-        <a href="#how-it-works">How it Works</a>
-        <a href="#download" class="btn-nav">Download</a>
-      </div>
-    </div>
-  </nav>
+  <!-- Accessible Skip Link -->
+  <a href="#hero" class="skip-link">Skip to main content</a>
 
-  <!-- HERO -->
-  <section class="hero" id="home">
-    <div class="hero-bg-shapes">
-      <div class="shape shape-1"></div>
-      <div class="shape shape-2"></div>
-      <div class="shape shape-3"></div>
+  <!-- ── 0. LOGO INTRO SCREEN (<1.2s ANIMATION) ───────────────────────────── -->
+  <div class="intro-screen" id="intro-screen" aria-hidden="true">
+    <div class="intro-icon-card" id="intro-icon-card">
+      <svg viewBox="0 0 1024 1024" width="100%" height="100%" class="intro-svg">
+        <defs>
+          <linearGradient id="introLimeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#C2FF3A" />
+            <stop offset="100%" stop-color="#7DFF2A" />
+          </linearGradient>
+        </defs>
+        <rect width="1024" height="1024" rx="220" ry="220" fill="url(#introLimeGrad)" />
+        <!-- Sparkle -->
+        <path class="intro-sparkle-path" d="M 250 176 Q 250 227 302 227 Q 250 227 250 278 Q 250 227 198 227 Q 250 227 250 176 Z" fill="#141416" />
+        <!-- Giant Cropped Z -->
+        <path class="intro-z-path" d="M 208 278 L 1024 278 L 1024 494 L 533 888 L 1024 888 L 1024 1024 L 198 1024 L 198 898 Q 198 888 208 888 L 728 469 L 208 469 Q 198 469 198 459 L 198 288 Q 198 278 208 278 Z" fill="#141416" />
+      </svg>
     </div>
-    <div class="hero-content">
-      <div class="hero-text">
-        <div class="hero-badge">🎓 Made for College Students</div>
-        <h1 class="hero-title">Your Campus.<br /><span class="highlight">Your Events.</span></h1>
-        <p class="hero-subtitle">
-          Discover, register, and attend college events all in one place. Scan QR codes, earn attendance points, and never miss what's happening on campus.
-        </p>
-        <div class="hero-actions">
-          <a href="#download" class="btn-primary">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3v13M7 11l5 5 5-5M3 20h18"/></svg>
-            Download APK
-          </a>
-          <a href="#features" class="btn-secondary">
-            Explore Features
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </a>
+  </div>
+
+  <!-- ── 1. FLOATING PILL NAVBAR ───────────────────────────────────────────── -->
+  <header class="navbar-wrap" id="navbar-wrap">
+    <nav class="navbar" id="navbar" aria-label="Main Navigation">
+      <a href="#hero" class="nav-brand" title="Zest - Home">
+        <div class="nav-logo-box" id="nav-target-logo">
+          <img src="assets/brand/logo-mark-small.svg" alt="Zest Mark" width="40" height="40" />
         </div>
-        <div class="hero-stats">
-          <div class="stat">
-            <span class="stat-num">QR</span>
-            <span class="stat-label">Check-in</span>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat">
-            <span class="stat-num">Live</span>
-            <span class="stat-label">Event Feed</span>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat">
-            <span class="stat-num">Admin</span>
-            <span class="stat-label">Dashboard</span>
-          </div>
-        </div>
+        <span class="nav-wordmark">zest</span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#features" class="nav-link">Features</a></li>
+        <li><a href="#how-it-works" class="nav-link">How It Works</a></li>
+        <li><a href="#leaderboard" class="nav-link">Leaderboard</a></li>
+        <li><a href="#organizers" class="nav-link">For Organizers</a></li>
+        <li><a href="#faq" class="nav-link">FAQ</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <button class="btn-theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" title="Toggle theme">
+          <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+          </svg>
+          <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+
+        <a href="#download" class="btn btn-lime">
+          <span>Get the app</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+
+        <button class="nav-mobile-toggle" id="mobile-nav-toggle" aria-label="Open navigation menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
       </div>
-      <div class="hero-visual">
-        <div class="phone-mockup">
-          <div class="phone-screen">
-            <div class="app-ui">
-              <div class="app-header">
-                <div class="app-header-text">
-                  <div class="app-greeting">Good evening 👋</div>
-                  <div class="app-name">Arjun</div>
+    </nav>
+  </header>
+
+  <!-- Mobile Fullscreen Menu -->
+  <div class="mobile-nav-overlay" id="mobile-nav-menu" style="display:none;">
+    <a href="#features" class="mobile-nav-link">Features</a>
+    <a href="#how-it-works" class="mobile-nav-link">How It Works</a>
+    <a href="#leaderboard" class="mobile-nav-link">Leaderboard</a>
+    <a href="#organizers" class="mobile-nav-link">For Organizers</a>
+    <a href="#faq" class="mobile-nav-link">FAQ</a>
+    <a href="#download" class="btn btn-lime btn-lg" style="margin-top:24px;">Get the app 🍋</a>
+  </div>
+
+  <main id="main-content">
+
+    <!-- ── 2. HERO SECTION (LIME CANVAS) ───────────────────────────────────── -->
+    <section class="section-hero" id="hero">
+      <!-- Background Motifs: Giant Cropped Z + Sparkle -->
+      <div class="hero-giant-z-wrap" aria-hidden="true">
+        <svg viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet">
+          <path d="M 208 278 L 1024 278 L 1024 494 L 533 888 L 1024 888 L 1024 1024 L 198 1024 L 198 898 Q 198 888 208 888 L 728 469 L 208 469 Q 198 469 198 459 L 198 288 Q 198 278 208 278 Z" fill="#141416"/>
+        </svg>
+      </div>
+      <div class="hero-twinkle-sparkle zest-sparkle" aria-hidden="true">
+        <svg viewBox="0 0 1024 1024">
+          <path d="M 250 176 Q 250 227 302 227 Q 250 227 250 278 Q 250 227 198 227 Q 250 227 250 176 Z" fill="#141416"/>
+        </svg>
+      </div>
+
+      <div class="container hero-container">
+        <div class="hero-header">
+          <div class="hero-badge-pill">
+            <span class="hero-badge-dot"></span>
+            <span>Fresh events, squeezed daily 🍋</span>
+          </div>
+
+          <h1 class="hero-title">
+            Your campus.<br />
+            <span class="marker-underline">Zero FOMO.</span>
+          </h1>
+
+          <p class="hero-subtitle">
+            Events, but make it fun. Discover college fests, 1-tap register, scan your dynamic QR pass at the door, and flex verified certificates.
+          </p>
+
+          <div class="hero-cta-group">
+            <a href="#download" class="btn btn-ink btn-lg" data-download-os="android">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.551 0 .9996.4482.9996.9993.0001.5511-.4486.9997-.9996.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9997.4482.9997.9993 0 .5511-.4486.9997-.9997.9997m11.4045-6.02l1.996-3.4572c.1147-.1986.0465-.4529-.1521-.5676-.1986-.1147-.4529-.0465-.5676.1521l-2.0223 3.503C15.5898 8.423 13.8488 8.0822 12 8.0822s-3.5898.3408-5.1355.8695L4.8422 5.4487c-.1147-.1986-.369-.2668-.5676-.1521-.1986.1147-.2668.369-.1521.5676l1.996 3.4572C2.6889 11.2867.3432 14.8622 0 19.1415h24c-.3432-4.2793-2.6889-7.8548-6.1185-9.8201"/></svg>
+              <span>Download for Android</span>
+            </a>
+            <a href="#waitlist" class="btn btn-ghost btn-lg">
+              <span>Join the Waitlist</span>
+            </a>
+          </div>
+
+          <div class="hero-social-proof">
+            <div class="avatar-stack">
+              <div class="avatar-stack-item">⚡</div>
+              <div class="avatar-stack-item">🍋</div>
+              <div class="avatar-stack-item">🎟️</div>
+              <div class="avatar-stack-item">+1k</div>
+            </div>
+            <span>Joined by 1,200+ campus early birds (Alpha Test)</span>
+          </div>
+        </div>
+
+        <!-- Overlapping Phone Mockup Stage -->
+        <div class="hero-phones-stage">
+          <!-- Floating Stickers -->
+          <div class="sticker sticker-coral hero-sticker-1 float-a">
+            <span>+50 Zest Pts 🍋</span>
+          </div>
+          <div class="sticker sticker-ink hero-sticker-2 float-b">
+            <span>You're in! 🎟️</span>
+          </div>
+          <div class="sticker sticker-lavender hero-sticker-3 float-c">
+            <span>Campus Legend 🏆</span>
+          </div>
+          <div class="sticker sticker-mustard hero-sticker-4 float-a">
+            <span>Verified Pass ⚡</span>
+          </div>
+
+          <!-- Secondary Phone (Left) -->
+          <div class="phone-mockup phone-secondary">
+            <div class="phone-screen">
+              <div class="phone-notch"></div>
+              <div style="font-size:12px; font-weight:800; color:#B8FF1A; margin-bottom:4px;">LEADERBOARD</div>
+              <div style="font-size:16px; font-weight:800; margin-bottom:12px;">Weekly Legends 🔥</div>
+              <div style="background:#1F2026; border-radius:12px; padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:700;">#1 Alex R.</span>
+                <span style="color:#B8FF1A; font-weight:800;">450 pts</span>
+              </div>
+              <div style="background:#1F2026; border-radius:12px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:700;">#2 Priya S.</span>
+                <span style="color:#F9B233; font-weight:800;">380 pts</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Primary Hero Phone (Center) -->
+          <div class="phone-mockup phone-primary">
+            <div class="phone-screen">
+              <div class="phone-notch"></div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <div>
+                  <div style="font-size:11px; color:#9B9DA8; font-weight:700;">CAMPUS FEED</div>
+                  <div style="font-size:18px; font-weight:800;">Explore Events</div>
                 </div>
-                <div class="app-avatar">A</div>
+                <span style="background:rgba(184,255,26,0.15); color:#B8FF1A; font-weight:800; padding:4px 10px; border-radius:99px; font-size:12px;">320 pts</span>
               </div>
-              <div class="app-section-title">Upcoming Events</div>
-              <div class="event-card-ui green">
-                <div class="event-ui-tag">Today</div>
-                <div class="event-ui-name">Tech Fest 2026</div>
-                <div class="event-ui-info">📍 Main Auditorium · 3:00 PM</div>
-                <div class="event-ui-btn">RSVP Now</div>
+
+              <!-- Event Card Preview -->
+              <div style="background:#1F2026; border:1px solid #2F3038; border-radius:20px; overflow:hidden; margin-bottom:14px;">
+                <div style="height:110px; background:linear-gradient(135deg, #FF6B00, #F0577A); padding:12px; display:flex; flex-direction:column; justify-content:space-between;">
+                  <span style="background:rgba(0,0,0,0.5); align-self:flex-start; padding:3px 8px; border-radius:99px; font-size:10px; font-weight:800;">TECH FEST</span>
+                  <div style="font-size:16px; font-weight:800;">Citrus Hack 2026</div>
+                </div>
+                <div style="padding:12px;">
+                  <div style="display:flex; justify-content:space-between; font-size:11px; color:#9B9DA8; margin-bottom:10px;">
+                    <span>📍 Auditorium Hall A</span>
+                    <span>⏳ 14 Seats left</span>
+                  </div>
+                  <div style="background:#B8FF1A; color:#141416; text-align:center; padding:8px; border-radius:99px; font-size:12px; font-weight:800;">Claim Pass 🎟️</div>
+                </div>
               </div>
-              <div class="event-card-ui gold">
-                <div class="event-ui-tag">Tomorrow</div>
-                <div class="event-ui-name">Cultural Night</div>
-                <div class="event-ui-info">📍 Open Ground · 6:00 PM</div>
-                <div class="event-ui-btn">Register</div>
+
+              <!-- Quick QR Pass Widget -->
+              <div style="background:#1F2026; border-radius:16px; padding:12px; display:flex; align-items:center; gap:12px; border:1px solid #2F3038;">
+                <div style="width:40px; height:40px; background:#fff; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#000; font-size:18px;">🏁</div>
+                <div>
+                  <div style="font-size:13px; font-weight:800;">RoboWars Pass Ready</div>
+                  <div style="font-size:11px; color:#9B9DA8;">Tap for live QR scan</div>
+                </div>
               </div>
-              <div class="app-points-bar">
-                <span>🏆 Attendance Points</span>
-                <span class="points-val">240 pts</span>
+            </div>
+          </div>
+
+          <!-- Tertiary Phone (Right) -->
+          <div class="phone-mockup phone-tertiary">
+            <div class="phone-screen">
+              <div class="phone-notch"></div>
+              <div style="font-size:12px; font-weight:800; color:#B8FF1A; margin-bottom:4px;">VERIFIED PASS</div>
+              <div style="font-size:16px; font-weight:800; margin-bottom:12px;">QR Check-In</div>
+              <div style="background:#fff; border-radius:16px; padding:20px; text-align:center; color:#000;">
+                <div style="font-weight:800; font-size:12px; margin-bottom:8px;">CITRUS PASS #4092</div>
+                <div style="width:120px; height:120px; background:#000; margin:0 auto 8px auto; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#B8FF1A; font-size:24px;">QR</div>
+                <div style="font-size:10px; color:#666;">Scan at venue gate</div>
               </div>
             </div>
           </div>
         </div>
-        <div class="phone-glow"></div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- FEATURES -->
-  <section class="features" id="features">
-    <div class="container">
-      <div class="section-header">
-        <div class="section-tag">✨ Everything You Need</div>
-        <h2 class="section-title">Built for Students & Organizers</h2>
-        <p class="section-sub">Two powerful roles. One seamless platform.</p>
-      </div>
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon" style="background: #E6F5ED;">🎟️</div>
-          <h3>Discover Events</h3>
-          <p>Browse all campus events in a beautiful feed. Filter by category, date, or department and never miss anything.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon" style="background: #FFF8E0;">📋</div>
-          <h3>Easy Registration</h3>
-          <p>Fill custom event forms, submit your details, and get your unique QR code ticket — all in under a minute.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon" style="background: #E6F5ED;">📱</div>
-          <h3>QR Code Check-in</h3>
-          <p>Show your QR at the door. Admins scan it instantly to verify attendance. No paper, no fuss.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon" style="background: #FFF8E0;">🏆</div>
-          <h3>Attendance Points</h3>
-          <p>Earn points for every event you attend. Track your score and climb the leaderboard.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon" style="background: #E6F5ED;">🔔</div>
-          <h3>Push Notifications</h3>
-          <p>Get notified about new events, registration confirmations, and important announcements instantly.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon" style="background: #FFF8E0;">📊</div>
-          <h3>Admin Dashboard</h3>
-          <p>Organizers get real-time analytics, registration management, and a QR scanner — all in one place.</p>
+    <!-- ── 3. MARQUEE STRIP (BLACK) ─────────────────────────────────────────── -->
+    <section class="section-marquee" aria-label="Event Highlights Marquee">
+      <div class="marquee-row">
+        <div class="marquee-track-left">
+          <!-- Half A -->
+          <div class="marquee-item">FESTS <span class="marquee-sparkle zest-sparkle">✦</span></div>
+          <div class="marquee-item accent-word">HACKATHONS <span class="marquee-sparkle zest-sparkle">✦</span></div>
+          <div class="marquee-item">WORKSHOPS <span class="marquee-sparkle zest-sparkle">✦</span></div>
+          <div class="marquee-item accent-word">CLUBS <span class="marquee-sparkle zest-sparkle">✦</span></div>
+          <div class="marquee-item">CONCERTS <span class="marquee-sparkle zest-sparkle">✦</span></div>
+          <div class="marquee-item accent-word">SPORTS <span class="marquee-sparkle zest-sparkle">✦</span></div>
+          <div class="marquee-item">TECH TALKS <span class="marquee-sparkle zest-sparkle">✦</span></div>
+          <div class="marquee-item accent-word">ESPORTS <span class="marquee-sparkle zest-sparkle">✦</span></div>
+          <div class="marquee-item">ROBOTICS <span class="marquee-sparkle zest-sparkle">✦</span></div>
+          <div class="marquee-item accent-word">CULTURE <span class="marquee-sparkle zest-sparkle">✦</span></div>
+          <!-- Half B (Exact copy for 100% seamless -50% loop) -->
+          <div class="marquee-item">FESTS <span class="marquee-sparkle zest-sparkle">✦</span></div>
+          <div class="marquee-item accent-word">HACKATHONS <span class="marquee-sparkle zest-sparkle">✦</span></div>
+          <div class="marquee-item">WORKSHOPS <span class="marquee-sparkle zest-sparkle">✦</span></div>
+          <div class="marquee-item accent-word">CLUBS <span class="marquee-sparkle zest-sparkle">✦</span></div>
+          <div class="marquee-item">CONCERTS <span class="marquee-sparkle zest-sparkle">✦</span></div>
+          <div class="marquee-item accent-word">SPORTS <span class="marquee-sparkle zest-sparkle">✦</span></div>
+          <div class="marquee-item">TECH TALKS <span class="marquee-sparkle zest-sparkle">✦</span></div>
+          <div class="marquee-item accent-word">ESPORTS <span class="marquee-sparkle zest-sparkle">✦</span></div>
+          <div class="marquee-item">ROBOTICS <span class="marquee-sparkle zest-sparkle">✦</span></div>
+          <div class="marquee-item accent-word">CULTURE <span class="marquee-sparkle zest-sparkle">✦</span></div>
         </div>
       </div>
-    </div>
-  </section>
+      <div class="marquee-row">
+        <div class="marquee-track-right">
+          <!-- Half A -->
+          <div class="marquee-item" style="color:#71737E;">ACM STUDENT CHAPTER <span class="marquee-sparkle">✦</span></div>
+          <div class="marquee-item" style="color:#B8FF1A;">IEEE ROBOTICS <span class="marquee-sparkle">✦</span></div>
+          <div class="marquee-item" style="color:#71737E;">DESIGN SPRINT CLUB <span class="marquee-sparkle">✦</span></div>
+          <div class="marquee-item" style="color:#B8FF1A;">DRAMATICS SOCIETY <span class="marquee-sparkle">✦</span></div>
+          <div class="marquee-item" style="color:#71737E;">ENTREPRENEURSHIP CELL <span class="marquee-sparkle">✦</span></div>
+          <div class="marquee-item" style="color:#B8FF1A;">MUSIC COLLECTIVE <span class="marquee-sparkle">✦</span></div>
+          <div class="marquee-item" style="color:#71737E;">PHOTOGRAPHY GUILD <span class="marquee-sparkle">✦</span></div>
+          <div class="marquee-item" style="color:#B8FF1A;">GAMING ARENA <span class="marquee-sparkle">✦</span></div>
+          <!-- Half B (Exact copy for 100% seamless -50% loop) -->
+          <div class="marquee-item" style="color:#71737E;">ACM STUDENT CHAPTER <span class="marquee-sparkle">✦</span></div>
+          <div class="marquee-item" style="color:#B8FF1A;">IEEE ROBOTICS <span class="marquee-sparkle">✦</span></div>
+          <div class="marquee-item" style="color:#71737E;">DESIGN SPRINT CLUB <span class="marquee-sparkle">✦</span></div>
+          <div class="marquee-item" style="color:#B8FF1A;">DRAMATICS SOCIETY <span class="marquee-sparkle">✦</span></div>
+          <div class="marquee-item" style="color:#71737E;">ENTREPRENEURSHIP CELL <span class="marquee-sparkle">✦</span></div>
+          <div class="marquee-item" style="color:#B8FF1A;">MUSIC COLLECTIVE <span class="marquee-sparkle">✦</span></div>
+          <div class="marquee-item" style="color:#71737E;">PHOTOGRAPHY GUILD <span class="marquee-sparkle">✦</span></div>
+          <div class="marquee-item" style="color:#B8FF1A;">GAMING ARENA <span class="marquee-sparkle">✦</span></div>
+        </div>
+      </div>
+    </section>
 
-  <!-- HOW IT WORKS -->
-  <section class="how-it-works" id="how-it-works">
-    <div class="container">
-      <div class="section-header">
-        <div class="section-tag">🚀 Simple Steps</div>
-        <h2 class="section-title">Up & Running in Minutes</h2>
+    <!-- ── 4. WHAT IS ZEST STATEMENT SECTION (SCROLL SCRUB REVEAL) ──────────── -->
+    <section class="section-statement" id="statement">
+      <div class="container statement-box">
+        <div class="statement-tag">
+          <span class="zest-sparkle">✦</span>
+          <span>The Campus Revolution</span>
+        </div>
+        <p class="statement-text" id="statement-text">
+          <span class="statement-word">Zest</span>
+          <span class="statement-word">is</span>
+          <span class="statement-word">your</span>
+          <span class="statement-word lime-lit">all-in-one</span>
+          <span class="statement-word">college</span>
+          <span class="statement-word">event</span>
+          <span class="statement-word">passport.</span>
+          <span class="statement-word">We</span>
+          <span class="statement-word">killed</span>
+          <span class="statement-word">ugly</span>
+          <span class="statement-word">Google</span>
+          <span class="statement-word">Forms,</span>
+          <span class="statement-word">lost</span>
+          <span class="statement-word">paper</span>
+          <span class="statement-word">passes,</span>
+          <span class="statement-word">and</span>
+          <span class="statement-word">boring</span>
+          <span class="statement-word">notice</span>
+          <span class="statement-word">boards</span>
+          <span class="statement-word">—</span>
+          <span class="statement-word">replacing</span>
+          <span class="statement-word">them</span>
+          <span class="statement-word">with</span>
+          <span class="statement-word lime-lit">1-tap</span>
+          <span class="statement-word lime-lit">registration,</span>
+          <span class="statement-word">live</span>
+          <span class="statement-word">QR</span>
+          <span class="statement-word">check-ins,</span>
+          <span class="statement-word">and</span>
+          <span class="statement-word lime-lit">verified</span>
+          <span class="statement-word lime-lit">certificates</span>
+          <span class="statement-word">you</span>
+          <span class="statement-word">can</span>
+          <span class="statement-word">actually</span>
+          <span class="statement-word">flex.</span>
+        </p>
       </div>
-      <div class="steps">
-        <div class="step">
-          <div class="step-num">1</div>
-          <h3>Download & Install</h3>
-          <p>Download the APK and install it on your Android device. Takes under 30 seconds.</p>
-        </div>
-        <div class="step-arrow">→</div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <h3>Create Your Profile</h3>
-          <p>Sign up with your college email. Set up your student profile in seconds.</p>
-        </div>
-        <div class="step-arrow">→</div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <h3>Explore & Register</h3>
-          <p>Browse upcoming events, register for ones you like, and get your QR ticket.</p>
-        </div>
-        <div class="step-arrow">→</div>
-        <div class="step">
-          <div class="step-num">4</div>
-          <h3>Attend & Earn</h3>
-          <p>Show up, scan your QR, and earn attendance points. That's it!</p>
-        </div>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- DOWNLOAD -->
-  <section class="download" id="download">
-    <div class="container">
-      <div class="download-card">
-        <div class="download-left">
-          <img src="logo.png" alt="Event Collage" class="download-logo" />
-          <h2>Ready to Join?</h2>
-          <p>Download Event Collage for Android and start discovering what's happening on your campus today.</p>
-          <a href="https://github.com/mayankbohara0-dev/Event-Management-Collage/releases/download/v1.0.1/College_Events.apk" class="btn-download" id="apk-download-btn">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+    <!-- ── 5. FEATURES BENTO GRID (OFF-WHITE) ──────────────────────────────── -->
+    <section class="section-bento" id="features">
+      <div class="container">
+        <div class="bento-header">
+          <div class="section-eyebrow">
+            <span class="zest-sparkle">✦</span>
+            <span>Engineered for Campus Life</span>
+          </div>
+          <h2 class="section-title">Everything you need to own campus.</h2>
+          <p style="color:var(--color-text-muted); font-size:1.15rem; max-width:580px;">Built by students, for students. Zero bloated menus. Maximum speed and hype.</p>
+        </div>
+
+        <div class="bento-grid">
+          <!-- Card 1: Discover Events (Col 8) -->
+          <div class="bento-card col-8 tilt-card">
+            <div class="card-glow"></div>
             <div>
-              <span class="btn-download-sub">Download for</span>
-              <span class="btn-download-main">Android (.apk)</span>
+              <div class="sticker sticker-lime" style="margin-bottom:16px;">✦ Smart Feed</div>
+              <h3 class="bento-card-title">Discover fresh events, squeezed daily.</h3>
+              <p class="bento-card-desc">Fests, hackathons, sports tournaments, and workshops filterable by tags, department, or free food alerts.</p>
             </div>
-          </a>
-          <div class="download-note">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            Android only · Allow "Install from Unknown Sources" when prompted
+            <div class="bento-preview-box">
+              <div style="display:flex; gap:12px; overflow:hidden;">
+                <div style="background:#fff; border-radius:16px; padding:14px; min-width:200px; box-shadow:0 4px 12px rgba(0,0,0,0.06); border:1px solid #EBE7DF;">
+                  <span style="font-size:10px; background:#C2FF3A; padding:2px 8px; border-radius:99px; font-weight:800;">MUSIC FEST</span>
+                  <div style="font-weight:800; font-size:14px; margin-top:6px;">Spring Waves '26</div>
+                  <div style="font-size:11px; color:#71737E; margin-top:4px;">Main Amphitheater</div>
+                </div>
+                <div style="background:#fff; border-radius:16px; padding:14px; min-width:200px; box-shadow:0 4px 12px rgba(0,0,0,0.06); border:1px solid #EBE7DF;">
+                  <span style="font-size:10px; background:#F0577A; color:#fff; padding:2px 8px; border-radius:99px; font-weight:800;">ESPORTS</span>
+                  <div style="font-weight:800; font-size:14px; margin-top:6px;">Valorant Open Cup</div>
+                  <div style="font-size:11px; color:#71737E; margin-top:4px;">Computer Lab 4</div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="download-right">
-          <div class="install-steps">
-            <h3>📲 How to Install</h3>
-            <ol>
-              <li>Tap the download button above</li>
-              <li>Open the downloaded <strong>.apk</strong> file</li>
-              <li>If prompted, tap <strong>"Settings"</strong> → enable <strong>"Install unknown apps"</strong> for your browser</li>
-              <li>Tap <strong>"Install"</strong> and you're done! 🎉</li>
-            </ol>
+
+          <!-- Card 2: 1-Tap Registration (Col 4) -->
+          <div class="bento-card col-4 tilt-card">
+            <div class="card-glow"></div>
+            <div>
+              <div class="sticker sticker-coral" style="margin-bottom:16px;">⚡ Speed</div>
+              <h3 class="bento-card-title">1-Tap Registration</h3>
+              <p class="bento-card-desc">No repetitive forms. Tap once and your college profile registers you automatically.</p>
+            </div>
+            <div class="bento-preview-box" style="text-align:center;">
+              <button class="btn btn-lime" style="width:100%;">
+                <span>Confirmed Pass 🎟️</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Card 3: Offline QR Passes (Col 4) -->
+          <div class="bento-card col-4 tilt-card">
+            <div class="card-glow"></div>
+            <div>
+              <div class="sticker sticker-mustard" style="margin-bottom:16px;">📶 Offline Ready</div>
+              <h3 class="bento-card-title">Sub-second QR Check-Ins</h3>
+              <p class="bento-card-desc">Bad campus Wi-Fi? No problem. Your pass works completely offline at the gate.</p>
+            </div>
+            <div class="bento-preview-box" style="height:120px; position:relative; display:flex; align-items:center; justify-content:center;">
+              <div class="scanner-laser"></div>
+              <div style="width:72px; height:72px; background:#141416; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#B8FF1A; font-weight:800;">QR</div>
+            </div>
+          </div>
+
+          <!-- Card 4: Zest Points & Gamification (Col 4) -->
+          <div class="bento-card col-4 tilt-card">
+            <div class="card-glow"></div>
+            <div>
+              <div class="sticker sticker-lime" style="margin-bottom:16px;">🏆 Earn</div>
+              <h3 class="bento-card-title">Zest Points & Badges</h3>
+              <p class="bento-card-desc">Show up, check in, climb your college leaderboard, and unlock VIP swag drops.</p>
+            </div>
+            <div class="bento-preview-box">
+              <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:800; margin-bottom:6px;">
+                <span>Campus Legend Rank</span>
+                <span style="color:#10B981;">Level 5</span>
+              </div>
+              <div style="width:100%; height:10px; background:#E5E5E5; border-radius:99px; overflow:hidden;">
+                <div style="width:82%; height:100%; background:var(--color-lime-gradient);"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 5: Verified Certificates (Col 4) -->
+          <div class="bento-card col-4 tilt-card">
+            <div class="card-glow"></div>
+            <div>
+              <div class="sticker sticker-lavender" style="margin-bottom:16px;">📜 Credentials</div>
+              <h3 class="bento-card-title">Auto Certificates</h3>
+              <p class="bento-card-desc">Instant PDF certificates stamped and verified with attendance tracking. Ready for LinkedIn.</p>
+            </div>
+            <div class="bento-preview-box" style="text-align:center; padding:16px;">
+              <div style="font-size:28px;">🎓</div>
+              <div style="font-size:11px; font-weight:700; color:#10B981; margin-top:4px;">VERIFIED ATTENDEE</div>
+            </div>
+          </div>
+
+          <!-- Card 6: Live Organizer Analytics (Col 12) -->
+          <div class="bento-card col-12 tilt-card" style="background:var(--color-ink); color:#fff; border-color:#2F3038;">
+            <div class="card-glow"></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:32px; align-items:center;">
+              <div>
+                <div class="sticker sticker-ink" style="margin-bottom:16px;">📊 For Clubs</div>
+                <h3 class="bento-card-title" style="color:#fff;">Live attendance analytics for organizers.</h3>
+                <p class="bento-card-desc" style="color:#9B9DA8;">Track registrations in real time, prevent gate bottlenecks, download 1-click attendee reports, and automate certificates.</p>
+                <button class="btn btn-lime" data-open-demo>Book a Campus Demo</button>
+              </div>
+              <div style="background:#1D1D22; border:1px solid #2F3038; border-radius:20px; padding:24px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:16px;">
+                  <span style="font-size:12px; color:#9B9DA8;">Live Event Check-Ins</span>
+                  <span style="color:#B8FF1A; font-weight:800; font-size:12px;">● LIVE</span>
+                </div>
+                <div style="font-size:2.4rem; font-family:var(--font-display); font-weight:800; margin-bottom:12px;">384 / 400 <span style="font-size:1rem; color:#9B9DA8;">checked in</span></div>
+                <div style="width:100%; height:12px; background:#2F3038; border-radius:99px; overflow:hidden;">
+                  <div style="width:96%; height:100%; background:var(--color-lime-gradient);"></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- FOOTER -->
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-inner">
-        <div class="footer-brand">
-          <img src="logo.png" alt="Event Collage" class="footer-logo" />
-          <span>Event Collage</span>
+    <!-- ── 6. HOW IT WORKS (BLACK, PINNED SCROLL) ──────────────────────────── -->
+    <section class="section-how" id="how-it-works">
+      <div class="container">
+        <div class="section-eyebrow" style="color:var(--color-lime-1);">
+          <span class="zest-sparkle">✦</span>
+          <span>Simple as 1, 2, 3</span>
         </div>
-        <p class="footer-copy">© 2026 Event Collage. Built for college communities.</p>
+        <h2 class="section-title" style="color:#fff; margin-bottom:clamp(40px, 6vw, 70px);">How Zest Works</h2>
+
+        <div class="how-grid">
+          <!-- Steps Track -->
+          <div class="how-steps-track">
+            <div class="how-step active" data-step="1">
+              <div class="how-step-num">STEP 01</div>
+              <h3 class="how-step-title">Find fresh events.</h3>
+              <p class="how-step-desc">Open the app to see every approved event, workshop, and club tryout across campus in real time. No scattered WhatsApp group spam.</p>
+            </div>
+
+            <div class="how-step" data-step="2">
+              <div class="how-step-num">STEP 02</div>
+              <h3 class="how-step-title">1-Tap RSVP.</h3>
+              <p class="how-step-desc">Claim your pass before seats run out. Your custom pass and offline QR ticket are immediately generated in your wallet.</p>
+            </div>
+
+            <div class="how-step" data-step="3">
+              <div class="how-step-num">STEP 03</div>
+              <h3 class="how-step-title">Show up and earn.</h3>
+              <p class="how-step-desc">Scan at the venue entrance in under 2 seconds. Earn Zest points, increase your weekly streak, and receive verified certificates.</p>
+            </div>
+          </div>
+
+          <!-- Central Phone Mockup Pinned Preview -->
+          <div style="display:flex; justify-content:center;">
+            <div class="phone-mockup" style="max-width:320px; height:540px; border-color:#2F3038; box-shadow:0 30px 80px rgba(0,0,0,0.6);">
+              <div class="phone-screen">
+                <div class="phone-notch"></div>
+                <!-- Screen 1 Preview -->
+                <div class="how-screen-content" data-screen="1" style="display:block;">
+                  <div style="font-size:11px; color:#B8FF1A; font-weight:800; margin-bottom:6px;">01. BROWSE FEED</div>
+                  <div style="font-size:16px; font-weight:800; margin-bottom:12px;">Upcoming On Campus</div>
+                  <div style="background:#1F2026; border-radius:14px; padding:14px; margin-bottom:10px; border:1px solid #2F3038;">
+                    <div style="font-size:13px; font-weight:800;">🎸 Battle of the Bands</div>
+                    <div style="font-size:11px; color:#9B9DA8; margin-top:2px;">Today at 6:00 PM • Open Lawn</div>
+                  </div>
+                  <div style="background:#1F2026; border-radius:14px; padding:14px; border:1px solid #2F3038;">
+                    <div style="font-size:13px; font-weight:800;">🤖 AI Robotics Showcase</div>
+                    <div style="font-size:11px; color:#9B9DA8; margin-top:2px;">Tomorrow • Main Auditorium</div>
+                  </div>
+                </div>
+
+                <!-- Screen 2 Preview -->
+                <div class="how-screen-content" data-screen="2" style="display:none;">
+                  <div style="font-size:11px; color:#B8FF1A; font-weight:800; margin-bottom:6px;">02. INSTANT RSVP</div>
+                  <div style="font-size:16px; font-weight:800; margin-bottom:12px;">Pass Generated</div>
+                  <div style="background:#1F2026; border-radius:16px; padding:20px; text-align:center; border:1px solid #2F3038;">
+                    <div style="font-size:32px; margin-bottom:8px;">🎟️</div>
+                    <div style="font-weight:800; font-size:15px;">You're Registered!</div>
+                    <div style="font-size:11px; color:#9B9DA8; margin-top:4px;">Seat #42 reserved for Citrus Hack</div>
+                  </div>
+                </div>
+
+                <!-- Screen 3 Preview -->
+                <div class="how-screen-content" data-screen="3" style="display:none;">
+                  <div style="font-size:11px; color:#B8FF1A; font-weight:800; margin-bottom:6px;">03. CHECK IN</div>
+                  <div style="font-size:16px; font-weight:800; margin-bottom:12px;">Points Unlocked!</div>
+                  <div style="background:#C2FF3A; color:#141416; border-radius:16px; padding:20px; text-align:center;">
+                    <div style="font-size:32px; margin-bottom:6px;">⚡</div>
+                    <div style="font-weight:800; font-size:16px;">+50 Zest Points</div>
+                    <div style="font-size:12px; font-weight:600; margin-top:4px;">Streak extended to 7 weeks! 🔥</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 7. LEADERBOARD / GAMIFICATION (LIME SECTION) ────────────────────── -->
+    <section class="section-gamify" id="leaderboard">
+      <div class="container" style="text-align:center;">
+        <div class="section-eyebrow" style="color:var(--color-ink); justify-content:center;">
+          <span class="zest-sparkle">✦</span>
+          <span>Campus Hall of Fame</span>
+        </div>
+        <h2 class="section-title">Show up. Earn points. Flex rank.</h2>
+        <p style="font-size:1.15rem; max-width:600px; margin:0 auto; color:rgba(20,20,22,0.85);">Every workshop, club meet, and fest earns you Zest points. Are you the most involved student on campus?</p>
+
+        <!-- Podium Rows -->
+        <div class="podium-wrap">
+          <!-- Rank 2 -->
+          <div class="podium-col podium-rank-2">
+            <div class="podium-avatar">🥈</div>
+            <div style="font-size:18px; font-weight:800;">Priya S.</div>
+            <div style="font-size:12px; color:#9B9DA8;">Design Lead</div>
+            <div style="font-size:24px; font-weight:800; color:#F9B233; margin-top:16px;">380 pts</div>
+            <div class="sticker sticker-coral" style="margin-top:12px; font-size:11px;">🔥 5 Week Streak</div>
+          </div>
+
+          <!-- Rank 1 (Tallest) -->
+          <div class="podium-col podium-rank-1">
+            <div class="podium-avatar" style="border-color:#C2FF3A;">👑</div>
+            <div style="font-size:20px; font-weight:800;">Alex R.</div>
+            <div style="font-size:12px; color:#9B9DA8;">ACM Chair</div>
+            <div style="font-size:32px; font-weight:800; color:#C2FF3A; margin-top:18px;">450 pts</div>
+            <div class="sticker sticker-lime" style="margin-top:16px; font-size:11px;">🏆 #1 Legend</div>
+          </div>
+
+          <!-- Rank 3 -->
+          <div class="podium-col podium-rank-3">
+            <div class="podium-avatar">🥉</div>
+            <div style="font-size:18px; font-weight:800;">Dev M.</div>
+            <div style="font-size:12px; color:#9B9DA8;">Robotics Team</div>
+            <div style="font-size:24px; font-weight:800; color:#8E8BEA; margin-top:16px;">310 pts</div>
+            <div class="sticker sticker-lavender" style="margin-top:12px; font-size:11px;">⚡ 4 Week Streak</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 8. FOR ORGANIZERS (BLACK) ───────────────────────────────────────── -->
+    <section class="section-organizers" id="organizers">
+      <div class="container">
+        <div class="org-dashboard-card">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:clamp(32px, 5vw, 64px); align-items:center;">
+            <div>
+              <div class="section-eyebrow" style="color:var(--color-lime-1);">
+                <span class="zest-sparkle">✦</span>
+                <span>For Campus Clubs & Committees</span>
+              </div>
+              <h2 class="section-title" style="color:#fff; margin-bottom:20px;">Say goodbye to broken Google Forms.</h2>
+              <ul style="list-style:none; display:flex; flex-direction:column; gap:16px; margin-bottom:32px; font-size:1.05rem;">
+                <li style="display:flex; align-items:center; gap:12px;">
+                  <span style="color:#C2FF3A; font-weight:800;">✓</span>
+                  <span>Instant seat-capping and race-condition protection</span>
+                </li>
+                <li style="display:flex; align-items:center; gap:12px;">
+                  <span style="color:#C2FF3A; font-weight:800;">✓</span>
+                  <span>Sub-second mobile camera QR scanner for venue entry</span>
+                </li>
+                <li style="display:flex; align-items:center; gap:12px;">
+                  <span style="color:#C2FF3A; font-weight:800;">✓</span>
+                  <span>Automated branded certificate generation upon check-in</span>
+                </li>
+                <li style="display:flex; align-items:center; gap:12px;">
+                  <span style="color:#C2FF3A; font-weight:800;">✓</span>
+                  <span>1-click CSV & attendee export for college administration</span>
+                </li>
+              </ul>
+              <button class="btn btn-lime btn-lg" data-open-demo>Book a Demo for Your Club</button>
+            </div>
+
+            <!-- Organizer UI Mockup -->
+            <div style="background:#141416; border:1px solid #2F3038; border-radius:24px; padding:28px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                <div style="font-family:var(--font-display); font-weight:800; font-size:18px;">Citrus Hack Live Portal</div>
+                <span style="background:rgba(184,255,26,0.15); color:#C2FF3A; font-weight:800; font-size:11px; padding:4px 10px; border-radius:99px;">CHECK-IN ACTIVE</span>
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+                <div style="background:#1D1D22; padding:16px; border-radius:16px;">
+                  <div style="font-size:11px; color:#9B9DA8;">Registered</div>
+                  <div style="font-size:24px; font-weight:800; font-family:var(--font-display); margin-top:4px;">500 / 500</div>
+                </div>
+                <div style="background:#1D1D22; padding:16px; border-radius:16px;">
+                  <div style="font-size:11px; color:#9B9DA8;">Scanned at Door</div>
+                  <div style="font-size:24px; font-weight:800; font-family:var(--font-display); color:#C2FF3A; margin-top:4px;">472 (94%)</div>
+                </div>
+              </div>
+              <div style="background:#1D1D22; padding:16px; border-radius:16px;">
+                <div style="font-size:12px; font-weight:700; margin-bottom:8px;">Fast Gate Scanner</div>
+                <div style="display:flex; align-items:center; justify-content:space-between; font-size:12px; color:#9B9DA8;">
+                  <span>Avg Scan Speed: 0.8s</span>
+                  <span style="color:#10B981;">0 Duplicate Scans</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 9. HORIZONTAL SCROLL SHOWCASE ───────────────────────────────────── -->
+    <section class="section-showcase" aria-label="Event Poster Showcase">
+      <div class="showcase-track">
+        <!-- Event Card 1 -->
+        <div class="event-poster-card">
+          <div style="height:160px; background:linear-gradient(135deg, #FF6B00, #F9B233); padding:16px; display:flex; flex-direction:column; justify-content:space-between;">
+            <span class="sticker sticker-ink">ANNUAL FEST</span>
+            <div style="font-size:22px; font-weight:800; font-family:var(--font-display); color:#fff;">Citrus Fest '26</div>
+          </div>
+          <div style="padding:20px;">
+            <div style="font-size:12px; color:#9B9DA8; margin-bottom:6px;">OCTOBER 24-26 • CAMPUS LAWN</div>
+            <p style="font-size:14px; color:#E7E8E0; margin-bottom:14px;">3 days of music, comedy, hackathons, and street food. The biggest college fest of the semester.</p>
+            <div class="sticker sticker-lime" style="font-size:12px;">🎟️ 1,200 Passes Squeezed</div>
+          </div>
+        </div>
+
+        <!-- Event Card 2 -->
+        <div class="event-poster-card">
+          <div style="height:160px; background:linear-gradient(135deg, #10B981, #6CE3FF); padding:16px; display:flex; flex-direction:column; justify-content:space-between;">
+            <span class="sticker sticker-ink">HACKATHON</span>
+            <div style="font-size:22px; font-weight:800; font-family:var(--font-display); color:#fff;">HackZest 36H</div>
+          </div>
+          <div style="padding:20px;">
+            <div style="font-size:12px; color:#9B9DA8; margin-bottom:6px;">NOVEMBER 5 • LAB COMPLEX</div>
+            <p style="font-size:14px; color:#E7E8E0; margin-bottom:14px;">Build AI, web3, and mobile prototypes with cash prizes and mentor feedback from industry leads.</p>
+            <div class="sticker sticker-coral" style="font-size:12px;">🏆 $5,000 Prize Pool</div>
+          </div>
+        </div>
+
+        <!-- Event Card 3 -->
+        <div class="event-poster-card">
+          <div style="height:160px; background:linear-gradient(135deg, #8E8BEA, #F0577A); padding:16px; display:flex; flex-direction:column; justify-content:space-between;">
+            <span class="sticker sticker-ink">WORKSHOP</span>
+            <div style="font-size:22px; font-weight:800; font-family:var(--font-display); color:#fff;">UI/UX Design Jam</div>
+          </div>
+          <div style="padding:20px;">
+            <div style="font-size:12px; color:#9B9DA8; margin-bottom:6px;">NOVEMBER 12 • SEMINAR HALL</div>
+            <p style="font-size:14px; color:#E7E8E0; margin-bottom:14px;">Learn interactive prototyping, Figma components, and micro-interactions with live hands-on challenges.</p>
+            <div class="sticker sticker-lavender" style="font-size:12px;">📜 Verified Certificate</div>
+          </div>
+        </div>
+
+        <!-- Event Card 4 -->
+        <div class="event-poster-card">
+          <div style="height:160px; background:linear-gradient(135deg, #F0577A, #FF6B00); padding:16px; display:flex; flex-direction:column; justify-content:space-between;">
+            <span class="sticker sticker-ink">SPORTS</span>
+            <div style="font-size:22px; font-weight:800; font-family:var(--font-display); color:#fff;">Inter-Hostel Cup</div>
+          </div>
+          <div style="padding:20px;">
+            <div style="font-size:12px; color:#9B9DA8; margin-bottom:6px;">NOVEMBER 18 • SPORTS ARENA</div>
+            <p style="font-size:14px; color:#E7E8E0; margin-bottom:14px;">Cricket, futsal, and basketball knockouts under floodlights. High energy guaranteed.</p>
+            <div class="sticker sticker-mustard" style="font-size:12px;">🔥 Double Zest Pts</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 10. STATS BAND ──────────────────────────────────────────────────── -->
+    <section class="section-stats" aria-label="Campus Statistics">
+      <div class="container">
+        <div class="stats-grid">
+          <div>
+            <div class="stat-number" data-counter="48" data-suffix="+">48+</div>
+            <div class="stat-label">Events Hosted *(Placeholder)*</div>
+          </div>
+          <div>
+            <div class="stat-number" data-counter="12400" data-suffix="+">12.4K+</div>
+            <div class="stat-label">Student Passes Scanned *(Placeholder)*</div>
+          </div>
+          <div>
+            <div class="stat-number" data-counter="99" data-suffix="%">99%</div>
+            <div class="stat-label">Sub-Second Gate Speed *(Benchmark)*</div>
+          </div>
+          <div>
+            <div class="stat-number" data-counter="3800" data-suffix="+">3.8K+</div>
+            <div class="stat-label">Certificates Issued *(Placeholder)*</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 11. TESTIMONIALS ────────────────────────────────────────────────── -->
+    <section class="section-testimonials" id="testimonials">
+      <div class="container">
+        <div style="text-align:center; margin-bottom:clamp(40px, 6vw, 64px);">
+          <div class="section-eyebrow" style="justify-content:center;">
+            <span class="zest-sparkle">✦</span>
+            <span>Early Feedback</span>
+          </div>
+          <h2 class="section-title">What students & club leads are saying.</h2>
+          <p style="color:var(--color-text-muted); font-size:1.1rem;">Early feedback from our initial campus beta testing. *(Content clearly marked as beta placeholders)*</p>
+        </div>
+
+        <div class="testimonials-track">
+          <!-- Testimonial 1 -->
+          <div class="testimonial-card">
+            <div style="color:#C2FF3A; background:#141416; display:inline-block; padding:4px 10px; border-radius:99px; font-size:12px; font-weight:800; margin-bottom:16px;">STUDENT</div>
+            <p style="font-size:1.05rem; line-height:1.6; margin-bottom:20px; font-weight:500;">"I used to miss half the hackathons because they were announced in random Telegram channels. Now I get a notification, tap once, and my pass is ready in Apple Wallet."</p>
+            <div style="font-weight:800;">Rohan M.</div>
+            <div style="font-size:12px; color:var(--color-text-muted);">Computer Science, 3rd Year *(Beta Tester)*</div>
+          </div>
+
+          <!-- Testimonial 2 -->
+          <div class="testimonial-card">
+            <div style="color:#fff; background:#F0577A; display:inline-block; padding:4px 10px; border-radius:99px; font-size:12px; font-weight:800; margin-bottom:16px;">CLUB LEAD</div>
+            <p style="font-size:1.05rem; line-height:1.6; margin-bottom:20px; font-weight:500;">"At our last fest, checking in 400 students took over an hour of checking names on a spreadsheet. With Zest's camera scanner, we processed the entire line in 15 minutes."</p>
+            <div style="font-weight:800;">Aanya K.</div>
+            <div style="font-size:12px; color:var(--color-text-muted);">President, Robotics Society *(Beta Lead)*</div>
+          </div>
+
+          <!-- Testimonial 3 -->
+          <div class="testimonial-card">
+            <div style="color:#141416; background:#F9B233; display:inline-block; padding:4px 10px; border-radius:99px; font-size:12px; font-weight:800; margin-bottom:16px;">LEADERBOARD #1</div>
+            <p style="font-size:1.05rem; line-height:1.6; margin-bottom:20px; font-weight:500;">"The Zest points leaderboard makes attending workshops actually fun. My whole dorm is competing for the highest streak this semester."</p>
+            <div style="font-weight:800;">Kavya T.</div>
+            <div style="font-size:12px; color:var(--color-text-muted);">Design Club Member *(Beta Tester)*</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 12. FAQ ACCORDION ───────────────────────────────────────────────── -->
+    <section class="section-faq" id="faq">
+      <div class="container">
+        <div style="text-align:center;">
+          <div class="section-eyebrow" style="justify-content:center;">
+            <span class="zest-sparkle">✦</span>
+            <span>Got Questions?</span>
+          </div>
+          <h2 class="section-title">Frequently Asked Questions</h2>
+          <p style="color:var(--color-text-muted); font-size:1.1rem;">Everything you need to know about Zest on your campus.</p>
+        </div>
+
+        <div class="faq-list">
+          <div class="faq-item open">
+            <button class="faq-question">
+              <span>Is Zest free for students?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>Yes, 100% free! Discovering events, registering in one tap, getting QR passes, and downloading verified certificates is completely free for all enrolled college students.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>How do Zest points and levels work?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>You earn points whenever you check in at an event via your dynamic QR code. Consecutive weekly attendance builds your streak multiplier. Points let you level up on the campus leaderboard and unlock priority pass access for high-demand fests.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>What if I have poor cellular connection at the door?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>Zest is offline-first. Once you claim a pass, your ticket data and QR code are securely cached locally on your device. Organizers can scan and verify your pass even in basement auditoriums with zero internet reception.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Can any student club or society host events?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>Yes. Any recognized student club, council, or department committee can request organizer credentials. You get full access to the Zest Admin Suite, drag-and-drop form builder, live check-in scanner, and instant CSV exports.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>How are event certificates verified?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>Certificates are automatically issued only to attendees who were marked present at the event door by an authorized organizer. Each certificate contains a unique cryptographic verification link suitable for your LinkedIn profile or resume.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>How do we bring Zest officially to our college?</span>
+              <span class="faq-icon">+</span>
+            </button>
+            <div class="faq-answer">
+              <p>Click "Book a Demo" above or email us at hello@zest.app. We provide full setup support, admin training, and custom department mapping for campus student affairs teams within 48 hours.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 13. FINAL CTA (LIME CANVAS) ─────────────────────────────────────── -->
+    <section class="section-final-cta" id="download">
+      <div class="container" style="position:relative; z-index:3;">
+        <div class="cta-app-icon" title="Zest App Icon" style="width:150px; height:150px; margin:0 auto 28px auto; border-radius:34px; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,0.22); transition:transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);">
+          <img src="assets/brand/logo-icon.svg" alt="Zest Icon" width="150" height="150" style="width:100%; height:100%; display:block;" />
+        </div>
+
+        <h2 class="section-title" style="font-size:clamp(2.5rem, 6.5vw, 5.5rem); margin-bottom:20px;">
+          Ready to add some zest?
+        </h2>
+        <p style="font-size:1.25rem; font-weight:600; max-width:540px; margin:0 auto 36px auto; color:rgba(20,20,22,0.85);">
+          Download the Android APK now, or get notified the second the iOS App Store build drops.
+        </p>
+
+        <!-- Store Buttons -->
+        <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap; margin-bottom:48px;">
+          <a href="#" class="btn btn-ink btn-lg" id="final-download-btn">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.551 0 .9996.4482.9996.9993.0001.5511-.4486.9997-.9996.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9997.4482.9997.9993 0 .5511-.4486.9997-.9997.9997m11.4045-6.02l1.996-3.4572c.1147-.1986.0465-.4529-.1521-.5676-.1986-.1147-.4529-.0465-.5676.1521l-2.0223 3.503C15.5898 8.423 13.8488 8.0822 12 8.0822s-3.5898.3408-5.1355.8695L4.8422 5.4487c-.1147-.1986-.369-.2668-.5676-.1521-.1986.1147-.2668.369-.1521.5676l1.996 3.4572C2.6889 11.2867.3432 14.8622 0 19.1415h24c-.3432-4.2793-2.6889-7.8548-6.1185-9.8201"/></svg>
+            <span>Download Android App</span>
+          </a>
+          <button class="btn btn-ghost btn-lg" data-copy-link>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span>Share Link</span>
+          </button>
+        </div>
+
+        <!-- Inline Waitlist Form -->
+        <div id="waitlist" style="max-width:480px; margin:0 auto;">
+          <form class="waitlist-form" style="display:flex; gap:10px; background:#fff; padding:6px; border-radius:99px; box-shadow:0 12px 32px rgba(0,0,0,0.15);">
+            <!-- Honeypot -->
+            <input type="text" name="b_honey" style="display:none;" tabindex="-1" autocomplete="off" />
+            <input type="email" placeholder="Enter college email for iOS alert" required style="flex:1; padding-left:20px; font-weight:600; background:transparent;" />
+            <button type="submit" class="btn btn-ink" style="padding:12px 24px;">Join VIP</button>
+          </form>
+          <div class="form-feedback" style="font-size:12px; font-weight:700; margin-top:10px;"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── 14. FOOTER (BLACK CANVAS WITH CROPPED WORDMARK) ───────────────────── -->
+  <footer class="site-footer">
+    <!-- Giant Cropped Lime Z Bleeding off Bottom Right -->
+    <div class="footer-giant-z-wrap" aria-hidden="true">
+      <svg viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet">
+        <path d="M 208 278 L 1024 278 L 1024 494 L 533 888 L 1024 888 L 1024 1024 L 198 1024 L 198 898 Q 198 888 208 888 L 728 469 L 208 469 Q 198 469 198 459 L 198 288 Q 198 278 208 278 Z" fill="#B8FF1A"/>
+      </svg>
+    </div>
+
+    <div class="container" style="position:relative; z-index:2;">
+      <div class="footer-top">
+        <div>
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+            <div class="nav-logo-box" style="width:36px; height:36px; border-radius:10px; border:1.5px solid rgba(184,255,26,0.35);">
+              <img src="assets/brand/logo-mark-small.svg" alt="Zest Mark" width="36" height="36" style="width:100%;height:100%;display:block;" />
+            </div>
+            <span style="font-family:var(--font-display); font-size:1.65rem; font-weight:800; color:#fff;">zest</span>
+          </div>
+          <p style="color:#9B9DA8; font-size:0.95rem; line-height:1.6; max-width:320px;">
+            Add some zest to your campus life. Discover events, register in one tap, and experience college at full volume.
+          </p>
+        </div>
+
+        <div>
+          <div style="font-size:12px; font-weight:800; color:#B8FF1A; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:16px;">App</div>
+          <ul style="list-style:none; display:flex; flex-direction:column; gap:10px; font-size:0.95rem; color:#9B9DA8;">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="#leaderboard">Leaderboard</a></li>
+            <li><a href="#download">Download APK</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div style="font-size:12px; font-weight:800; color:#B8FF1A; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:16px;">Organizers</div>
+          <ul style="list-style:none; display:flex; flex-direction:column; gap:10px; font-size:0.95rem; color:#9B9DA8;">
+            <li><a href="#organizers">Club Portal</a></li>
+            <li><a href="#" data-open-demo>Book a Demo</a></li>
+            <li><a href="mailto:hello@zest.app">Contact Team</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div style="font-size:12px; font-weight:800; color:#B8FF1A; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:16px;">Legal</div>
+          <ul style="list-style:none; display:flex; flex-direction:column; gap:10px; font-size:0.95rem; color:#9B9DA8;">
+            <li><a href="privacy.html">Privacy Policy</a></li>
+            <li><a href="terms.html">Terms of Service</a></li>
+            <li style="margin-top:12px; font-size:12px; color:#71737E;">Made with ❤️ by Mayank</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Giant Cropped Wordmark Bleeding off Bottom -->
+      <div class="footer-giant-wordmark" aria-hidden="true">
+        zest
       </div>
     </div>
   </footer>
 
+  <!-- ── STICKY MOBILE DOWNLOAD BAR ────────────────────────────────────────── -->
+  <aside class="mobile-sticky-bar" id="mobile-sticky-bar" aria-label="Quick download">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <div class="nav-logo-box" style="width:28px; height:28px; border-radius:7px; overflow:hidden;">
+        <img src="assets/brand/logo-mark-small.svg" alt="Zest Logo" width="28" height="28" style="width:100%;height:100%;display:block;" />
+      </div>
+      <span style="font-family:var(--font-display); font-weight:800; font-size:14px; color:#fff;">Zest App</span>
+    </div>
+    <a href="#download" class="btn btn-lime" style="padding:8px 16px; font-size:12px;">Get App ⚡</a>
+  </aside>
+
+  <!-- ── BOOK A DEMO MODAL DIALOG ──────────────────────────────────────────── -->
+  <div class="modal-overlay" id="demo-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-card">
+      <button class="modal-close" data-close-demo aria-label="Close modal">✕</button>
+      <div class="sticker sticker-lime" style="margin-bottom:12px;">✦ For Campus Clubs</div>
+      <h3 id="modal-title" style="font-size:1.8rem; margin-bottom:8px;">Book a Zest Demo</h3>
+      <p style="color:#9B9DA8; font-size:0.95rem; margin-bottom:24px;">See how your student club or campus committee can manage check-ins, forms, and automated certificates.</p>
+
+      <form id="demo-form" style="display:flex; flex-direction:column; gap:14px;">
+        <input type="text" placeholder="Your Name *" required style="background:#26262C; color:#fff; padding:14px; border-radius:12px; border:1px solid #3A3C47;" />
+        <input type="text" placeholder="College / University Name *" required style="background:#26262C; color:#fff; padding:14px; border-radius:12px; border:1px solid #3A3C47;" />
+        <input type="text" placeholder="Club or Society Name *" required style="background:#26262C; color:#fff; padding:14px; border-radius:12px; border:1px solid #3A3C47;" />
+        <input type="email" placeholder="Official / Student Email *" required style="background:#26262C; color:#fff; padding:14px; border-radius:12px; border:1px solid #3A3C47;" />
+        <button type="submit" class="btn btn-lime btn-lg" style="margin-top:10px;">Submit Request 🍋</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Deferred Scripts -->
+  <script src="js/cursor.js" defer></script>
+  <script src="js/intro.js" defer></script>
+  <script src="js/scroll.js" defer></script>
+  <script src="js/forms.js" defer></script>
+  <script src="js/main.js" defer></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -230,10 +230,10 @@ class _AdminNotificationCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AdminColors.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isRead ? AdminColors.border : color.withOpacity(0.5)),
+          border: Border.all(color: isRead ? AdminColors.border : color.withValues(alpha: 0.5)),
           boxShadow: isRead ? [] : [
             BoxShadow(
-              color: color.withOpacity(0.05),
+              color: color.withValues(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             )
@@ -246,7 +246,7 @@ class _AdminNotificationCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 20),

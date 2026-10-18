@@ -412,8 +412,8 @@ class _RegistrationFormScreenState
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         decoration: BoxDecoration(
                           color: selected
-                              ? AppColors.accent.withOpacity(0.12)
-                              : AppColors.grey100.withOpacity(0.5),
+                              ? AppColors.accent.withValues(alpha: 0.12)
+                              : AppColors.grey100.withValues(alpha: 0.5),
                           border: Border.all(
                             color: selected
                                 ? AppColors.accent
@@ -464,7 +464,7 @@ class _RegistrationFormScreenState
       // ── DROPDOWN ─────────────────────────────────────────────────────
       case 'dropdown':
         inputField = DropdownButtonFormField<String>(
-          value: _answers[id] as String?,
+          initialValue: _answers[id] as String?,
           decoration: InputDecoration(
               hintText: placeholder ?? 'Select an option'),
           isExpanded: true,
@@ -505,7 +505,7 @@ class _RegistrationFormScreenState
                         horizontal: 16, vertical: 13),
                     decoration: BoxDecoration(
                       color: selected
-                          ? AppColors.accent.withOpacity(0.08)
+                          ? AppColors.accent.withValues(alpha: 0.08)
                           : Colors.transparent,
                       border: Border.all(
                         color: selected
@@ -610,7 +610,7 @@ class _RegistrationFormScreenState
                         horizontal: 16, vertical: 13),
                     decoration: BoxDecoration(
                       color: checked
-                          ? AppColors.accent.withOpacity(0.08)
+                          ? AppColors.accent.withValues(alpha: 0.08)
                           : Colors.transparent,
                       border: Border.all(
                         color: checked
@@ -739,7 +739,7 @@ class _RegistrationFormScreenState
                 context: context,
                 initialTime: TimeOfDay.now(),
               );
-              if (picked != null) {
+              if (picked != null && mounted) {
                 final formatted = picked.format(context);
                 setState(() {
                   _answers[id] = formatted;
@@ -847,7 +847,7 @@ class _RegistrationFormScreenState
         border: Border.all(color: AppColors.grey100),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -960,7 +960,7 @@ class _RegistrationFormScreenState
                               _eventData!['cover_image_url']),
                           fit: BoxFit.cover,
                           colorFilter: ColorFilter.mode(
-                              AppColors.primary.withOpacity(0.6),
+                              AppColors.primary.withValues(alpha: 0.6),
                               BlendMode.darken),
                         )
                       : null,
@@ -975,7 +975,7 @@ class _RegistrationFormScreenState
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.accent.withOpacity(0.85),
+                          color: AppColors.accent.withValues(alpha: 0.85),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Text('REGISTRATION FORM',
@@ -1042,7 +1042,7 @@ class _RegistrationFormScreenState
                                       section['description'],
                                       style: TextStyle(
                                           color: Colors.white
-                                              .withOpacity(0.75),
+                                              .withValues(alpha: 0.75),
                                           fontSize: 12),
                                     ),
                                 ],

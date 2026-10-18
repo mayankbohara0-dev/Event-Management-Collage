@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -375,7 +375,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: _statusFilters.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (context, index) => const SizedBox(width: 8),
               itemBuilder: (_, i) {
                 final f = _statusFilters[i];
                 final selected = _filterStatus == f;

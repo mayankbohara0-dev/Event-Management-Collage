@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:event_app/core/design_system.dart';
+import 'package:zest_app/core/design_system.dart';
+import '../../admin_colors.dart';
 
 class ScannerScreen extends StatefulWidget {
   final String eventId;
@@ -38,7 +39,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
       if (regRes == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: const Text('Invalid Ticket or Wrong Event!'), backgroundColor: AppColors.error),
+            SnackBar(
+              content: const Text('Invalid pass or wrong event! 🍋'),
+              backgroundColor: AdminColors.error,
+              behavior: SnackBarBehavior.floating,
+            ),
           );
         }
       } else {
@@ -63,8 +68,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Success! Marked $studentName as attended.'),
-              backgroundColor: AppColors.green,
+              content: Text('You\'re in! Marked $studentName as attended. 🎟️'),
+              backgroundColor: AdminColors.success,
+              behavior: SnackBarBehavior.floating,
             ),
           );
         }
@@ -88,9 +94,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
       backgroundColor: AppColors.black,
       appBar: AppBar(
         backgroundColor: AppColors.black,
-        title: Text('Scan Tickets', style: TextStyle(color: AppColors.white)),
+        title: const Text('Scan Passes', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.white),
+          icon: const Icon(Icons.arrow_back, color: AppColors.white),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
@@ -118,7 +124,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               height: 250,
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: _isProcessing ? AppColors.yellow : AppColors.green,
+                  color: _isProcessing ? AdminColors.gold : AdminColors.accent,
                   width: 3,
                 ),
                 borderRadius: BorderRadius.circular(20),
@@ -137,12 +143,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
-                  color: AppColors.black.withOpacity(0.7),
+                  color: AppColors.black.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Text(
-                  'Point camera at Student Ticket',
-                  style: TextStyle(color: AppColors.white, fontSize: 16),
+                child: const Text(
+                  'Point camera at Zest Event Pass',
+                  style: TextStyle(color: AppColors.white, fontSize: 15, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -150,22 +156,22 @@ class _ScannerScreenState extends State<ScannerScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.green,
+        backgroundColor: AdminColors.accent,
         onPressed: () {
           final tec = TextEditingController();
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              backgroundColor: AppColors.black,
-              title: const Text('Manual Entry', style: TextStyle(color: AppColors.white)),
+              backgroundColor: const Color(0xFF1E1F24),
+              title: const Text('Manual Entry', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
               content: TextField(
                 controller: tec,
                 style: const TextStyle(color: AppColors.white),
                 decoration: InputDecoration(
                   hintText: 'Enter Registration ID or QR data',
                   hintStyle: const TextStyle(color: AppColors.grey400),
-                  enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: AppColors.grey800)),
-                  focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: AppColors.green)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.grey800)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AdminColors.accent)),
                 ),
               ),
               actions: [
@@ -180,14 +186,14 @@ class _ScannerScreenState extends State<ScannerScreen> {
                       _processQR(tec.text.trim());
                     }
                   },
-                  child: const Text('Submit', style: TextStyle(color: AppColors.green, fontWeight: FontWeight.bold)),
+                  child: const Text('Submit', style: TextStyle(color: AdminColors.accent, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
           );
         },
-        icon: const Icon(Icons.keyboard, color: AppColors.black),
-        label: const Text('Manual Entry', style: TextStyle(color: AppColors.black, fontWeight: FontWeight.bold)),
+        icon: const Icon(Icons.keyboard, color: Colors.white),
+        label: const Text('Manual Entry', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
     );
   }

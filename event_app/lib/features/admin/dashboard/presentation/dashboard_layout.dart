@@ -216,18 +216,18 @@ class _MobileLayout extends StatelessWidget {
         ),
         title: Row(
           children: [
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                gradient: AdminColors.heroGradient,
-                borderRadius: BorderRadius.circular(8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                'assets/logo.png',
+                width: 30,
+                height: 30,
+                fit: BoxFit.cover,
               ),
-              child: const Icon(Icons.event_rounded, color: Colors.white, size: 16),
             ),
             const SizedBox(width: 10),
             Text(
-              'Event Admin',
+              'Zest Admin',
               style: GoogleFonts.inter(
                 color: AdminColors.textPrimary,
                 fontWeight: FontWeight.w700,
@@ -316,21 +316,21 @@ class _MobileDrawer extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      gradient: AdminColors.heroGradient,
-                      borderRadius: BorderRadius.circular(12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.asset(
+                      'assets/logo.png',
+                      width: 42,
+                      height: 42,
+                      fit: BoxFit.cover,
                     ),
-                    child: const Icon(Icons.event_rounded, color: Colors.white, size: 22),
                   ),
                   const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Event Admin',
+                        'Zest Admin',
                         style: GoogleFonts.inter(
                           color: AdminColors.textPrimary,
                           fontWeight: FontWeight.w800,
@@ -338,7 +338,7 @@ class _MobileDrawer extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Management Portal',
+                        'Admin Portal',
                         style: GoogleFonts.inter(
                           color: AdminColors.textSecondary,
                           fontSize: 12,
@@ -470,14 +470,14 @@ class _SidebarHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              gradient: AdminColors.heroGradient,
-              borderRadius: BorderRadius.circular(10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.asset(
+              'assets/logo.png',
+              width: 36,
+              height: 36,
+              fit: BoxFit.cover,
             ),
-            child: const Icon(Icons.event_rounded, color: Colors.white, size: 20),
           ),
           if (expanded) ...[
             const SizedBox(width: 10),
@@ -487,7 +487,7 @@ class _SidebarHeader extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Event Admin',
+                    'Zest Admin',
                     style: GoogleFonts.inter(
                       color: AdminColors.textPrimary,
                       fontWeight: FontWeight.w700,
@@ -495,7 +495,7 @@ class _SidebarHeader extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'Management Portal',
+                    'Admin Portal',
                     style: GoogleFonts.inter(
                       color: AdminColors.textSecondary,
                       fontSize: 11,

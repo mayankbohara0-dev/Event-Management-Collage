@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -189,7 +189,7 @@ class _EventFeedbackScreenState extends ConsumerState<EventFeedbackScreen> {
                       : ListView.separated(
                           padding: const EdgeInsets.all(24),
                           itemCount: _feedbacks.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 16),
+                          separatorBuilder: (context, index) => const SizedBox(height: 16),
                           itemBuilder: (context, index) {
                             final f = _feedbacks[index];
                             final profile = f['student_profiles'];

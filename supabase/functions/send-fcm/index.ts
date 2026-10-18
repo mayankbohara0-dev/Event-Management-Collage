@@ -1,4 +1,4 @@
-﻿import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 import { JWT } from 'npm:google-auth-library@9'
 
 console.log("FCM Function Booted!");
@@ -53,8 +53,8 @@ Deno.serve(async (req) => {
         message: {
           token: token,
           notification: {
-            title: 'New Event Available!',
-            body: `${newEvent.title} was just posted. Check it out!`,
+            title: 'Fresh Event Squeezed! 🍋',
+            body: `${newEvent.title} just dropped on Zest. Grab your pass!`,
           },
           data: { eventId: newEvent.id.toString(), click_action: 'FLUTTER_NOTIFICATION_CLICK' }
         }

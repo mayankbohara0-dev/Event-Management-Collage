@@ -646,7 +646,7 @@ class _MobileEventList extends StatelessWidget {
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: events.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
         itemBuilder: (context, i) {
           final event = events[i];
           return _MobileEventCard(

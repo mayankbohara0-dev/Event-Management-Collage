@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -378,7 +378,7 @@ class _EventRegistrationCardState extends State<_EventRegistrationCard> {
                         ? Image.network(
                             event['cover_image_url'],
                             width: 56, height: 56, fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => _eventPlaceholder(),
+                            errorBuilder: (context, error, stackTrace) => _eventPlaceholder(),
                           )
                         : _eventPlaceholder(),
                   ),

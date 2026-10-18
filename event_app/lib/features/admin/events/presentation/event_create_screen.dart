@@ -248,8 +248,11 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
   }
 
   void _goBack() {
-    if (context.canPop()) context.pop();
-    else context.go('/admin/events');
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/admin/events');
+    }
   }
 
   @override
@@ -296,7 +299,7 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
                           _buildTextField(_longDescController, 'Full Description', Icons.notes, maxLines: 4, required: false),
                           const SizedBox(height: 16),
                           DropdownButtonFormField<String>(
-                            value: _categoryId,
+                            initialValue: _categoryId,
                             decoration: _inputDeco('Category', Icons.category),
                             dropdownColor: AdminColors.surfaceLight,
                             items: _categories.map((c) => DropdownMenuItem<String>(
@@ -328,7 +331,7 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
                           ]),
                           const SizedBox(height: 16),
                           DropdownButtonFormField<String>(
-                            value: _visibility,
+                            initialValue: _visibility,
                             decoration: _inputDeco('Visibility', Icons.visibility),
                             dropdownColor: AdminColors.surfaceLight,
                             style: const TextStyle(color: AdminColors.textPrimary, fontSize: 14),
@@ -395,7 +398,7 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AdminColors.accent.withOpacity(0.12),
+                  color: AdminColors.accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Text('Optional', style: TextStyle(color: AdminColors.accent, fontSize: 11, fontWeight: FontWeight.w700)),
@@ -417,7 +420,7 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
                 decoration: BoxDecoration(
                   color: AdminColors.surfaceLight,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AdminColors.accent.withOpacity(0.45), width: 2),
+                  border: Border.all(color: AdminColors.accent.withValues(alpha: 0.45), width: 2),
                 ),
                 child: _isUploadingPoster
                     ? const Center(child: CircularProgressIndicator(color: AdminColors.accent))
@@ -426,7 +429,7 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
                         children: [
                           Container(
                             width: 64, height: 64,
-                            decoration: BoxDecoration(color: AdminColors.accent.withOpacity(0.1), shape: BoxShape.circle),
+                            decoration: BoxDecoration(color: AdminColors.accent.withValues(alpha: 0.1), shape: BoxShape.circle),
                             child: const Icon(Icons.add_photo_alternate_rounded, color: AdminColors.accent, size: 32),
                           ),
                           const SizedBox(height: 16),
@@ -459,7 +462,7 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
                                   child: const Center(child: CircularProgressIndicator(color: AdminColors.accent)),
                                 );
                               },
-                              errorBuilder: (_, __, ___) => Container(
+                              errorBuilder: (context, error, stackTrace) => Container(
                                 height: 240, color: AdminColors.surfaceLight,
                                 child: const Center(child: Icon(Icons.broken_image_rounded, size: 48, color: AdminColors.textSecondary)),
                               ),

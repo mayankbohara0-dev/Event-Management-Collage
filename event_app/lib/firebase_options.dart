@@ -64,7 +64,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '775000935598',
     projectId: 'event-collage',
     storageBucket: 'event-collage.firebasestorage.app',
-    iosBundleId: 'com.example.eventApp',
+    iosBundleId: 'com.zest.app',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -73,7 +73,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '775000935598',
     projectId: 'event-collage',
     storageBucket: 'event-collage.firebasestorage.app',
-    iosBundleId: 'com.example.eventApp',
+    iosBundleId: 'com.zest.app',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

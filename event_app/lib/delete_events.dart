@@ -1,5 +1,6 @@
+// ignore_for_file: avoid_print, prefer_interpolation_to_compose_strings
 import 'dart:io';
-import 'package:supabase/supabase.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   final supabaseUrl = 'https://fgdrvtonfgeuboggucoe.supabase.co';

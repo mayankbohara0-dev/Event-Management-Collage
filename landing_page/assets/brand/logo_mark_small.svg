@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+  <defs>
+    <linearGradient id="limeGradSmall" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C2FF3A" />
+      <stop offset="100%" stop-color="#7DFF2A" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" ry="28" fill="url(#limeGradSmall)" />
+  <!-- Sparkle top-left -->
+  <path d="M 40 18 Q 40 28 50 28 Q 40 28 40 38 Q 40 28 30 28 Q 40 28 40 18 Z" fill="#141416" />
+  <!-- Bold, fully visible Z -->
+  <path d="M 34 38 L 98 38 Q 102 38 102 42 L 102 54 Q 102 56 100 58 L 59 94 L 98 94 Q 102 94 102 98 L 102 106 Q 102 110 98 110 L 32 110 Q 28 110 28 106 L 28 94 Q 28 92 30 90 L 71 54 L 34 54 Q 30 54 30 50 L 30 42 Q 30 38 34 38 Z" fill="#141416" />
+</svg>

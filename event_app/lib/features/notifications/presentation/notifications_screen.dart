@@ -119,7 +119,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   child: ListView.separated(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     itemCount: _notifications.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.grey100),
+                    separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.grey100),
                     itemBuilder: (context, i) {
                       final n = _notifications[i];
                       return _NotificationTile(
@@ -182,17 +182,17 @@ class _NotificationTile extends StatelessWidget {
       case 'event_update':
         icon = Icons.event_rounded;
         iconColor = AppColors.green;
-        bgColor = AppColors.green.withOpacity(0.1);
+        bgColor = AppColors.green.withValues(alpha: 0.1);
         break;
       case 'feedback_request':
         icon = Icons.star_rounded;
         iconColor = Colors.amber;
-        bgColor = Colors.amber.withOpacity(0.1);
+        bgColor = Colors.amber.withValues(alpha: 0.1);
         break;
       case 'registration_update':
         icon = Icons.how_to_reg_rounded;
         iconColor = AppColors.yellow;
-        bgColor = AppColors.yellow.withOpacity(0.2);
+        bgColor = AppColors.yellow.withValues(alpha: 0.2);
         break;
       default:
         icon = Icons.notifications_rounded;
@@ -203,7 +203,7 @@ class _NotificationTile extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        color: isRead ? Colors.transparent : AppColors.green.withOpacity(0.02),
+        color: isRead ? Colors.transparent : AppColors.green.withValues(alpha: 0.02),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -473,6 +473,7 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen>
     return ReorderableListView.builder(
       padding: const EdgeInsets.all(24),
       itemCount: _questions.length,
+      // ignore: deprecated_member_use
       onReorder: (oldIndex, newIndex) {
         setState(() {
           if (newIndex > oldIndex) newIndex--;
@@ -518,7 +519,7 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AdminColors.accent.withOpacity(0.15),
+                      color: AdminColors.accent.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(typeLabel, style: const TextStyle(fontSize: 11, color: AdminColors.accent, fontWeight: FontWeight.bold)),
@@ -530,7 +531,7 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen>
                   Switch(
                     value: q.isRequired,
                     onChanged: (v) => setState(() => q.isRequired = v),
-                    activeColor: AdminColors.accent,
+                    activeThumbColor: AdminColors.accent,
                   ),
                 ],
               ),
@@ -710,6 +711,7 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen>
             q.scaleMax - q.scaleMin + 1,
             (i) => Column(
               children: [
+                // ignore: deprecated_member_use
                 Radio(value: i, groupValue: -1, onChanged: null, fillColor: WidgetStateProperty.all(AdminColors.textSecondary)),
                 Text('${q.scaleMin + i}', style: const TextStyle(fontSize: 12, color: AdminColors.textSecondary)),
               ],
@@ -867,12 +869,12 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen>
                   _settingsTile(
                     'Collect only one response per student',
                     'Prevents a student from submitting the form more than once.',
-                    Switch(value: _oneResponseOnly, onChanged: (v) => setState(() => _oneResponseOnly = v), activeColor: AdminColors.accent),
+                    Switch(value: _oneResponseOnly, onChanged: (v) => setState(() => _oneResponseOnly = v), activeThumbColor: AdminColors.accent),
                   ),
                   _settingsTile(
                     'Allow response editing',
                     'Students can edit their submitted response.',
-                    Switch(value: _editableResponse, onChanged: (v) => setState(() => _editableResponse = v), activeColor: AdminColors.accent),
+                    Switch(value: _editableResponse, onChanged: (v) => setState(() => _editableResponse = v), activeThumbColor: AdminColors.accent),
                   ),
                 ],
               ),
@@ -883,12 +885,12 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen>
                   _settingsTile(
                     'Auto-approve registrations',
                     'Registrations are approved immediately without admin review.',
-                    Switch(value: _autoApproval, onChanged: (v) => setState(() => _autoApproval = v), activeColor: AdminColors.accent),
+                    Switch(value: _autoApproval, onChanged: (v) => setState(() => _autoApproval = v), activeThumbColor: AdminColors.accent),
                   ),
                   _settingsTile(
                     'Allow waitlist',
                     'When seats are full, students join a waitlist.',
-                    Switch(value: _allowWaitlist, onChanged: (v) => setState(() => _allowWaitlist = v), activeColor: AdminColors.accent),
+                    Switch(value: _allowWaitlist, onChanged: (v) => setState(() => _allowWaitlist = v), activeThumbColor: AdminColors.accent),
                   ),
                 ],
               ),
@@ -921,7 +923,7 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen>
                   _settingsTile(
                     'Auto-close when limit reached',
                     'Stop accepting new registrations automatically when the cap is hit.',
-                    Switch(value: _closeOnLimit, onChanged: (v) => setState(() => _closeOnLimit = v), activeColor: AdminColors.accent),
+                    Switch(value: _closeOnLimit, onChanged: (v) => setState(() => _closeOnLimit = v), activeThumbColor: AdminColors.accent),
                   ),
                 ],
               ),

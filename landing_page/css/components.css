@@ -1,0 +1,442 @@
+/* ==========================================================================
+   ZEST COMPONENTS
+   Buttons, Navbar, Custom Cursor, Stickers, Modal, Forms
+   ========================================================================== */
+
+/* ── Custom Cursor (Desktop Only) ────────────────────────────────────────── */
+@media (hover: hover) and (pointer: fine) {
+  .custom-cursor {
+    width: 14px;
+    height: 14px;
+    background-color: var(--color-lime-flat);
+    border-radius: 50%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 99999;
+    transform: translate(-50%, -50%);
+    transition: width 0.2s ease, height 0.2s ease, background-color 0.2s ease, transform 0.08s ease-out;
+    mix-blend-mode: difference;
+  }
+  .custom-cursor.hover {
+    width: 48px;
+    height: 48px;
+    background-color: var(--color-lime-1);
+    opacity: 0.85;
+    mix-blend-mode: normal;
+  }
+}
+@media (hover: none) or (pointer: coarse) {
+  .custom-cursor {
+    display: none !important;
+  }
+}
+
+/* ── Floating Pill Navbar ────────────────────────────────────────────────── */
+.navbar-wrap {
+  position: fixed;
+  top: 20px;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  padding: 0 var(--container-pad);
+  pointer-events: none;
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.navbar-wrap.nav-hidden {
+  transform: translateY(-130%);
+}
+
+.navbar {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 14px 8px 14px;
+  background: rgba(20, 20, 22, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+  max-width: 1100px;
+  width: 100%;
+  transition: padding var(--transition-normal), background var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.navbar.scrolled {
+  padding: 6px 12px 6px 12px;
+  background: #141416;
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.nav-logo-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  flex-shrink: 0;
+  border: 2px solid rgba(20, 20, 22, 0.6);
+  box-shadow: 0 2px 10px rgba(184, 255, 26, 0.35);
+  transition: transform var(--transition-fast);
+}
+
+.nav-brand:hover .nav-logo-box {
+  transform: scale(1.05);
+}
+
+.nav-logo-box img,
+.nav-logo-box svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.nav-wordmark-wrap {
+  display: flex;
+  align-items: center;
+  height: 26px;
+}
+
+.nav-wordmark-wrap svg {
+  height: 24px;
+  width: auto;
+  display: block;
+}
+
+.nav-wordmark {
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--color-paper);
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  list-style: none;
+  flex-shrink: 0;
+}
+
+.nav-link {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.nav-link:hover {
+  color: var(--color-lime-1);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-link.active {
+  color: #141416;
+  background: var(--color-lime-flat);
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(184, 255, 26, 0.3);
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Theme Toggle Button with Crisp Icons & Rotate Swap */
+.btn-theme-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-paper);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.btn-theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.btn-theme-toggle svg {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+}
+
+.theme-icon-sun {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.5);
+}
+
+.theme-icon-moon {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+[data-theme="dark"] .theme-icon-sun {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+[data-theme="dark"] .theme-icon-moon {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.5);
+}
+
+/* Hamburger for Mobile */
+.nav-mobile-toggle {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  align-items: center;
+  justify-content: center;
+  color: var(--color-paper);
+}
+
+/* ── Pill Buttons ────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: -0.01em;
+  padding: 12px 24px;
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+  white-space: nowrap;
+}
+
+.btn:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.btn:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* Primary Lime Pill with Black Text */
+.btn-lime {
+  background: var(--color-lime-gradient);
+  color: var(--color-ink) !important;
+  box-shadow: 0 4px 18px rgba(184, 255, 26, 0.35);
+}
+
+.btn-lime:hover {
+  box-shadow: 0 8px 28px rgba(184, 255, 26, 0.55);
+}
+
+/* Ink Dark Pill */
+.btn-ink {
+  background: var(--color-ink);
+  color: var(--color-paper) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.btn-ink:hover {
+  border-color: var(--color-lime-1);
+  color: var(--color-lime-1) !important;
+}
+
+/* Ghost Pill */
+.btn-ghost {
+  background: transparent;
+  color: var(--color-ink);
+  border: 2px solid var(--color-ink);
+}
+
+.btn-ghost:hover {
+  background: var(--color-ink);
+  color: var(--color-lime-1) !important;
+}
+
+.btn-lg {
+  padding: 16px 34px;
+  font-size: 1.1rem;
+}
+
+/* ── Sparkles & Badges ───────────────────────────────────────────────────── */
+.zest-sparkle {
+  display: inline-block;
+  color: var(--color-ink);
+  animation: sparkleTwinkle 2.4s ease-in-out infinite;
+}
+
+.sticker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.88rem;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+  user-select: none;
+  transition: transform var(--transition-fast);
+}
+
+.sticker:hover {
+  transform: scale(1.08) rotate(-2deg);
+}
+
+.sticker-lime {
+  background: var(--color-lime-1);
+  color: var(--color-ink);
+}
+
+.sticker-coral {
+  background: var(--color-coral);
+  color: #fff;
+}
+
+.sticker-lavender {
+  background: var(--color-lavender);
+  color: #fff;
+}
+
+.sticker-mustard {
+  background: var(--color-mustard);
+  color: var(--color-ink);
+}
+
+.sticker-ink {
+  background: var(--color-ink);
+  color: var(--color-lime-1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* ── Modal Dialog ────────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 12, 0.7);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--container-pad);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-normal);
+}
+
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-card {
+  background: var(--color-surface-dark);
+  color: var(--color-paper);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-lg);
+  padding: clamp(24px, 4vw, 40px);
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.5);
+  position: relative;
+  transform: translateY(20px) scale(0.96);
+  transition: transform var(--transition-normal);
+}
+
+.modal-overlay.open .modal-card {
+  transform: translateY(0) scale(1);
+}
+
+.modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-paper);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast);
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Sticky Mobile Download Bar ──────────────────────────────────────────── */
+.mobile-sticky-bar {
+  display: none;
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  z-index: 999;
+  background: rgba(20, 20, 22, 0.95);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 10px 14px;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  align-items: center;
+  justify-content: space-between;
+  transform: translateY(120%);
+  transition: transform var(--transition-normal);
+}
+
+.mobile-sticky-bar.visible {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+  }
+  .nav-mobile-toggle {
+    display: flex;
+  }
+  .mobile-sticky-bar {
+    display: flex;
+  }
+}

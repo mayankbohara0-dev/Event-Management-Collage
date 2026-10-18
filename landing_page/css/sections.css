@@ -1,0 +1,756 @@
+/* ==========================================================================
+   ZEST SECTIONS STYLESHEET
+   All 14 Core Sections in Exact Required Order
+   ========================================================================== */
+
+/* ── 2. HERO SECTION (LIME CANVAS) ───────────────────────────────────────── */
+.section-hero {
+  position: relative;
+  background: var(--color-lime-gradient);
+  color: var(--color-ink);
+  padding-top: clamp(140px, 16vw, 210px);
+  padding-bottom: clamp(100px, 14vw, 180px);
+  overflow: hidden;
+  border-bottom-left-radius: clamp(32px, 5vw, 64px);
+  border-bottom-right-radius: clamp(32px, 5vw, 64px);
+  z-index: 2;
+}
+
+/* The Signature Giant Cropped Z bleeding off bottom-right */
+.hero-giant-z-wrap {
+  position: absolute;
+  right: 0%;
+  top: 8%;
+  width: clamp(480px, 54vw, 840px);
+  height: clamp(480px, 54vw, 840px);
+  aspect-ratio: 1 / 1;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.28;
+  transform-origin: center right;
+  transition: transform 0.1s ease-out;
+}
+
+.hero-giant-z-wrap svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.hero-twinkle-sparkle {
+  position: absolute;
+  top: 18%;
+  right: 28%;
+  width: clamp(36px, 5vw, 64px);
+  height: clamp(36px, 5vw, 64px);
+  color: var(--color-ink);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.hero-container {
+  position: relative;
+  z-index: 3;
+}
+
+.hero-header {
+  max-width: 900px;
+}
+
+.hero-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(20, 20, 22, 0.08);
+  border: 1px solid rgba(20, 20, 22, 0.18);
+  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: var(--space-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.hero-badge-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-ink);
+  animation: badgePulse 2s infinite;
+}
+
+.hero-title {
+  font-size: var(--text-hero);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 0.94;
+  margin-bottom: var(--space-md);
+  color: var(--color-ink);
+  text-wrap: balance;
+}
+
+/* Black Marker-Style Pill Highlight */
+.marker-underline {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+  background: var(--color-ink);
+  color: var(--color-lime-1) !important;
+  padding: 4px 18px 8px 18px;
+  border-radius: 20px;
+  transform: rotate(-1.5deg);
+  box-shadow: 0 10px 28px rgba(20, 20, 22, 0.22);
+}
+
+.hero-subtitle {
+  font-size: var(--text-body-lg);
+  font-weight: 500;
+  color: rgba(20, 20, 22, 0.84);
+  max-width: 620px;
+  line-height: 1.45;
+  margin-bottom: var(--space-lg);
+}
+
+.hero-cta-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.hero-social-proof {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(20, 20, 22, 0.75);
+}
+
+.avatar-stack {
+  display: flex;
+  align-items: center;
+}
+
+.avatar-stack-item {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--color-lime-1);
+  margin-left: -8px;
+  background: var(--color-ink);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+}
+.avatar-stack-item:first-child { margin-left: 0; }
+
+/* Hero Phone Mockup Stage */
+.hero-phones-stage {
+  position: relative;
+  margin-top: clamp(24px, 4vw, 56px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 520px;
+}
+
+.phone-mockup {
+  width: clamp(260px, 32vw, 340px);
+  height: clamp(520px, 58vw, 680px);
+  background: #000;
+  border: 10px solid #22232A;
+  border-radius: 46px;
+  box-shadow: 0 35px 80px -15px rgba(20, 20, 22, 0.35);
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.4s var(--ease-spring);
+}
+
+.phone-screen {
+  width: 100%;
+  height: 100%;
+  background: #141416;
+  color: #fff;
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.phone-notch {
+  width: 90px;
+  height: 18px;
+  background: #22232A;
+  border-radius: 12px;
+  margin: 0 auto 16px auto;
+}
+
+.phone-primary {
+  z-index: 3;
+  transform: translateY(0) rotate(0deg);
+}
+.phone-primary:hover {
+  transform: translateY(-8px) scale(1.02);
+}
+
+.phone-secondary {
+  position: absolute;
+  left: 10%;
+  z-index: 2;
+  transform: translateY(30px) rotate(-9deg) scale(0.92);
+  opacity: 0.85;
+}
+.phone-tertiary {
+  position: absolute;
+  right: 10%;
+  z-index: 2;
+  transform: translateY(30px) rotate(9deg) scale(0.92);
+  opacity: 0.85;
+}
+
+/* Floating Stickers on Stage - repositioned to phone edges so they never overlap screen text */
+.hero-sticker-1 {
+  position: absolute;
+  top: 5%;
+  left: -2%;
+  z-index: 4;
+}
+.hero-sticker-2 {
+  position: absolute;
+  top: 16%;
+  right: -2%;
+  z-index: 4;
+}
+.hero-sticker-3 {
+  position: absolute;
+  bottom: 8%;
+  left: 2%;
+  z-index: 4;
+}
+.hero-sticker-4 {
+  position: absolute;
+  bottom: 12%;
+  right: 0%;
+  z-index: 4;
+}
+
+/* ── 3. MARQUEE STRIP (BLACK) ────────────────────────────────────────────── */
+.section-marquee {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  padding: var(--space-xl) 0;
+  overflow: hidden;
+  border-bottom: 1px solid var(--color-border-dark);
+}
+
+.marquee-row {
+  margin: 8px 0;
+  overflow: hidden;
+  user-select: none;
+}
+
+.marquee-item {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 3.8vw, 3.2rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  padding: 0 var(--space-md);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-md);
+  white-space: nowrap;
+}
+
+.marquee-item.accent-word {
+  color: var(--color-lime-1);
+}
+
+.marquee-sparkle {
+  width: 24px;
+  height: 24px;
+  color: var(--color-lime-1);
+}
+
+/* ── 4. WHAT IS ZEST STATEMENT SECTION (SCROLL SCRUB REVEAL) ──────────────── */
+.section-statement {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  padding: clamp(100px, 16vw, 200px) 0;
+  position: relative;
+}
+
+.statement-box {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.statement-tag {
+  color: var(--color-lime-1);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statement-text {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 5.2vw, 4.8rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+}
+
+.statement-word {
+  display: inline-block;
+  color: rgba(255, 255, 255, 0.18);
+  transition: color 0.25s ease, transform 0.25s ease;
+}
+
+.statement-word.lit {
+  color: var(--color-paper);
+}
+
+.statement-word.lime-lit {
+  color: var(--color-lime-1);
+}
+
+/* ── 5. FEATURES BENTO GRID (OFF-WHITE) ──────────────────────────────────── */
+.section-bento {
+  background: var(--color-offwhite);
+  color: var(--color-ink);
+  padding: clamp(80px, 12vw, 160px) 0;
+  border-radius: clamp(32px, 5vw, 64px);
+  margin-top: -32px;
+  position: relative;
+  z-index: 3;
+}
+
+.bento-header {
+  margin-bottom: clamp(48px, 8vw, 80px);
+}
+
+.section-eyebrow {
+  font-size: 0.95rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title {
+  font-size: var(--text-display);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  margin-bottom: var(--space-sm);
+}
+
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: clamp(16px, 2.5vw, 28px);
+}
+
+.bento-card {
+  background: var(--color-paper);
+  border-radius: var(--radius-lg);
+  padding: clamp(24px, 3.5vw, 40px);
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-card);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.bento-card.col-8 { grid-column: span 8; }
+.bento-card.col-4 { grid-column: span 4; }
+.bento-card.col-6 { grid-column: span 6; }
+.bento-card.col-12 { grid-column: span 12; }
+
+.bento-card-title {
+  font-size: var(--text-h3);
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.bento-card-desc {
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-bottom: var(--space-md);
+}
+
+.bento-preview-box {
+  width: 100%;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-light);
+  padding: 20px;
+  border: 1px solid var(--color-border-light);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── 6. HOW IT WORKS (BLACK, PINNED SCROLL) ──────────────────────────────── */
+.section-how {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  padding: clamp(90px, 14vw, 170px) 0;
+  position: relative;
+}
+
+.how-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(40px, 6vw, 80px);
+  align-items: center;
+}
+
+.how-step {
+  padding: 32px 0;
+  border-left: 3px solid rgba(255, 255, 255, 0.15);
+  padding-left: 32px;
+  position: relative;
+  transition: all var(--transition-normal);
+}
+
+.how-step.active {
+  border-left-color: var(--color-lime-1);
+}
+
+.how-step-num {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--color-lime-1);
+  margin-bottom: 8px;
+}
+
+.how-step-title {
+  font-size: var(--text-h2);
+  margin-bottom: 12px;
+}
+
+.how-step-desc {
+  color: var(--color-text-muted-dark);
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+
+/* ── 7. LEADERBOARD / GAMIFICATION (LIME SECTION) ────────────────────────── */
+.section-gamify {
+  background: var(--color-lime-gradient);
+  color: var(--color-ink);
+  padding: clamp(90px, 14vw, 170px) 0;
+  border-radius: clamp(32px, 5vw, 64px);
+  position: relative;
+  overflow: hidden;
+}
+
+.podium-wrap {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: clamp(12px, 2vw, 24px);
+  margin-top: 48px;
+}
+
+.podium-col {
+  flex: 1;
+  max-width: 260px;
+  background: var(--color-ink);
+  color: var(--color-paper);
+  border-radius: var(--radius-lg);
+  padding: 24px 20px;
+  text-align: center;
+  box-shadow: var(--shadow-hero);
+  position: relative;
+}
+.podium-rank-1 { height: 320px; border: 3px solid var(--color-lime-1); }
+.podium-rank-2 { height: 260px; }
+.podium-rank-3 { height: 230px; }
+
+.podium-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #333;
+  margin: -48px auto 12px auto;
+  border: 4px solid var(--color-lime-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.3rem;
+}
+
+/* ── 8. FOR ORGANIZERS (BLACK) ───────────────────────────────────────────── */
+.section-organizers {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  padding: clamp(90px, 14vw, 170px) 0;
+}
+
+.org-dashboard-card {
+  background: var(--color-surface-dark);
+  border: 1px solid var(--color-border-dark);
+  border-radius: var(--radius-xl);
+  padding: clamp(24px, 4vw, 48px);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+}
+
+/* ── 9. HORIZONTAL SCROLL SHOWCASE ───────────────────────────────────────── */
+.section-showcase {
+  background: var(--color-surface-dark);
+  color: var(--color-paper);
+  padding: clamp(80px, 12vw, 140px) 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.section-showcase::-webkit-scrollbar { display: none; }
+
+.showcase-track {
+  display: flex;
+  gap: clamp(20px, 3vw, 36px);
+  padding: 0 var(--container-pad);
+  width: max-content;
+}
+
+.event-poster-card {
+  width: clamp(280px, 30vw, 360px);
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-dark);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  transition: transform var(--transition-fast);
+}
+.event-poster-card:hover {
+  transform: translateY(-8px);
+}
+
+/* ── 10. STATS BAND ──────────────────────────────────────────────────────── */
+.section-stats {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  padding: clamp(60px, 10vw, 110px) 0;
+  border-top: 1px solid var(--color-border-dark);
+  border-bottom: 1px solid var(--color-border-dark);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+  text-align: center;
+}
+
+.stat-number {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 800;
+  color: var(--color-lime-1);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.stat-label {
+  font-size: 1rem;
+  color: var(--color-text-muted-dark);
+  font-weight: 600;
+}
+
+/* ── 11. TESTIMONIALS ────────────────────────────────────────────────────── */
+.section-testimonials {
+  background: var(--color-offwhite);
+  color: var(--color-ink);
+  padding: clamp(80px, 12vw, 150px) 0;
+}
+
+.testimonials-track {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+}
+
+.testimonial-card {
+  background: var(--color-paper);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: var(--shadow-card);
+}
+
+/* ── 12. FAQ ACCORDION ───────────────────────────────────────────────────── */
+.section-faq {
+  background: var(--color-offwhite);
+  color: var(--color-ink);
+  padding: clamp(80px, 12vw, 150px) 0;
+}
+
+.faq-list {
+  max-width: 800px;
+  margin: 40px auto 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.faq-item {
+  background: var(--color-paper);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: all var(--transition-fast);
+}
+
+.faq-question {
+  width: 100%;
+  padding: 22px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 800;
+  cursor: pointer;
+  text-align: left;
+}
+
+.faq-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-surface-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--transition-fast);
+}
+
+.faq-item.open .faq-icon {
+  transform: rotate(45deg);
+  background: var(--color-lime-1);
+}
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  padding: 0 28px;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  font-size: 1.05rem;
+  transition: max-height 0.35s ease, padding 0.35s ease;
+}
+
+.faq-item.open .faq-answer {
+  max-height: 300px;
+  padding: 0 28px 24px 28px;
+}
+
+/* ── 13. FINAL CTA (LIME CANVAS) ─────────────────────────────────────────── */
+.section-final-cta {
+  background: var(--color-lime-gradient);
+  color: var(--color-ink);
+  padding: clamp(100px, 15vw, 180px) 0;
+  border-radius: clamp(32px, 5vw, 64px);
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+
+.cta-app-icon {
+  width: clamp(96px, 12vw, 140px);
+  height: clamp(96px, 12vw, 140px);
+  border-radius: 36px;
+  margin: 0 auto var(--space-md) auto;
+  box-shadow: 0 25px 60px rgba(20, 20, 22, 0.25);
+  transition: transform 0.4s var(--ease-spring);
+  cursor: pointer;
+}
+.cta-app-icon:hover {
+  transform: scale(1.1) rotate(6deg);
+}
+
+/* ── 14. FOOTER (BLACK CANVAS WITH CROPPED WORDMARK) ─────────────────────── */
+.site-footer {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  padding-top: clamp(80px, 12vw, 140px);
+  padding-bottom: 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.footer-top {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: clamp(32px, 5vw, 64px);
+  margin-bottom: clamp(60px, 10vw, 100px);
+}
+
+.footer-giant-z-wrap {
+  position: absolute;
+  right: -60px;
+  bottom: -80px;
+  width: clamp(380px, 46vw, 720px);
+  height: clamp(380px, 46vw, 720px);
+  aspect-ratio: 1 / 1;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.footer-giant-z-wrap svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.footer-giant-wordmark {
+  font-family: var(--font-display);
+  font-size: clamp(5rem, 24vw, 22rem);
+  font-weight: 800;
+  line-height: 0.78;
+  letter-spacing: -0.05em;
+  color: rgba(255, 255, 255, 0.06);
+  user-select: none;
+  pointer-events: none;
+  margin-bottom: -0.1em;
+  overflow: hidden;
+  text-transform: lowercase;
+  position: relative;
+  z-index: 2;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1024px) {
+  .bento-card.col-8,
+  .bento-card.col-4,
+  .bento-card.col-6 { grid-column: span 12; }
+  .how-grid { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 32px; }
+  .testimonials-track { grid-template-columns: 1fr; }
+  .footer-top { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 640px) {
+  .hero-phones-stage { min-height: 440px; }
+  .phone-secondary, .phone-tertiary { display: none; }
+  .podium-wrap { flex-direction: column; align-items: stretch; }
+  .podium-col { height: auto !important; max-width: 100%; }
+  .stats-grid { grid-template-columns: 1fr; }
+  .footer-top { grid-template-columns: 1fr; }
+}

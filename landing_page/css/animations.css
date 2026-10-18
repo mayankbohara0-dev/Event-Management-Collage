@@ -1,0 +1,204 @@
+/* ==========================================================================
+   ZEST ANIMATIONS & KEYFRAMES
+   ========================================================================== */
+
+/* ── Sparkle Twinkle ─────────────────────────────────────────────────────── */
+@keyframes sparkleTwinkle {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.65) rotate(45deg);
+    opacity: 0.6;
+  }
+}
+
+/* ── Floating Stickers Drift ─────────────────────────────────────────────── */
+@keyframes floatDriftA {
+  0%, 100% {
+    transform: translateY(0px) rotate(-3deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(2deg);
+  }
+}
+
+@keyframes floatDriftB {
+  0%, 100% {
+    transform: translateY(0px) rotate(4deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(-2deg);
+  }
+}
+
+@keyframes floatDriftC {
+  0%, 100% {
+    transform: translateY(0px) rotate(-6deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(-1deg);
+  }
+}
+
+.float-a { animation: floatDriftA 4.2s ease-in-out infinite; }
+.float-b { animation: floatDriftB 5.1s ease-in-out infinite; }
+.float-c { animation: floatDriftC 3.8s ease-in-out infinite; }
+
+/* ── Infinite Marquee Strips ─────────────────────────────────────────────── */
+@keyframes marqueeLeft {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes marqueeRight {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+.marquee-track-left {
+  display: flex;
+  width: max-content;
+  animation: marqueeLeft 32s linear infinite;
+}
+
+.marquee-track-right {
+  display: flex;
+  width: max-content;
+  animation: marqueeRight 36s linear infinite;
+}
+
+.marquee:hover .marquee-track-left,
+.marquee:hover .marquee-track-right {
+  animation-play-state: paused;
+}
+
+/* ── QR Scanner Line ─────────────────────────────────────────────────────── */
+@keyframes scanLine {
+  0% { top: 10%; opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { top: 90%; opacity: 0; }
+}
+
+.scanner-laser {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-lime-1);
+  box-shadow: 0 0 10px var(--color-lime-1);
+  animation: scanLine 2.2s ease-in-out infinite;
+}
+
+/* ── Intro Screen Animation (FLIP-Style into Navbar) ─────────────────────── */
+.intro-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: #141416;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  transition: opacity 0.4s ease-out, visibility 0.4s ease-out;
+}
+
+.intro-screen.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.intro-icon-card {
+  width: clamp(200px, 30vw, 320px);
+  height: clamp(200px, 30vw, 320px);
+  position: relative;
+  border-radius: 22%;
+  overflow: hidden;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5), 0 0 50px rgba(184, 255, 26, 0.35);
+  transform-origin: center center;
+  will-change: transform, opacity;
+  transition: transform 0.48s cubic-bezier(0.16, 1, 0.3, 1), border-radius 0.48s ease;
+}
+
+.intro-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.intro-z-path {
+  transform: translate(60px, 60px);
+  opacity: 0;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+}
+
+.intro-icon-card.locked .intro-z-path {
+  transform: translate(0, 0);
+  opacity: 1;
+}
+
+.intro-sparkle-path {
+  transform-origin: 250px 227px;
+  transform: scale(0);
+  opacity: 0;
+  transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) 0.18s, opacity 0.25s ease 0.18s;
+}
+
+.intro-icon-card.locked .intro-sparkle-path {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* ── Pulse Badge ─────────────────────────────────────────────────────────── */
+@keyframes badgePulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(184, 255, 26, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(184, 255, 26, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(184, 255, 26, 0); }
+}
+
+/* ── Card Tilt Follow Glow ───────────────────────────────────────────────── */
+.tilt-card {
+  position: relative;
+  transition: transform 0.25s ease-out, box-shadow 0.25s ease-out;
+  transform-style: preserve-3d;
+}
+
+.card-glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: radial-gradient(400px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(184, 255, 26, 0.18), transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.tilt-card:hover .card-glow {
+  opacity: 1;
+}
+
+/* ── Accessibility: Reduced Motion ───────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .intro-screen {
+    display: none !important;
+  }
+  .marquee-track-left,
+  .marquee-track-right {
+    animation: none !important;
+    transform: none !important;
+  }
+  .float-a, .float-b, .float-c {
+    animation: none !important;
+  }
+}

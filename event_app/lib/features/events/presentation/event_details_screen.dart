@@ -5,8 +5,17 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:add_2_calendar/add_2_calendar.dart';
 import 'dart:async';
-import '../../../core/design_system.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_shadows.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/skeleton_loader.dart';
+import '../../../core/widgets/zest_button.dart';
 
+/// Zest Event Details Screen
+/// Displays hero event banner, countdown timer, seats remaining indicator,
+/// details highlights, description, calendar sync, and registration action.
 class EventDetailsScreen extends ConsumerStatefulWidget {
   final String eventId;
   const EventDetailsScreen({super.key, required this.eventId});
@@ -20,6 +29,7 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   bool _isLoading = true;
   String? _error;
   bool _isRegistered = false;
+  int _registrationCount = 0;
 
   @override
   void initState() {
@@ -35,7 +45,6 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
           .eq('id', widget.eventId)
           .maybeSingle();
 
-      // Check if already registered
       final user = Supabase.instance.client.auth.currentUser;
       bool alreadyRegistered = false;
       if (user != null) {
@@ -48,16 +57,28 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         alreadyRegistered = regRes != null;
       }
 
+      // Count total registrations for this event
+      final regCountRes = await Supabase.instance.client
+          .from('registrations')
+          .select('id')
+          .eq('event_id', widget.eventId);
+
       if (mounted) {
         setState(() {
           _event = res;
           _isRegistered = alreadyRegistered;
+          _registrationCount = (regCountRes as List).length;
           _isLoading = false;
         });
       }
     } catch (e) {
       debugPrint('Error fetching event: $e');
-      if (mounted) setState(() { _isLoading = false; _error = e.toString(); });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = e.toString();
+        });
+      }
     }
   }
 
@@ -66,348 +87,528 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     if (_isLoading) {
       return Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(backgroundColor: AppColors.green, title: const Text('Loading...')),
-        body: const Center(child: CircularProgressIndicator(color: AppColors.green)),
+        appBar: AppBar(
+          backgroundColor: AppColors.charcoal,
+          foregroundColor: Colors.white,
+          title: Text('Loading Event...', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        ),
+        body: const Padding(
+          padding: EdgeInsets.all(AppSpacing.pagePadding),
+          child: Column(
+            children: [
+              SkeletonLoader(height: 240),
+              SizedBox(height: AppSpacing.base),
+              SkeletonLoader(height: 32),
+              SizedBox(height: AppSpacing.sm),
+              SkeletonLoader(height: 60),
+            ],
+          ),
+        ),
       );
     }
 
     if (_error != null || _event == null) {
       return Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(backgroundColor: AppColors.green, foregroundColor: AppColors.white, title: const Text('Event')),
+        appBar: AppBar(
+          backgroundColor: AppColors.charcoal,
+          foregroundColor: Colors.white,
+          title: Text('Event Details', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        ),
         body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.event_busy_rounded, size: 64, color: AppColors.grey200),
-              const SizedBox(height: 16),
-              Text('Event not found', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700)),
-              if (_error != null) ...[
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Text(_error!, textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: 12, color: AppColors.grey400)),
-                ),
-              ],
-            ],
+          child: EmptyState(
+            emoji: '🔍',
+            title: 'Event Not Found',
+            subtitle: _error ?? 'This event might have been removed or is no longer accessible.',
+            actionLabel: 'Back to Feed',
+            onAction: () => context.pop(),
           ),
         ),
       );
     }
 
-    final title = _event!['title'] ?? '';
-    final shortDesc = _event!['short_description'] ?? '';
-    final longDesc = _event!['long_description'] ?? '';
-    final venue = _event!['venue'] ?? 'TBA';
-    final coverImage = _event!['cover_image_url'];
-    final category = _event!['event_categories']?['name'] ?? 'General';
-    final eligibility = _event!['eligibility'] ?? '';
-    final startDateStr = _event!['start_date'];
-    final endDateStr = _event!['end_date'];
-    
-    DateTime? startDate = startDateStr != null ? DateTime.tryParse(startDateStr)?.toLocal() : null;
-    DateTime? endDate = endDateStr != null ? DateTime.tryParse(endDateStr)?.toLocal() : null;
+    final title = _event!['title']?.toString() ?? 'Event';
+    final shortDesc = _event!['short_description']?.toString() ?? '';
+    final longDesc = _event!['long_description']?.toString() ?? '';
+    final venue = _event!['venue']?.toString() ?? 'Campus';
+    final coverImage = _event!['cover_image_url']?.toString();
+    final category = _event!['event_categories']?['name']?.toString() ?? 'General';
+    final eligibility = _event!['eligibility']?.toString() ?? '';
+    final maxCapacity = _event!['max_capacity'] != null
+        ? int.tryParse(_event!['max_capacity'].toString())
+        : null;
+
+    final startDateStr = _event!['start_date']?.toString();
+    final endDateStr = _event!['end_date']?.toString();
+
+    final DateTime? startDate = startDateStr != null ? DateTime.tryParse(startDateStr)?.toLocal() : null;
+    final DateTime? endDate = endDateStr != null ? DateTime.tryParse(endDateStr)?.toLocal() : null;
 
     final dateString = startDate != null
-        ? '${startDate.day}/${startDate.month}/${startDate.year}'
+        ? () {
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+            return '${days[startDate.weekday - 1]}, ${months[startDate.month - 1]} ${startDate.day}, ${startDate.year}';
+          }()
         : 'Date TBA';
-    
+
     final timeString = startDate != null
         ? '${startDate.hour.toString().padLeft(2, '0')}:${startDate.minute.toString().padLeft(2, '0')}'
         : 'Time TBA';
 
+    final isPast = startDate != null && startDate.isBefore(DateTime.now());
+
+    // Capacity calculation
+    final int? remainingSeats = maxCapacity != null ? (maxCapacity - _registrationCount) : null;
+    final double capacityProgress = (maxCapacity != null && maxCapacity > 0)
+        ? (_registrationCount / maxCapacity).clamp(0.0, 1.0)
+        : 0.0;
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: CustomScrollView(
-        slivers: [
-          // Header Image
-          SliverAppBar(
-            expandedHeight: 280,
-            pinned: true,
-            backgroundColor: AppColors.green,
-            flexibleSpace: FlexibleSpaceBar(
-              background: coverImage != null && coverImage.isNotEmpty
-                  ? Image.network(
-                      coverImage,
-                      cacheWidth: 1000,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          decoration: const BoxDecoration(gradient: AppColors.heroGradient),
-                          child: const Center(
-                            child: CircularProgressIndicator(color: Colors.white54, strokeWidth: 2),
-                          ),
-                        );
-                      },
-                      errorBuilder: (_, __, ___) => Container(
-                        decoration: const BoxDecoration(gradient: AppColors.heroGradient),
-                        child: const Center(
-                          child: Icon(Icons.event_rounded, size: 80, color: Colors.white24),
-                        ),
-                      ),
-                    )
-                  : Container(
-                      decoration: const BoxDecoration(gradient: AppColors.heroGradient),
-                      child: const Center(
-                        child: Icon(Icons.event_rounded, size: 80, color: Colors.white24),
-                      ),
-                    ),
-            ),
-            leading: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: GestureDetector(
-                onTap: () => context.pop(),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
-                ),
-              ),
-            ),
-            actions: [
-              if (startDate != null && endDate != null)
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
+      body: Stack(
+        children: [
+          CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            slivers: [
+              // Parallax Hero Header Image
+              SliverAppBar(
+                expandedHeight: 280,
+                pinned: true,
+                backgroundColor: AppColors.charcoal,
+                elevation: 0,
+                leading: Padding(
+                  padding: const EdgeInsets.all(8.0),
                   child: GestureDetector(
-                    onTap: () {
-                      final Event calEvent = Event(
-                        title: title,
-                        description: shortDesc,
-                        location: venue,
-                        startDate: startDate,
-                        endDate: endDate,
-                      );
-                      Add2Calendar.addEvent2Cal(calEvent);
-                    },
+                    onTap: () => context.pop(),
                     child: Container(
-                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.3),
+                        color: Colors.black.withValues(alpha: 0.45),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.calendar_month_rounded, color: Colors.white, size: 18),
+                      child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
                     ),
                   ),
                 ),
-            ],
-          ),
-          
-          // Content
-          SliverToBoxAdapter(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
-              ),
-              transform: Matrix4.translationValues(0, -20, 0),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Category badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.yellow,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        category.toUpperCase(),
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.black,
-                          letterSpacing: 1.0,
+                actions: [
+                  if (startDate != null && endDate != null)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 12.0),
+                      child: GestureDetector(
+                        onTap: () {
+                          final Event calEvent = Event(
+                            title: title,
+                            description: shortDesc,
+                            location: venue,
+                            startDate: startDate,
+                            endDate: endDate,
+                          );
+                          Add2Calendar.addEvent2Cal(calEvent);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.45),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.calendar_month_rounded, color: Colors.white, size: 20),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    if (startDate != null)
-                      _CountdownTimer(eventDate: startDate),
-                    if (startDate != null)
-                      const SizedBox(height: 16),
-                    
-                    // Title
-                    Text(
-                      title,
-                      style: GoogleFonts.inter(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.black,
-                        height: 1.1,
+                ],
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (coverImage != null && coverImage.isNotEmpty)
+                        Image.network(
+                          coverImage,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => _fallbackBanner(),
+                        )
+                      else
+                        _fallbackBanner(),
+                      // Bottom gradient overlay
+                      Positioned.fill(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withValues(alpha: 0.7),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Content Body
+              SliverToBoxAdapter(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(AppRadius.xl3),
+                      topRight: Radius.circular(AppRadius.xl3),
                     ),
-                    const SizedBox(height: 16),
-                    
-                    // Key Details Cards
-                    Row(
+                  ),
+                  transform: Matrix4.translationValues(0, -24, 0),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(AppSpacing.pagePadding, 24, AppSpacing.pagePadding, 140),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(child: _InfoTile(icon: Icons.calendar_today_rounded, label: 'Date', value: dateString)),
-                        const SizedBox(width: 12),
-                        Expanded(child: _InfoTile(icon: Icons.access_time_rounded, label: 'Time', value: timeString)),
+                        // Category pill & status
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                              decoration: BoxDecoration(
+                                gradient: AppColors.zestGradient,
+                                borderRadius: AppRadius.circularPill,
+                              ),
+                              child: Text(
+                                category.toUpperCase(),
+                                style: GoogleFonts.poppins(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                            ),
+                            const Spacer(),
+                            if (_isRegistered)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: AppColors.tealLight,
+                                  borderRadius: AppRadius.circularPill,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.check_circle_rounded, size: 14, color: AppColors.teal),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Pass Confirmed',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.teal,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+
+                        const SizedBox(height: AppSpacing.base),
+
+                        // Title
+                        Text(
+                          title,
+                          style: GoogleFonts.poppins(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.charcoal,
+                            height: 1.2,
+                          ),
+                        ),
+
+                        if (shortDesc.isNotEmpty) ...[
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            shortDesc,
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.coral,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: AppSpacing.lg),
+
+                        // Countdown Timer Card
+                        if (startDate != null && !isPast) ...[
+                          _ZestCountdownCard(eventDate: startDate),
+                          const SizedBox(height: AppSpacing.base),
+                        ],
+
+                        // Capacity Bar if set
+                        if (maxCapacity != null && maxCapacity > 0) ...[
+                          Container(
+                            padding: const EdgeInsets.all(AppSpacing.base),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: AppRadius.circularLg,
+                              boxShadow: AppShadows.card,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Seat Availability',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.charcoal,
+                                      ),
+                                    ),
+                                    Text(
+                                      remainingSeats != null && remainingSeats > 0
+                                          ? '$remainingSeats spots left ⚡'
+                                          : 'Sold Out!',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: (remainingSeats != null && remainingSeats <= 5)
+                                            ? AppColors.error
+                                            : AppColors.teal,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                ClipRRect(
+                                  borderRadius: AppRadius.circularPill,
+                                  child: LinearProgressIndicator(
+                                    value: capacityProgress,
+                                    minHeight: 8,
+                                    backgroundColor: AppColors.grey100,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      capacityProgress > 0.9 ? AppColors.coral : AppColors.teal,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.base),
+                        ],
+
+                        // Key Information Highlights
+                        Text(
+                          'Event Highlights 📍',
+                          style: GoogleFonts.poppins(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.charcoal,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _ZestDetailTile(
+                                icon: Icons.calendar_today_rounded,
+                                label: 'Date',
+                                value: dateString,
+                                iconColor: AppColors.coral,
+                                iconBg: AppColors.coralLight,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: _ZestDetailTile(
+                                icon: Icons.access_time_rounded,
+                                label: 'Time',
+                                value: timeString,
+                                iconColor: AppColors.mustard,
+                                iconBg: AppColors.mustardLight,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: AppSpacing.sm),
+
+                        _ZestDetailTile(
+                          icon: Icons.location_on_outlined,
+                          label: 'Venue',
+                          value: venue,
+                          iconColor: AppColors.teal,
+                          iconBg: AppColors.tealLight,
+                        ),
+
+                        if (eligibility.isNotEmpty) ...[
+                          const SizedBox(height: AppSpacing.sm),
+                          _ZestDetailTile(
+                            icon: Icons.verified_user_outlined,
+                            label: 'Eligibility',
+                            value: eligibility,
+                            iconColor: AppColors.periwinkle,
+                            iconBg: AppColors.periwinkleLight,
+                          ),
+                        ],
+
+                        const SizedBox(height: AppSpacing.xl),
+
+                        // Long Description
+                        Text(
+                          'About this Event 📖',
+                          style: GoogleFonts.poppins(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.charcoal,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+
+                        Text(
+                          longDesc.isNotEmpty ? longDesc : 'No additional information provided.',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: AppColors.grey600,
+                            height: 1.6,
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    _InfoTile(icon: Icons.location_on_rounded, label: 'Venue', value: venue),
-                    if (eligibility.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      _InfoTile(icon: Icons.verified_user_rounded, label: 'Eligibility', value: eligibility),
-                    ],
-                    
-                    const SizedBox(height: 32),
-                    
-                    // Description
-                    Text('About the Event',
-                        style: GoogleFonts.inter(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.black)),
-                    const SizedBox(height: 12),
-                    if (shortDesc.isNotEmpty) ...[
-                      Text(shortDesc,
-                          style: GoogleFonts.inter(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.green,
-                              height: 1.5)),
-                      const SizedBox(height: 12),
-                    ],
-                    Text(longDesc.isNotEmpty ? longDesc : 'No additional information provided.',
-                        style: GoogleFonts.inter(
-                            fontSize: 15,
-                            color: AppColors.grey600,
-                            height: 1.6)),
-                    const SizedBox(height: 100), // spacing for bottom nav
-                  ],
+                  ),
                 ),
+              ),
+            ],
+          ),
+
+          // Sticky Bottom Registration Bar
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.pagePadding, 16, AppSpacing.pagePadding, 24),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                boxShadow: AppShadows.hero,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl2)),
+              ),
+              child: SafeArea(
+                top: false,
+                child: _buildActionButton(context, isPast),
               ),
             ),
           ),
         ],
       ),
-      // Floating Action Button for Registration
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              offset: const Offset(0, -4),
-              blurRadius: 10,
-            ),
-          ],
+    );
+  }
+
+  Widget _buildActionButton(BuildContext context, bool isPast) {
+    if (isPast) {
+      return ZestButton(
+        label: 'Event Concluded 🏁',
+        variant: ZestButtonVariant.ghost,
+        fullWidth: true,
+        onPressed: null,
+      );
+    }
+
+    if (_isRegistered) {
+      return ZestButton(
+        label: 'View Your Entry Pass 🎟️',
+        icon: Icons.confirmation_number_rounded,
+        variant: ZestButtonVariant.secondary,
+        fullWidth: true,
+        onPressed: () => context.go('/student/home'),
+      );
+    }
+
+    return ZestButton(
+      label: 'Claim Your Spot ⚡',
+      icon: Icons.bolt_rounded,
+      fullWidth: true,
+      onPressed: () => context.push('/student/event/${widget.eventId}/register'),
+    );
+  }
+
+  Widget _fallbackBanner() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.charcoal, Color(0xFF1E293B)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        child: _isRegistered
-            ? Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      offset: const Offset(0, -4),
-                      blurRadius: 10,
-                    ),
-                  ],
-                ),
-                child: ElevatedButton.icon(
-                  onPressed: null,
-                  icon: const Icon(Icons.check_circle_rounded, color: AppColors.green),
-                  label: Text(
-                    'Already Registered ✓',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.green,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.greenLight,
-                    disabledBackgroundColor: AppColors.greenLight,
-                    disabledForegroundColor: AppColors.green,
-                    minimumSize: const Size(double.infinity, 54),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                    elevation: 0,
-                  ),
-                ),
-              )
-            : Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      offset: const Offset(0, -4),
-                      blurRadius: 10,
-                    ),
-                  ],
-                ),
-                child: ElevatedButton(
-                  onPressed: () => context.push('/student/event/${widget.eventId}/register'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.green,
-                    minimumSize: const Size(double.infinity, 54),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Register Now',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.white,
-                    ),
-                  ),
-                ),
-              ),
+      ),
+      child: const Center(
+        child: Icon(Icons.event_rounded, size: 72, color: Colors.white24),
       ),
     );
   }
 }
 
-class _InfoTile extends StatelessWidget {
+class _ZestDetailTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  const _InfoTile({required this.icon, required this.label, required this.value});
+  final Color iconColor;
+  final Color iconBg;
+
+  const _ZestDetailTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.iconColor,
+    required this.iconBg,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.base),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.grey200),
+        color: AppColors.surface,
+        borderRadius: AppRadius.circularLg,
+        boxShadow: AppShadows.card,
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: AppColors.greenLight,
-              borderRadius: BorderRadius.circular(10),
+              color: iconBg,
+              borderRadius: AppRadius.circularMd,
             ),
-            child: Icon(icon, color: AppColors.green, size: 18),
+            child: Icon(icon, color: iconColor, size: 20),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: GoogleFonts.inter(fontSize: 12, color: AppColors.grey400, fontWeight: FontWeight.w600)),
+                Text(
+                  label,
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: AppColors.grey400,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(value, style: GoogleFonts.inter(fontSize: 14, color: AppColors.black, fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis),
+                Text(
+                  value,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: AppColors.charcoal,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
           ),
@@ -417,15 +618,16 @@ class _InfoTile extends StatelessWidget {
   }
 }
 
-class _CountdownTimer extends StatefulWidget {
+/// Zest countdown card with energetic digits
+class _ZestCountdownCard extends StatefulWidget {
   final DateTime eventDate;
-  const _CountdownTimer({required this.eventDate});
+  const _ZestCountdownCard({required this.eventDate});
 
   @override
-  State<_CountdownTimer> createState() => _CountdownTimerState();
+  State<_ZestCountdownCard> createState() => _ZestCountdownCardState();
 }
 
-class _CountdownTimerState extends State<_CountdownTimer> {
+class _ZestCountdownCardState extends State<_ZestCountdownCard> {
   late Timer _timer;
   Duration _timeLeft = Duration.zero;
 
@@ -433,24 +635,18 @@ class _CountdownTimerState extends State<_CountdownTimer> {
   void initState() {
     super.initState();
     _updateTime();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      _updateTime();
-    });
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _updateTime());
   }
 
   void _updateTime() {
     final now = DateTime.now();
     if (widget.eventDate.isAfter(now)) {
       if (mounted) {
-        setState(() {
-          _timeLeft = widget.eventDate.difference(now);
-        });
+        setState(() => _timeLeft = widget.eventDate.difference(now));
       }
     } else {
       if (mounted) {
-        setState(() {
-          _timeLeft = Duration.zero;
-        });
+        setState(() => _timeLeft = Duration.zero);
       }
       _timer.cancel();
     }
@@ -462,51 +658,87 @@ class _CountdownTimerState extends State<_CountdownTimer> {
     super.dispose();
   }
 
-  Widget _buildTimeSegment(String value, String label) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: AppColors.greenLight,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.green.withOpacity(0.3)),
-          ),
-          child: Text(
-            value,
-            style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.green),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.grey400),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_timeLeft == Duration.zero) return const SizedBox.shrink();
 
-    return Row(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: AppRadius.circularLg,
+        boxShadow: AppShadows.card,
+        border: Border.all(color: AppColors.mustardLight, width: 2),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          Row(
+            children: [
+              const Text('⏱️', style: TextStyle(fontSize: 20)),
+              const SizedBox(width: 8),
+              Text(
+                'Starts in',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.charcoal,
+                ),
+              ),
+            ],
+          ),
+          _timeDigit(_timeLeft.inDays.toString().padLeft(2, '0'), 'DAYS'),
+          _colon(),
+          _timeDigit((_timeLeft.inHours % 24).toString().padLeft(2, '0'), 'HRS'),
+          _colon(),
+          _timeDigit((_timeLeft.inMinutes % 60).toString().padLeft(2, '0'), 'MIN'),
+          _colon(),
+          _timeDigit((_timeLeft.inSeconds % 60).toString().padLeft(2, '0'), 'SEC'),
+        ],
+      ),
+    );
+  }
+
+  Widget _colon() {
+    return Text(
+      ':',
+      style: GoogleFonts.poppins(
+        fontSize: 18,
+        fontWeight: FontWeight.w900,
+        color: AppColors.mustard,
+      ),
+    );
+  }
+
+  Widget _timeDigit(String val, String label) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        _buildTimeSegment(_timeLeft.inDays.toString().padLeft(2, '0'), 'DAYS'),
-        const SizedBox(width: 8),
-        Text(':', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.grey400)),
-        const SizedBox(width: 8),
-        _buildTimeSegment((_timeLeft.inHours % 24).toString().padLeft(2, '0'), 'HOURS'),
-        const SizedBox(width: 8),
-        Text(':', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.grey400)),
-        const SizedBox(width: 8),
-        _buildTimeSegment((_timeLeft.inMinutes % 60).toString().padLeft(2, '0'), 'MINS'),
-        const SizedBox(width: 8),
-        Text(':', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.grey400)),
-        const SizedBox(width: 8),
-        _buildTimeSegment((_timeLeft.inSeconds % 60).toString().padLeft(2, '0'), 'SECS'),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppColors.mustardLight,
+            borderRadius: AppRadius.circularSm,
+          ),
+          child: Text(
+            val,
+            style: GoogleFonts.poppins(
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+              color: AppColors.charcoal,
+            ),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+            color: AppColors.grey400,
+          ),
+        ),
       ],
     );
   }
 }
-
