@@ -79,7 +79,6 @@ export default function Mascot({
 
   const [isBlinking, setIsBlinking] = useState(false);
   const [eyeOffset, setEyeOffset] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
 
   const colors = TINT_CONFIG[tint] || TINT_CONFIG.blue;
   const rawId = React.useId();
@@ -144,8 +143,6 @@ export default function Mascot({
       ref={mascotRef}
       className={`inline-block select-none cursor-pointer ${className}`}
       onClick={onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       whileHover={
         interactive && !reducedMotion
           ? {

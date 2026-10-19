@@ -13,7 +13,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import SectionHeading from "@/components/brand/SectionHeading";
-import { landingData, FeatureItem } from "@/lib/landing-data";
+import { landingData } from "@/lib/landing-data";
 
 const ICON_MAP: Record<string, React.ElementType> = {
   QrCode,

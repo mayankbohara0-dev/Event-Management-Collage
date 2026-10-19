@@ -215,7 +215,7 @@ export default function HowItWorks() {
                 >
                   {isRegistered ? (
                     <>
-                      <Check size={14} /> You're in!
+                      <Check size={14} /> You&apos;re in!
                     </>
                   ) : (
                     <>Autofilling details...</>

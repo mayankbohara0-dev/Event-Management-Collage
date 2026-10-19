@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { wordMaskContainer, wordMaskChild, reducedMotionVariants } from "@/lib/motion";
+import { wordMaskContainer, wordMaskChild } from "@/lib/motion";
 
 interface HeadingParts {
   prefix: string;

@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
-  Sparkles,
   BarChart3,
   PlusCircle,
   Sliders,
@@ -13,7 +12,6 @@ import {
   CheckCircle2,
   ShieldAlert,
   Zap,
-  ArrowRight,
   Check,
 } from "lucide-react";
 import SectionHeading from "@/components/brand/SectionHeading";

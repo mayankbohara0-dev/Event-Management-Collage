@@ -1,7 +1,7 @@
 "use client";
 
 import React, { ReactNode } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
 
 export type MeshRecipe = "sky" | "sunset" | "violet" | "mint";
 
@@ -9,14 +9,12 @@ interface MeshCardProps {
   recipe?: MeshRecipe;
   children: ReactNode;
   className?: string;
-  enableTilt?: boolean;
 }
 
 export default function MeshCard({
   recipe = "sky",
   children,
   className = "",
-  enableTilt = false,
 }: MeshCardProps) {
   const reducedMotion = useReducedMotion();
 

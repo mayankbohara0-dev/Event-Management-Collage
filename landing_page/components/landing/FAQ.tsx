@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Mail, MessageCircle, ArrowRight } from "lucide-react";
+import { Plus, Mail } from "lucide-react";
 import SectionHeading from "@/components/brand/SectionHeading";
 import MeshCard from "@/components/brand/MeshCard";
 import MagneticButton from "@/components/brand/MagneticButton";

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, useInView, useReducedMotion } from "framer-motion";
-import { Trophy, Crown, Flame, Sparkles, CheckCircle2, TrendingUp } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
+import { Trophy, Crown, Flame, Sparkles } from "lucide-react";
 import SectionHeading from "@/components/brand/SectionHeading";
 import { landingData } from "@/lib/landing-data";
 

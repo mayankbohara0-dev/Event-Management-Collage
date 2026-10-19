@@ -2,10 +2,10 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { Calendar as CalendarIcon, Clock, MapPin, Sparkles, X } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, MapPin, Sparkles } from "lucide-react";
 import MagneticButton from "@/components/brand/MagneticButton";
 import Mascot, { MascotTint } from "@/components/brand/Mascot";
-import { landingData, CalendarEvent } from "@/lib/landing-data";
+import { landingData } from "@/lib/landing-data";
 
 export default function FinalCTA() {
   const { headingParts, subtitle, ctaPrimary, ctaSecondary, calendarWidget } =

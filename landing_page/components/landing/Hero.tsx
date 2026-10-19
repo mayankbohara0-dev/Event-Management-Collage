@@ -2,7 +2,7 @@
 
 import React, { useRef } from "react";
 import { motion, useMotionValue, useTransform, useReducedMotion } from "framer-motion";
-import { Sparkles, Calendar, MapPin, CheckCircle2, ChevronRight, Zap } from "lucide-react";
+import { Sparkles, Calendar, MapPin, CheckCircle2, Zap } from "lucide-react";
 import SectionHeading from "@/components/brand/SectionHeading";
 import MagneticButton from "@/components/brand/MagneticButton";
 import MeshCard from "@/components/brand/MeshCard";
@@ -125,7 +125,7 @@ export default function Hero() {
                       <div className="h-full bg-gradient-to-r from-[#6CE3FF] to-[#FFD84D] w-[71%] rounded-full" />
                     </div>
                     <div className="text-[10px] text-white/70 mt-1 flex justify-between">
-                      <span>Batch '26</span>
+                      <span>Batch &apos;26</span>
                       <span>580 XP to Level 5</span>
                     </div>
                   </div>

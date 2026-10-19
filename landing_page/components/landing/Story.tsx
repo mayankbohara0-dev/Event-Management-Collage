@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useRef } from "react";
-import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
-import { Sparkles, Heart } from "lucide-react";
+import { motion, useScroll, useTransform, useReducedMotion, type MotionValue } from "framer-motion";
+import { Heart } from "lucide-react";
 import BlobLogo from "@/components/brand/BlobLogo";
 import { landingData } from "@/lib/landing-data";
 
-function Word({ children, progress, range }: { children: string; progress: any; range: [number, number] }) {
+function Word({ children, progress, range }: { children: string; progress: MotionValue<number>; range: [number, number] }) {
   const opacity = useTransform(progress, range, [0.22, 1]);
   return (
     <span className="relative inline-block mr-[0.28em] my-1">

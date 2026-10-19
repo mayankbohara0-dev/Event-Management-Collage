@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { motion, useMotionValue, useTransform, useReducedMotion } from "framer-motion";
-import { QrCode, Sparkles, Check, RotateCcw, Calendar, MapPin, User, ShieldCheck } from "lucide-react";
+import { QrCode, Sparkles, Check, RotateCcw, Calendar, MapPin } from "lucide-react";
 import confetti from "canvas-confetti";
 import SectionHeading from "@/components/brand/SectionHeading";
 import MagneticButton from "@/components/brand/MagneticButton";
@@ -25,6 +25,8 @@ export default function PassDemo() {
   const rotateY = useTransform(mouseX, [-200, 200], [-8, 8]);
   const glareX = useTransform(mouseX, [-200, 200], [0, 100]);
   const glareY = useTransform(mouseY, [-200, 200], [0, 100]);
+  const glareXPercent = useTransform(glareX, (v) => `${v}%`);
+  const glareYPercent = useTransform(glareY, (v) => `${v}%`);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (reducedMotion || !ticketRef.current) return;
@@ -126,9 +128,9 @@ export default function PassDemo() {
                   className="absolute inset-0 pointer-events-none opacity-25 bg-[radial-gradient(circle_at_var(--gx)_var(--gy),rgba(255,255,255,0.8)_0%,transparent_60%)]"
                   style={
                     {
-                      "--gx": useTransform(glareX, (v) => `${v}%`),
-                      "--gy": useTransform(glareY, (v) => `${v}%`),
-                    } as any
+                      "--gx": glareXPercent,
+                      "--gy": glareYPercent,
+                    } as unknown as React.CSSProperties
                   }
                 />
               )}

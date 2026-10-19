@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
-import { Check, Clock, Lock, ArrowRight, Sparkles } from "lucide-react";
+import { Check, Clock, Lock } from "lucide-react";
 import SectionHeading from "@/components/brand/SectionHeading";
 import MeshCard from "@/components/brand/MeshCard";
 import MagneticButton from "@/components/brand/MagneticButton";

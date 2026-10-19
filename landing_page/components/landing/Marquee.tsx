@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { Users2, Compass } from "lucide-react";
 import { landingData } from "@/lib/landing-data";
 
 export default function Marquee() {
