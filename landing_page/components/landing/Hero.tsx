@@ -41,12 +41,12 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative pt-[120px] pb-[72px] lg:pt-[150px] lg:pb-[110px] overflow-hidden">
+    <section className="relative pt-[100px] pb-[60px] sm:pt-[120px] sm:pb-[72px] lg:pt-[150px] lg:pb-[110px] overflow-hidden">
       {/* Background radial glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-gradient-to-tr from-[var(--sky)]/15 via-[var(--core)]/10 to-transparent blur-[120px] pointer-events-none -z-10" />
 
-      <div className="max-w-[1200px] mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+      <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
           {/* Left Column: Headline & CTAs */}
           <div className="lg:col-span-7 flex flex-col items-start text-left">
             <SectionHeading
@@ -59,17 +59,17 @@ export default function Hero() {
             />
 
             {/* CTAs */}
-            <div className="flex flex-wrap items-center gap-4 mt-8">
-              <MagneticButton variant="primary" href={heroData.ctaPrimary.href}>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mt-6 sm:mt-8 w-full sm:w-auto">
+              <MagneticButton variant="primary" href={heroData.ctaPrimary.href} className="w-full sm:w-auto text-center">
                 {heroData.ctaPrimary.label}
               </MagneticButton>
-              <MagneticButton variant="secondary" href={heroData.ctaSecondary.href}>
+              <MagneticButton variant="secondary" href={heroData.ctaSecondary.href} className="w-full sm:w-auto text-center">
                 {heroData.ctaSecondary.label}
               </MagneticButton>
             </div>
 
             {/* Micro-line */}
-            <p className="text-[13px] text-[var(--ink-3)] font-medium mt-4 tracking-wide">
+            <p className="text-[12px] sm:text-[13px] text-[var(--ink-3)] font-medium mt-3.5 sm:mt-4 tracking-wide">
               {heroData.microcopy}
             </p>
           </div>
@@ -79,16 +79,16 @@ export default function Hero() {
             ref={cardRef}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
-            className="lg:col-span-5 relative flex justify-center perspective-[1200px]"
+            className="lg:col-span-5 relative flex justify-center perspective-[1200px] mt-4 lg:mt-0"
           >
             {/* Mascot peeking over card top-right */}
             <motion.div
-              className="absolute -top-12 right-2 sm:right-6 z-20 pointer-events-auto"
+              className="absolute -top-10 sm:-top-12 right-2 sm:right-6 z-20 pointer-events-auto"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.5, duration: 0.6, ease: easeOutExpo }}
             >
-              <Mascot size={90} tint="lemon" />
+              <Mascot size={75} tint="lemon" />
             </motion.div>
 
             {/* Main Sky Mesh Card (Designjoy style) */}
@@ -208,10 +208,10 @@ export default function Hero() {
                       transition: { duration: 4.2, repeat: Infinity, ease: "easeInOut" },
                     }
               }
-              className="absolute -left-6 top-16 z-30 bg-white/90 backdrop-blur-md px-3.5 py-2 rounded-full border border-white/80 shadow-[0_8px_24px_rgba(11,18,32,0.1)] flex items-center gap-2 text-[12px] font-semibold text-[var(--ink)]"
+              className="absolute left-1 sm:-left-6 top-10 sm:top-16 z-30 bg-white/95 backdrop-blur-md px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-full border border-white/80 shadow-[0_8px_24px_rgba(11,18,32,0.1)] flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-[12px] font-semibold text-[var(--ink)]"
             >
-              <span className="w-5 h-5 rounded-full bg-[#ECFDF5] text-[#10B981] flex items-center justify-center">
-                <CheckCircle2 size={12} />
+              <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#ECFDF5] text-[#10B981] flex items-center justify-center">
+                <CheckCircle2 size={11} />
               </span>
               <span>Pass verified ✓</span>
             </motion.div>
@@ -227,10 +227,10 @@ export default function Hero() {
                       transition: { duration: 3.6, repeat: Infinity, ease: "easeInOut", delay: 0.4 },
                     }
               }
-              className="absolute -right-6 bottom-20 z-30 bg-white/90 backdrop-blur-md px-3.5 py-2 rounded-full border border-white/80 shadow-[0_8px_24px_rgba(11,18,32,0.1)] flex items-center gap-2 text-[12px] font-semibold text-[var(--ink)]"
+              className="absolute right-1 sm:-right-6 bottom-16 sm:bottom-20 z-30 bg-white/95 backdrop-blur-md px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-full border border-white/80 shadow-[0_8px_24px_rgba(11,18,32,0.1)] flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-[12px] font-semibold text-[var(--ink)]"
             >
-              <span className="w-5 h-5 rounded-full bg-[#FEF3C7] text-[#D97706] flex items-center justify-center">
-                <Sparkles size={12} />
+              <span className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-[#FEF3C7] text-[#D97706] flex items-center justify-center">
+                <Sparkles size={11} />
               </span>
               <span className="text-[#0AA5F0] font-bold">+80 XP</span>
             </motion.div>
@@ -246,9 +246,9 @@ export default function Hero() {
                       transition: { duration: 4.8, repeat: Infinity, ease: "easeInOut", delay: 0.8 },
                     }
               }
-              className="absolute left-4 -bottom-4 z-30 bg-white/90 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/80 shadow-[0_8px_24px_rgba(11,18,32,0.1)] flex items-center gap-1.5 text-[11px] font-semibold text-[var(--coral)]"
+              className="absolute left-2 sm:left-4 -bottom-3 sm:-bottom-4 z-30 bg-white/95 backdrop-blur-md px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full border border-white/80 shadow-[0_8px_24px_rgba(11,18,32,0.1)] flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-[11px] font-semibold text-[var(--coral)]"
             >
-              <Zap size={12} className="fill-[var(--coral)]" />
+              <Zap size={11} className="fill-[var(--coral)]" />
               <span>5 spots left ⚡</span>
             </motion.div>
           </div>

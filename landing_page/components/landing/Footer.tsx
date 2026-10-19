@@ -8,9 +8,9 @@ export default function Footer() {
   const { brandName, tagline, links, madeBy, copyrightYear } = landingData.footer;
 
   return (
-    <footer className="bg-white border-t border-[var(--line)] py-12 text-[var(--ink)]">
-      <div className="max-w-[1200px] mx-auto px-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-[var(--line)]">
+    <footer className="bg-white border-t border-[var(--line)] py-10 sm:py-12 text-[var(--ink)]">
+      <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
+        <div className="flex flex-col items-center sm:flex-row sm:items-center justify-between gap-5 sm:gap-6 pb-6 sm:pb-8 border-b border-[var(--line)]">
           {/* Logo & Tagline */}
           <div className="flex items-center gap-3">
             <BlobLogo size={32} />

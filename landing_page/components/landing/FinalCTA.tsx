@@ -29,13 +29,13 @@ export default function FinalCTA() {
   const activeEvent = calendarWidget.events.find((e) => e.day === selectedDay);
 
   return (
-    <section id="contact" className="bg-[var(--ink)] text-white pt-[90px] pb-12 sm:pb-16 relative overflow-hidden">
+    <section id="contact" className="bg-[var(--ink)] text-white pt-[70px] lg:pt-[90px] pb-12 sm:pb-16 relative overflow-hidden">
       {/* Background radial ambient lights */}
       <div className="absolute top-1/3 left-1/4 w-[600px] h-[400px] bg-[var(--core)]/10 blur-[130px] rounded-full pointer-events-none" />
       <div className="absolute bottom-10 right-1/4 w-[500px] h-[350px] bg-[var(--sky)]/10 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="max-w-[1200px] mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
           {/* Left Column: Heading & CTAs */}
           <div className="lg:col-span-6 text-left">
             <h2 className="heading-h2 text-white">
@@ -46,18 +46,18 @@ export default function FinalCTA() {
               {headingParts.suffix}
             </h2>
 
-            <p className="body-lead text-gray-300 mt-6 max-w-[500px]">
+            <p className="body-lead text-gray-300 mt-4 sm:mt-6 max-w-[500px]">
               {subtitle}
             </p>
 
-            <div className="flex flex-wrap items-center gap-4 mt-8">
-              <MagneticButton variant="primary" href={ctaPrimary.href}>
+            <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 sm:gap-4 mt-6 sm:mt-8">
+              <MagneticButton variant="primary" href={ctaPrimary.href} className="w-full sm:w-auto text-center">
                 {ctaPrimary.label}
               </MagneticButton>
               <MagneticButton
                 variant="secondary"
                 href={ctaSecondary.href}
-                className="bg-white/10 text-white border-white/20 hover:bg-white/15"
+                className="w-full sm:w-auto text-center bg-white/10 text-white border-white/20 hover:bg-white/15"
               >
                 {ctaSecondary.label}
               </MagneticButton>
@@ -157,12 +157,12 @@ export default function FinalCTA() {
         </div>
 
         {/* Bottom: Pile of 7 coloured Mascot blobs that drop in with spring physics */}
-        <div className="mt-20 pt-10 border-t border-gray-800/80">
-          <p className="text-center text-[12px] font-bold tracking-widest text-gray-400 uppercase mb-8">
+        <div className="mt-14 sm:mt-20 pt-8 sm:pt-10 border-t border-gray-800/80">
+          <p className="text-center text-[12px] font-bold tracking-widest text-gray-400 uppercase mb-6 sm:mb-8">
             MEET THE ZEST MASCOT CREW
           </p>
 
-          <div className="flex flex-wrap items-end justify-center gap-3 sm:gap-6 pb-2">
+          <div className="flex flex-wrap items-end justify-center gap-2 sm:gap-6 pb-2">
             {mascotTints.map((tint, i) => (
               <motion.div
                 key={`${tint}-${i}`}
@@ -190,7 +190,12 @@ export default function FinalCTA() {
                 }
                 className="cursor-pointer"
               >
-                <Mascot size={i === 3 ? 100 : 80} tint={tint} />
+                <div className="sm:hidden">
+                  <Mascot size={i === 3 ? 75 : 60} tint={tint} />
+                </div>
+                <div className="hidden sm:block">
+                  <Mascot size={i === 3 ? 100 : 80} tint={tint} />
+                </div>
               </motion.div>
             ))}
           </div>

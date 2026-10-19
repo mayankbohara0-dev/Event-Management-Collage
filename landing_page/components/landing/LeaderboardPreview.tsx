@@ -32,9 +32,9 @@ export default function LeaderboardPreview() {
   }, [reducedMotion]);
 
   return (
-    <section className="py-[72px] lg:py-[120px] relative">
-      <div className="max-w-[1200px] mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+    <section className="py-[60px] lg:py-[120px] relative">
+      <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
           {/* Left Column: Copy & Bullets */}
           <div className="lg:col-span-5 text-left">
             <SectionHeading
@@ -46,7 +46,7 @@ export default function LeaderboardPreview() {
             />
 
             {/* 3 Bullets */}
-            <div className="mt-8 space-y-4">
+            <div className="mt-6 sm:mt-8 space-y-4">
               {bullets.map((bullet, idx) => (
                 <motion.div
                   key={bullet.title}
@@ -66,10 +66,10 @@ export default function LeaderboardPreview() {
                     )}
                   </div>
                   <div>
-                    <h4 className="text-[15px] font-semibold text-[var(--ink)]">
+                    <h4 className="text-[14px] sm:text-[15px] font-semibold text-[var(--ink)]">
                       {bullet.title}
                     </h4>
-                    <p className="text-[13px] text-[var(--ink-2)] mt-0.5 leading-relaxed">
+                    <p className="text-[12px] sm:text-[13px] text-[var(--ink-2)] mt-0.5 leading-relaxed">
                       {bullet.desc}
                     </p>
                   </div>
@@ -79,89 +79,89 @@ export default function LeaderboardPreview() {
           </div>
 
           {/* Right Column: Animated Podium + Ranking Rows */}
-          <div className="lg:col-span-7 bg-white rounded-[32px] p-6 sm:p-8 border border-[var(--line)] shadow-[0_10px_40px_rgba(11,18,32,0.06)]">
+          <div className="lg:col-span-7 bg-white rounded-[28px] sm:rounded-[32px] p-4 sm:p-6 lg:p-8 border border-[var(--line)] shadow-[0_10px_40px_rgba(11,18,32,0.06)]">
             {/* Header with live dot */}
-            <div className="flex items-center justify-between pb-6 border-b border-[var(--line)]">
+            <div className="flex items-center justify-between pb-4 sm:pb-6 border-b border-[var(--line)]">
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--ink-3)]">
+                <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[var(--ink-3)]">
                   Weekly Campus Arena
                 </span>
-                <h3 className="text-[18px] font-bold text-[var(--ink)]">
+                <h3 className="text-[16px] sm:text-[18px] font-bold text-[var(--ink)]">
                   Top Event Explorers
                 </h3>
               </div>
-              <div className="flex items-center gap-2 bg-[#ECFDF5] border border-[#A7F3D0] px-3 py-1 rounded-full text-[12px] font-bold text-[#059669]">
+              <div className="flex items-center gap-1.5 sm:gap-2 bg-[#ECFDF5] border border-[#A7F3D0] px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-[12px] font-bold text-[#059669]">
                 <span className="w-2 h-2 rounded-full bg-[#10B981] animate-ping" />
                 <span>LIVE</span>
               </div>
             </div>
 
             {/* Animated Podium (1st taller in center with Crown, 2nd, 3rd) */}
-            <div className="pt-8 pb-6 flex items-end justify-center gap-3 sm:gap-6 border-b border-[var(--line)] select-none">
+            <div className="pt-6 sm:pt-8 pb-4 sm:pb-6 flex items-end justify-center gap-2 sm:gap-6 border-b border-[var(--line)] select-none">
               {/* 2nd Place */}
-              <div className="flex flex-col items-center flex-1 max-w-[110px]">
-                <div className="w-11 h-11 rounded-full bg-[#E2E8F0] border-2 border-white shadow-md flex items-center justify-center text-[13px] font-bold text-gray-700 mb-1.5">
+              <div className="flex flex-col items-center flex-1 max-w-[90px] sm:max-w-[110px]">
+                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#E2E8F0] border-2 border-white shadow-md flex items-center justify-center text-[12px] sm:text-[13px] font-bold text-gray-700 mb-1.5">
                   {podium[1].name.substring(0, 2)}
                 </div>
-                <span className="text-[12px] font-semibold text-[var(--ink)] truncate max-w-[90px]">
+                <span className="text-[11px] sm:text-[12px] font-semibold text-[var(--ink)] truncate max-w-[80px] sm:max-w-[90px]">
                   {podium[1].name}
                 </span>
-                <span className="text-[11px] font-bold text-[var(--blue)]">
+                <span className="text-[10px] sm:text-[11px] font-bold text-[var(--blue)]">
                   {podium[1].xp} XP
                 </span>
                 <motion.div
                   initial={{ height: 0 }}
-                  whileInView={{ height: 85 }}
+                  whileInView={{ height: 75 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.6, delay: 0.1 }}
-                  className="w-full bg-[#F1F5F9] rounded-t-[14px] mt-2 flex flex-col items-center justify-center text-gray-400 font-bold text-[18px] border border-[var(--line)]"
+                  className="w-full bg-[#F1F5F9] rounded-t-[12px] sm:rounded-t-[14px] mt-2 flex flex-col items-center justify-center text-gray-400 font-bold text-[16px] sm:text-[18px] border border-[var(--line)]"
                 >
                   2
                 </motion.div>
               </div>
 
               {/* 1st Place (Taller with Crown) */}
-              <div className="flex flex-col items-center flex-1 max-w-[125px]">
-                <Crown size={22} className="text-[#F59E0B] fill-[#F59E0B] mb-1 animate-bounce" />
-                <div className="w-13 h-13 rounded-full bg-gradient-to-tr from-[#FDE68A] to-[#F59E0B] border-2 border-white shadow-lg flex items-center justify-center text-[14px] font-bold text-white mb-1.5 p-0.5">
+              <div className="flex flex-col items-center flex-1 max-w-[105px] sm:max-w-[125px]">
+                <Crown size={20} className="text-[#F59E0B] fill-[#F59E0B] mb-1 animate-bounce" />
+                <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-gradient-to-tr from-[#FDE68A] to-[#F59E0B] border-2 border-white shadow-lg flex items-center justify-center text-[13px] sm:text-[14px] font-bold text-white mb-1.5 p-0.5">
                   <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-[#B45309]">
                     {podium[0].name.substring(0, 2)}
                   </div>
                 </div>
-                <span className="text-[13px] font-bold text-[var(--ink)] truncate max-w-[100px]">
+                <span className="text-[12px] sm:text-[13px] font-bold text-[var(--ink)] truncate max-w-[90px] sm:max-w-[100px]">
                   {podium[0].name}
                 </span>
-                <span className="text-[12px] font-extrabold text-[#D97706]">
+                <span className="text-[11px] sm:text-[12px] font-extrabold text-[#D97706]">
                   {podium[0].xp} XP
                 </span>
                 <motion.div
                   initial={{ height: 0 }}
-                  whileInView={{ height: 120 }}
+                  whileInView={{ height: 105 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.6 }}
-                  className="w-full bg-gradient-to-t from-[#FEF3C7] to-[#FDE68A]/60 rounded-t-[16px] mt-2 flex flex-col items-center justify-center text-[#B45309] font-bold text-[22px] border border-[#FDE68A]"
+                  className="w-full bg-gradient-to-t from-[#FEF3C7] to-[#FDE68A]/60 rounded-t-[14px] sm:rounded-t-[16px] mt-2 flex flex-col items-center justify-center text-[#B45309] font-bold text-[19px] sm:text-[22px] border border-[#FDE68A]"
                 >
                   1
                 </motion.div>
               </div>
 
               {/* 3rd Place */}
-              <div className="flex flex-col items-center flex-1 max-w-[110px]">
-                <div className="w-11 h-11 rounded-full bg-[#FED7AA] border-2 border-white shadow-md flex items-center justify-center text-[13px] font-bold text-[#9A3412] mb-1.5">
+              <div className="flex flex-col items-center flex-1 max-w-[90px] sm:max-w-[110px]">
+                <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#FED7AA] border-2 border-white shadow-md flex items-center justify-center text-[12px] sm:text-[13px] font-bold text-[#9A3412] mb-1.5">
                   {podium[2].name.substring(0, 2)}
                 </div>
-                <span className="text-[12px] font-semibold text-[var(--ink)] truncate max-w-[90px]">
+                <span className="text-[11px] sm:text-[12px] font-semibold text-[var(--ink)] truncate max-w-[80px] sm:max-w-[90px]">
                   {podium[2].name}
                 </span>
-                <span className="text-[11px] font-bold text-[var(--blue)]">
+                <span className="text-[10px] sm:text-[11px] font-bold text-[var(--blue)]">
                   {podium[2].xp} XP
                 </span>
                 <motion.div
                   initial={{ height: 0 }}
-                  whileInView={{ height: 65 }}
+                  whileInView={{ height: 55 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.6, delay: 0.2 }}
-                  className="w-full bg-[#FFEDD5] rounded-t-[14px] mt-2 flex flex-col items-center justify-center text-[#9A3412] font-bold text-[18px] border border-[#FED7AA]"
+                  className="w-full bg-[#FFEDD5] rounded-t-[12px] sm:rounded-t-[14px] mt-2 flex flex-col items-center justify-center text-[#9A3412] font-bold text-[16px] sm:text-[18px] border border-[#FED7AA]"
                 >
                   3
                 </motion.div>
@@ -179,23 +179,23 @@ export default function LeaderboardPreview() {
                     key={user.id}
                     layout={!reducedMotion}
                     transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                    className="p-3 rounded-[16px] bg-[#F8FAFC] border border-[var(--line)] flex items-center justify-between text-[13px] hover:border-[var(--sky)] transition-colors"
+                    className="p-2.5 sm:p-3 rounded-[16px] bg-[#F8FAFC] border border-[var(--line)] flex items-center justify-between text-[12px] sm:text-[13px] hover:border-[var(--sky)] transition-colors gap-2"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="w-5 text-center font-bold text-[var(--ink-3)] text-xs">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <span className="w-4 sm:w-5 text-center font-bold text-[var(--ink-3)] text-[11px] sm:text-xs flex-shrink-0">
                         #{idx + 4}
                       </span>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-[var(--ink)]">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                          <span className="font-semibold text-[var(--ink)] truncate">
                             {user.name}
                           </span>
-                          <span className="text-[10px] text-[var(--ink-3)] bg-white px-2 py-0.5 rounded-full border border-[var(--line)] font-medium">
+                          <span className="text-[9px] sm:text-[10px] text-[var(--ink-3)] bg-white px-1.5 sm:px-2 py-0.5 rounded-full border border-[var(--line)] font-medium flex-shrink-0">
                             {user.tag}
                           </span>
                         </div>
                         {/* Progress Bar */}
-                        <div className="w-36 sm:w-48 h-1.5 bg-gray-200 rounded-full mt-1.5 overflow-hidden">
+                        <div className="w-24 sm:w-48 h-1.5 bg-gray-200 rounded-full mt-1 sm:mt-1.5 overflow-hidden">
                           <motion.div
                             initial={{ width: 0 }}
                             whileInView={{ width: `${percentage}%` }}
@@ -207,11 +207,11 @@ export default function LeaderboardPreview() {
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <span className="font-bold text-[var(--blue)] text-[13px]">
+                    <div className="text-right flex-shrink-0">
+                      <span className="font-bold text-[var(--blue)] text-[12px] sm:text-[13px]">
                         {user.xp} XP
                       </span>
-                      <span className="text-[10px] text-[var(--ink-3)] block font-medium">
+                      <span className="text-[9px] sm:text-[10px] text-[var(--ink-3)] block font-medium">
                         Lvl {user.level} · {user.streak}d streak
                       </span>
                     </div>

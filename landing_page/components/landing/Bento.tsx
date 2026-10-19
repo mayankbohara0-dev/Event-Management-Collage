@@ -40,17 +40,17 @@ export default function Bento() {
   const reducedMotion = useReducedMotion();
 
   return (
-    <section id="organizers" className="py-[72px] lg:py-[120px] relative">
-      <div className="max-w-[1200px] mx-auto px-6">
+    <section id="organizers" className="py-[60px] lg:py-[120px] relative">
+      <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
         <SectionHeading
           align="center"
           headingParts={bento.headingParts}
           subtitle={bento.subtitle}
-          className="mb-14"
+          className="mb-10 sm:mb-14"
         />
 
         {/* Two big white cards side by side */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
           {/* 1. FOR STUDENTS CARD */}
           <motion.div
             initial={{ opacity: 0, y: 28 }}
@@ -59,7 +59,7 @@ export default function Bento() {
             transition={{ duration: 0.6 }}
             onMouseEnter={() => setStudentHovered(true)}
             onMouseLeave={() => setStudentHovered(false)}
-            className="card-soft p-8 sm:p-10 flex flex-col justify-between overflow-hidden relative group"
+            className="card-soft p-6 sm:p-10 flex flex-col justify-between overflow-hidden relative group"
           >
             {/* Top info */}
             <div>
@@ -67,7 +67,7 @@ export default function Bento() {
                 <span className="w-2 h-2 rounded-full bg-[var(--sky)]" />
                 <span className="eyebrow">{bento.students.title}</span>
               </div>
-              <h3 className="text-[26px] sm:text-[30px] font-semibold text-[var(--ink)] tracking-tight">
+              <h3 className="text-[22px] sm:text-[30px] font-semibold text-[var(--ink)] tracking-tight">
                 Campus life in your pocket
               </h3>
               <p className="body-base text-[var(--ink-2)] mt-2">
@@ -76,18 +76,18 @@ export default function Bento() {
             </div>
 
             {/* Interactive Graphic: Three tilted CSS phone screens that fan out on hover */}
-            <div className="py-12 relative h-[280px] flex items-center justify-center select-none perspective-[1000px]">
+            <div className="py-8 sm:py-12 relative h-[250px] sm:h-[280px] flex items-center justify-center select-none perspective-[1000px] overflow-hidden">
               {/* Phone 1: Left (Home) */}
               <motion.div
                 animate={
                   reducedMotion
                     ? {}
                     : studentHovered
-                    ? { x: -90, rotateZ: -14, y: 10, scale: 0.95 }
-                    : { x: -40, rotateZ: -6, y: 0, scale: 0.95 }
+                    ? { x: -65, rotateZ: -12, y: 8, scale: 0.92 }
+                    : { x: -30, rotateZ: -6, y: 0, scale: 0.92 }
                 }
                 transition={{ type: "spring", stiffness: 260, damping: 22 }}
-                className="absolute w-[160px] h-[210px] bg-white rounded-[22px] border border-[var(--line)] shadow-[0_12px_30px_rgba(11,18,32,0.12)] p-3 flex flex-col justify-between -z-10"
+                className="absolute w-[140px] sm:w-[160px] h-[195px] sm:h-[210px] bg-white rounded-[20px] sm:rounded-[22px] border border-[var(--line)] shadow-[0_12px_30px_rgba(11,18,32,0.12)] p-3 flex flex-col justify-between -z-10"
               >
                 <div>
                   <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-2" />
@@ -110,11 +110,11 @@ export default function Bento() {
                   reducedMotion
                     ? {}
                     : studentHovered
-                    ? { y: -16, scale: 1.05 }
+                    ? { y: -12, scale: 1.03 }
                     : { y: 0, scale: 1 }
                 }
                 transition={{ type: "spring", stiffness: 260, damping: 22 }}
-                className="relative z-10 w-[170px] h-[225px] bg-gradient-to-br from-[var(--sky)] to-[var(--blue)] rounded-[24px] p-3.5 text-white shadow-[0_16px_40px_rgba(0,99,240,0.3)] flex flex-col justify-between border border-white/40"
+                className="relative z-10 w-[150px] sm:w-[170px] h-[210px] sm:h-[225px] bg-gradient-to-br from-[var(--sky)] to-[var(--blue)] rounded-[22px] sm:rounded-[24px] p-3 sm:p-3.5 text-white shadow-[0_16px_40px_rgba(0,99,240,0.3)] flex flex-col justify-between border border-white/40"
               >
                 <div>
                   <div className="w-10 h-1 bg-white/40 rounded-full mx-auto mb-2" />
@@ -123,13 +123,13 @@ export default function Bento() {
                     <span className="bg-white/20 px-1.5 py-0.5 rounded-full">+80 XP</span>
                   </div>
                   {/* QR Box */}
-                  <div className="w-20 h-20 bg-white rounded-[14px] mx-auto mt-3 p-1.5 flex items-center justify-center">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-[12px] sm:rounded-[14px] mx-auto mt-2 sm:mt-3 p-1.5 flex items-center justify-center">
                     <div className="w-full h-full bg-[var(--ink)] rounded-[8px] flex items-center justify-center text-white text-[9px] font-mono">
                       QR PASS
                     </div>
                   </div>
                 </div>
-                <div className="text-[10px] text-center font-medium bg-white/20 py-1 rounded-full">
+                <div className="text-[10px] text-center font-medium bg-white/20 py-0.5 sm:py-1 rounded-full">
                   Gate Ready
                 </div>
               </motion.div>
@@ -140,11 +140,11 @@ export default function Bento() {
                   reducedMotion
                     ? {}
                     : studentHovered
-                    ? { x: 90, rotateZ: 14, y: 10, scale: 0.95 }
-                    : { x: 40, rotateZ: 6, y: 0, scale: 0.95 }
+                    ? { x: 65, rotateZ: 12, y: 8, scale: 0.92 }
+                    : { x: 30, rotateZ: 6, y: 0, scale: 0.92 }
                 }
                 transition={{ type: "spring", stiffness: 260, damping: 22 }}
-                className="absolute w-[160px] h-[210px] bg-white rounded-[22px] border border-[var(--line)] shadow-[0_12px_30px_rgba(11,18,32,0.12)] p-3 flex flex-col justify-between -z-10"
+                className="absolute w-[140px] sm:w-[160px] h-[195px] sm:h-[210px] bg-white rounded-[20px] sm:rounded-[22px] border border-[var(--line)] shadow-[0_12px_30px_rgba(11,18,32,0.12)] p-3 flex flex-col justify-between -z-10"
               >
                 <div>
                   <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-2" />
@@ -175,7 +175,7 @@ export default function Bento() {
                   </li>
                 ))}
               </ul>
-              <MagneticButton variant="secondary" href="#get-app" className="w-full sm:w-auto">
+              <MagneticButton variant="secondary" href="#get-app" className="w-full sm:w-auto text-center">
                 {bento.students.cta}
               </MagneticButton>
             </div>
@@ -189,11 +189,11 @@ export default function Bento() {
             transition={{ duration: 0.6, delay: 0.1 }}
             onMouseEnter={() => setOrganizerHovered(true)}
             onMouseLeave={() => setOrganizerHovered(false)}
-            className="card-soft p-8 sm:p-10 flex flex-col justify-between overflow-hidden relative group"
+            className="card-soft p-6 sm:p-10 flex flex-col justify-between overflow-hidden relative group"
           >
             {/* Mascot peeking in from top-right corner */}
-            <div className="absolute -top-6 -right-6 z-20 pointer-events-auto">
-              <Mascot size={75} tint="aqua" />
+            <div className="absolute -top-4 -right-4 sm:-top-6 sm:-right-6 z-20 pointer-events-auto">
+              <Mascot size={60} tint="aqua" />
             </div>
 
             {/* Top info */}
@@ -202,7 +202,7 @@ export default function Bento() {
                 <span className="w-2 h-2 rounded-full bg-[var(--core)]" />
                 <span className="eyebrow">{bento.organizers.title}</span>
               </div>
-              <h3 className="text-[26px] sm:text-[30px] font-semibold text-[var(--ink)] tracking-tight">
+              <h3 className="text-[22px] sm:text-[30px] font-semibold text-[var(--ink)] tracking-tight">
                 The control room for campus clubs
               </h3>
               <p className="body-base text-[var(--ink-2)] mt-2">
@@ -211,8 +211,8 @@ export default function Bento() {
             </div>
 
             {/* Interactive Graphic: Floating pill cloud that bobs and rearranges */}
-            <div className="py-8 relative h-[280px] flex items-center justify-center">
-              <div className="flex flex-wrap justify-center gap-2.5 max-w-[420px]">
+            <div className="py-6 sm:py-8 relative min-h-[240px] sm:h-[280px] flex items-center justify-center">
+              <div className="flex flex-wrap justify-center gap-2 sm:gap-2.5 max-w-[420px]">
                 {bento.organizers.pills.map((pill, i) => {
                   const Icon = ORGANIZER_ICONS[pill.icon] || Zap;
                   const offsets = [
@@ -250,9 +250,9 @@ export default function Bento() {
                               },
                             }
                       }
-                      className="px-3.5 py-2 rounded-full bg-[#F8FAFC] border border-[var(--line)] shadow-sm flex items-center gap-2 text-[12px] font-semibold text-[var(--ink)] hover:border-[var(--core)] hover:bg-white transition-colors cursor-default"
+                      className="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-full bg-[#F8FAFC] border border-[var(--line)] shadow-sm flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-[12px] font-semibold text-[var(--ink)] hover:border-[var(--core)] hover:bg-white transition-colors cursor-default"
                     >
-                      <Icon size={14} className="text-[var(--core)]" />
+                      <Icon size={13} className="text-[var(--core)] sm:w-3.5 sm:h-3.5" />
                       <span>{pill.label}</span>
                     </motion.div>
                   );
@@ -272,7 +272,7 @@ export default function Bento() {
                   </li>
                 ))}
               </ul>
-              <MagneticButton variant="primary" href="#contact" className="w-full sm:w-auto">
+              <MagneticButton variant="primary" href="#contact" className="w-full sm:w-auto text-center">
                 {bento.organizers.cta}
               </MagneticButton>
             </div>

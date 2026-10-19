@@ -85,14 +85,14 @@ export default function PassDemo() {
   };
 
   return (
-    <section className="py-[72px] lg:py-[120px] relative overflow-hidden bg-white/40">
-      <div className="max-w-[1200px] mx-auto px-6 text-center">
+    <section className="py-[60px] lg:py-[120px] relative overflow-hidden bg-white/40">
+      <div className="max-w-[1200px] mx-auto px-5 sm:px-6 text-center">
         <SectionHeading
           eyebrow={eyebrow}
           headingParts={headingParts}
           subtitle={subtitle}
           align="center"
-          className="mb-14"
+          className="mb-10 sm:mb-14"
         />
 
         {/* Center: Sky-gradient ticket with circular side notches and dashed perforation */}
@@ -119,7 +119,7 @@ export default function PassDemo() {
             )}
 
             {/* Main Sky-Gradient Ticket Body */}
-            <div className="relative rounded-[32px] bg-gradient-to-br from-[#38BDF8] via-[#0AA5F0] to-[#0063F0] p-6 text-white shadow-[0_20px_60px_rgba(0,99,240,0.3)] border border-white/40 overflow-hidden text-left">
+            <div className="relative rounded-[28px] sm:rounded-[32px] bg-gradient-to-br from-[#38BDF8] via-[#0AA5F0] to-[#0063F0] p-5 sm:p-6 text-white shadow-[0_20px_60px_rgba(0,99,240,0.3)] border border-white/40 overflow-hidden text-left">
               {/* Specular glare highlight following cursor */}
               {!reducedMotion && (
                 <motion.div
@@ -188,9 +188,9 @@ export default function PassDemo() {
 
               {/* Circular side notches & dashed perforation */}
               <div className="relative my-2 flex items-center justify-center">
-                <div className="absolute -left-[38px] w-8 h-8 rounded-full bg-[var(--page)] border-r border-[var(--line)] shadow-inner" />
+                <div className="absolute -left-[30px] sm:-left-[38px] w-8 h-8 rounded-full bg-[var(--page)] border-r border-[var(--line)] shadow-inner" />
                 <div className="w-full border-b border-dashed border-white/35" />
-                <div className="absolute -right-[38px] w-8 h-8 rounded-full bg-[var(--page)] border-l border-[var(--line)] shadow-inner" />
+                <div className="absolute -right-[30px] sm:-right-[38px] w-8 h-8 rounded-full bg-[var(--page)] border-l border-[var(--line)] shadow-inner" />
               </div>
 
               {/* Bottom attendee row & White rounded QR tile */}
@@ -199,20 +199,20 @@ export default function PassDemo() {
                   <span className="text-[10px] uppercase text-white/70 font-semibold block">
                     Attendee
                   </span>
-                  <span className="text-[14px] font-bold text-white block">
+                  <span className="text-[13px] sm:text-[14px] font-bold text-white block">
                     {ticket.attendee}
                   </span>
-                  <span className="text-[11px] font-mono text-white/80 block mt-0.5">
+                  <span className="text-[10px] sm:text-[11px] font-mono text-white/80 block mt-0.5">
                     {ticket.rollNo}
                   </span>
-                  <div className="mt-2 text-[10px] text-white/60 font-mono">
+                  <div className="mt-1.5 sm:mt-2 text-[9px] sm:text-[10px] text-white/60 font-mono">
                     ID: {ticket.ticketId}
                   </div>
                 </div>
 
                 {/* White rounded QR tile with sweeping laser line */}
-                <div className="relative w-24 h-24 bg-white rounded-[18px] p-2 flex items-center justify-center shadow-md overflow-hidden">
-                  <QrCode size={76} className="text-[var(--ink)]" />
+                <div className="relative w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-[16px] sm:rounded-[18px] p-1.5 sm:p-2 flex items-center justify-center shadow-md overflow-hidden flex-shrink-0">
+                  <QrCode size={64} className="text-[var(--ink)] sm:w-[76px] sm:h-[76px]" />
 
                   {/* Coral laser line */}
                   {!isScanned && (
@@ -236,8 +236,8 @@ export default function PassDemo() {
                       animate={{ scale: 1 }}
                       className="absolute inset-0 bg-[#10B981] flex flex-col items-center justify-center text-white"
                     >
-                      <Check size={32} strokeWidth={3} />
-                      <span className="text-[9px] font-bold mt-1">CHECKED IN</span>
+                      <Check size={28} strokeWidth={3} className="sm:w-8 sm:h-8" />
+                      <span className="text-[8px] sm:text-[9px] font-bold mt-1">CHECKED IN</span>
                     </motion.div>
                   )}
                 </div>
@@ -246,18 +246,18 @@ export default function PassDemo() {
           </motion.div>
 
           {/* Interactive Scan Action & XP Counter */}
-          <div className="mt-8 flex flex-col items-center gap-3">
-            <div className="flex items-center gap-4">
+          <div className="mt-6 sm:mt-8 flex flex-col items-center gap-3 w-full max-w-[420px]">
+            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full justify-center">
               <MagneticButton
                 variant="primary"
                 onClick={handleScan}
                 ariaLabel="Scan Pass Demo"
-                className="px-8 py-3.5 text-[16px] shadow-[0_10px_25px_rgba(0,99,240,0.35)]"
+                className="w-full sm:w-auto px-8 py-3.5 text-[15px] sm:text-[16px] shadow-[0_10px_25px_rgba(0,99,240,0.35)] text-center"
               >
                 {isScanning ? (
                   "Scanning Pass..."
                 ) : isScanned ? (
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex items-center justify-center gap-1.5">
                     <Check size={16} strokeWidth={3} /> Pass Verified (+80 XP)
                   </span>
                 ) : (
@@ -268,10 +268,10 @@ export default function PassDemo() {
               {isScanned && (
                 <button
                   onClick={handleReset}
-                  className="flex items-center gap-1.5 text-[14px] font-semibold text-[var(--ink-2)] hover:text-[var(--ink)] transition-colors px-3 py-2 rounded-full hover:bg-gray-100"
+                  className="flex items-center gap-1.5 text-[13px] sm:text-[14px] font-semibold text-[var(--ink-2)] hover:text-[var(--ink)] transition-colors px-4 py-2 rounded-full hover:bg-gray-100"
                 >
-                  <RotateCcw size={15} />
-                  <span>Reset</span>
+                  <RotateCcw size={14} />
+                  <span>Reset demo</span>
                 </button>
               )}
             </div>

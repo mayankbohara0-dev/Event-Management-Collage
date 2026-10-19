@@ -18,14 +18,14 @@ export default function FAQ() {
   };
 
   return (
-    <section id="faq" className="py-[72px] lg:py-[120px] relative">
-      <div className="max-w-[1200px] mx-auto px-6">
+    <section id="faq" className="py-[60px] lg:py-[120px] relative">
+      <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
         <SectionHeading
           eyebrow={eyebrow}
           headingParts={headingParts}
           subtitle={subtitle}
           align="left"
-          className="mb-14"
+          className="mb-10 sm:mb-14"
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">

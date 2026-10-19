@@ -58,14 +58,14 @@ export default function HowItWorks() {
   }, [isInView, reducedMotion]);
 
   return (
-    <section id="how-it-works" ref={sectionRef} className="py-[72px] lg:py-[120px] relative">
-      <div className="max-w-[1200px] mx-auto px-6">
+    <section id="how-it-works" ref={sectionRef} className="py-[60px] lg:py-[120px] relative">
+      <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
         <SectionHeading
           eyebrow={data.eyebrow}
           headingParts={data.headingParts}
           subtitle={data.subtitle}
           align="center"
-          className="mb-14"
+          className="mb-10 sm:mb-14"
         />
 
         {/* 3 Tall Designjoy-style Gradient Cards */}

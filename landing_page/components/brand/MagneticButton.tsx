@@ -70,8 +70,12 @@ export default function MagneticButton({
   );
 
   if (href) {
+    const isFullWidth = className.includes("w-full");
     return (
-      <a href={href} className="inline-block no-underline">
+      <a
+        href={href}
+        className={`${isFullWidth ? "block w-full sm:w-auto sm:inline-block" : "inline-block"} no-underline`}
+      >
         {buttonContent}
       </a>
     );
