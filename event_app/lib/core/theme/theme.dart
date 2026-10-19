@@ -1,4 +1,6 @@
-﻿// Zest Design System — barrel export
+// Zest Design System — barrel export
+export 'zest_tokens.dart';
+export 'zest_theme.dart';
 export 'app_colors.dart';
 export 'app_text_styles.dart';
 export 'app_spacing.dart';

@@ -2,20 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_radius.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/empty_state.dart';
-import '../../../../core/widgets/skeleton_loader.dart';
+import '../../../../core/theme/zest_tokens.dart';
+import '../../../../shared/widgets/shared_widgets.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MyEventsTab — Zest Student Passes & Tickets
-// Spec: "My Passes" title 38sp, Upcoming/Attended segmented toggle,
-//       lime background ticket cards with side notches at ~62% height,
-//       dashed divider 3px 35% ink, 128px QR with animated scan line,
-//       "Show this at the gate" caption, "Certificate ready + 80pts" for attended.
+// Minimal, simple, modern, light UI matching the blue lemon blob brand.
 // ─────────────────────────────────────────────────────────────────────────────
 
 class MyEventsTab extends ConsumerStatefulWidget {
@@ -122,216 +118,175 @@ class _MyEventsTabState extends ConsumerState<MyEventsTab> {
     final rollNumber = _profile?['roll_number']?.toString() ??
         _profile?['enrollment_number']?.toString() ?? '';
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light.copyWith(
-        statusBarColor: Colors.transparent,
-      ),
-      child: Scaffold(
-        backgroundColor: AppColors.ink,
-        body: RefreshIndicator(
-          color: AppColors.ink,
-          backgroundColor: AppColors.lime,
-          onRefresh: _load,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            slivers: [
-              // ── Top Safe Area + Screen Title ───────────────────────────
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    18,
-                    MediaQuery.of(context).padding.top + 20,
-                    18,
-                    16,
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.lime.withValues(alpha: 0.15),
-                              borderRadius: AppRadius.circularPill,
-                            ),
-                            child: Text(
-                              'CAMPUS ACCESS',
-                              style: AppTextStyles.pillTag.copyWith(
-                                color: AppColors.lime,
-                                fontSize: 11,
-                                letterSpacing: 1.0,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            'My Passes',
-                            style: AppTextStyles.title38.copyWith(
-                              color: AppColors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Your verified entry tickets to campus events.',
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: AppColors.grey400,
-                            ),
-                          ),
-                        ],
-                      ),
-                      GestureDetector(
-                        onTap: widget.onProfileTap,
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.lime, width: 2),
-                          ),
-                          child: CircleAvatar(
-                            radius: 20,
-                            backgroundColor: AppColors.surfaceCard,
-                            backgroundImage: (avatarUrl != null && avatarUrl.isNotEmpty)
-                                ? NetworkImage(avatarUrl)
-                                : null,
-                            child: (avatarUrl == null || avatarUrl.isEmpty)
-                                ? Text(
-                                    name.isNotEmpty ? name[0].toUpperCase() : 'S',
-                                    style: AppTextStyles.title17.copyWith(
-                                      color: AppColors.lime,
-                                    ),
-                                  )
-                                : null,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+    return Scaffold(
+      backgroundColor: ZestTokens.page,
+      body: RefreshIndicator(
+        color: ZestTokens.blue,
+        backgroundColor: Colors.white,
+        onRefresh: _load,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
+          slivers: [
+            // ── Top Safe Area + Screen Title ───────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  ZestTokens.horizontalPadding,
+                  MediaQuery.of(context).padding.top + 16,
+                  ZestTokens.horizontalPadding,
+                  14,
                 ),
-              ),
-
-              // ── Upcoming / Attended Segmented Pill Toggle ─────────────
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18),
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceDark,
-                      borderRadius: AppRadius.circularPill,
-                      border: Border.all(color: AppColors.borderDark),
-                    ),
-                    child: Row(
-                      children: List.generate(_filterOptions.length, (i) {
-                        final isSel = i == _selectedFilterIndex;
-                        return Expanded(
-                          child: GestureDetector(
-                            onTap: () => _onFilterChanged(i),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(vertical: 11),
-                              decoration: BoxDecoration(
-                                color: isSel ? AppColors.lime : Colors.transparent,
-                                borderRadius: AppRadius.circularPill,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'My ',
+                                style: ZestTokens.display.copyWith(fontSize: 32),
                               ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                _filterOptions[i],
-                                style: AppTextStyles.caption.copyWith(
-                                  color: isSel ? AppColors.ink : AppColors.grey400,
-                                  fontWeight: FontWeight.w800,
+                              TextSpan(
+                                text: 'passes',
+                                style: ZestTokens.accentItalic.copyWith(
+                                  fontSize: 36,
+                                  color: ZestTokens.blue,
                                 ),
                               ),
-                            ),
+                            ],
                           ),
-                        );
-                      }),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Your verified entry tickets to campus events',
+                          style: ZestTokens.body.copyWith(
+                            color: ZestTokens.ink2,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
+                    GestureDetector(
+                      onTap: widget.onProfileTap,
+                      child: ZestAvatar(
+                        imageUrl: avatarUrl,
+                        name: name,
+                        size: 44,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── Upcoming / Attended Segmented Pill Toggle ─────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: ZestTokens.horizontalPadding,
+                ),
+                child: ZestSegmentedToggle(
+                  segments: _filterOptions,
+                  selectedIndex: _selectedFilterIndex,
+                  onChanged: _onFilterChanged,
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+            // ── Passes List / Tickets ──────────────────────────────────
+            if (_isLoading)
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: ZestTokens.horizontalPadding,
+                ),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (_, i) => const Padding(
+                      padding: EdgeInsets.only(bottom: 16),
+                      child: ZestSkeleton(
+                        width: double.infinity,
+                        height: 320,
+                        borderRadius: BorderRadius.all(Radius.circular(28)),
+                      ),
+                    ),
+                    childCount: 2,
+                  ),
+                ),
+              )
+            else if (_filtered.isEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: ZestEmptyState(
+                    mascotMood: _selectedFilterIndex == 0
+                        ? ZestMascotMood.idle
+                        : ZestMascotMood.happy,
+                    title: _selectedFilterIndex == 0
+                        ? 'No Upcoming Passes'
+                        : 'No Attended Events Yet',
+                    subtitle: _selectedFilterIndex == 0
+                        ? 'Explore campus workshops, hackathons, and concerts to reserve your ticket.'
+                        : 'Attend registered events to get verified, earn XP, and unlock certificates!',
+                    actionLabel: _selectedFilterIndex == 0
+                        ? 'Explore Events 🚀'
+                        : 'View Upcoming Passes',
+                    onAction: () {
+                      if (_selectedFilterIndex == 0) {
+                        widget.onExploreTap();
+                      } else {
+                        _onFilterChanged(0);
+                      }
+                    },
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  ZestTokens.horizontalPadding,
+                  0,
+                  ZestTokens.horizontalPadding,
+                  110,
+                ),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final reg = _filtered[index];
+                      final event =
+                          (reg['events'] as Map<String, dynamic>?) ?? {};
+                      final isAttended = _selectedFilterIndex == 1;
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 24),
+                        child: _ZestTicket(
+                          registration: reg,
+                          event: event,
+                          studentName: name,
+                          rollNumber: rollNumber,
+                          isAttended: isAttended,
+                          onTap: () {
+                            final eventId = event['id']?.toString() ??
+                                reg['event_id']?.toString();
+                            if (eventId != null) {
+                              context.push('/student/event/$eventId');
+                            }
+                          },
+                        ),
+                      );
+                    },
+                    childCount: _filtered.length,
                   ),
                 ),
               ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-              // ── Passes List / Tickets ──────────────────────────────────
-              if (_isLoading)
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (_, i) => Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: SkeletonLoader(
-                          width: double.infinity,
-                          height: 320,
-                          radius: AppRadius.ticketCard,
-                        ),
-                      ),
-                      childCount: 2,
-                    ),
-                  ),
-                )
-              else if (_filtered.isEmpty)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: EmptyState(
-                      emoji: _selectedFilterIndex == 0 ? '🎟️' : '🏆',
-                      title: _selectedFilterIndex == 0
-                          ? 'No Upcoming Passes'
-                          : 'No Attended Events Yet',
-                      subtitle: _selectedFilterIndex == 0
-                          ? 'Explore campus workshops, hackathons, and concerts to reserve your ticket.'
-                          : 'Attend registered events to get verified, earn XP, and unlock certificates!',
-                      actionLabel: _selectedFilterIndex == 0 ? 'Explore Events 🚀' : 'View Upcoming Passes',
-                      onAction: () {
-                        if (_selectedFilterIndex == 0) {
-                          widget.onExploreTap();
-                        } else {
-                          _onFilterChanged(0);
-                        }
-                      },
-                    ),
-                  ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 120),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final reg = _filtered[index];
-                        final event = (reg['events'] as Map<String, dynamic>?) ?? {};
-                        final isAttended = _selectedFilterIndex == 1;
-
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 24),
-                          child: _ZestLimeTicket(
-                            registration: reg,
-                            event: event,
-                            studentName: name,
-                            rollNumber: rollNumber,
-                            isAttended: isAttended,
-                            onTap: () {
-                              final eventId = event['id']?.toString() ?? reg['event_id']?.toString();
-                              if (eventId != null) {
-                                context.push('/student/event/$eventId');
-                              }
-                            },
-                          ),
-                        );
-                      },
-                      childCount: _filtered.length,
-                    ),
-                  ),
-                ),
-            ],
-          ),
+          ],
         ),
       ),
     );
@@ -339,10 +294,10 @@ class _MyEventsTabState extends ConsumerState<MyEventsTab> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Spec-Exact Lime Ticket Card with Notches, Perforation, and Animated QR
+// Signature Brand Ticket Card with Side Notches, Dashed Divider, and Laser QR
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ZestLimeTicket extends StatefulWidget {
+class _ZestTicket extends StatefulWidget {
   final Map<String, dynamic> registration;
   final Map<String, dynamic> event;
   final String studentName;
@@ -350,7 +305,7 @@ class _ZestLimeTicket extends StatefulWidget {
   final bool isAttended;
   final VoidCallback onTap;
 
-  const _ZestLimeTicket({
+  const _ZestTicket({
     required this.registration,
     required this.event,
     required this.studentName,
@@ -360,10 +315,10 @@ class _ZestLimeTicket extends StatefulWidget {
   });
 
   @override
-  State<_ZestLimeTicket> createState() => _ZestLimeTicketState();
+  State<_ZestTicket> createState() => _ZestTicketState();
 }
 
-class _ZestLimeTicketState extends State<_ZestLimeTicket>
+class _ZestTicketState extends State<_ZestTicket>
     with SingleTickerProviderStateMixin {
   late AnimationController _scanController;
 
@@ -372,7 +327,7 @@ class _ZestLimeTicketState extends State<_ZestLimeTicket>
     super.initState();
     _scanController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2400),
+      duration: const Duration(milliseconds: 2000),
     )..repeat(reverse: true);
   }
 
@@ -384,35 +339,41 @@ class _ZestLimeTicketState extends State<_ZestLimeTicket>
 
   @override
   Widget build(BuildContext context) {
-    final status = (widget.registration['status'] ?? 'approved').toString().toLowerCase();
+    final status =
+        (widget.registration['status'] ?? 'approved').toString().toLowerCase();
     final eventTitle = widget.event['title']?.toString() ?? 'Campus Event';
     final venue = widget.event['venue']?.toString() ?? 'Main Campus';
     final startDateStr = widget.event['start_date']?.toString();
-    final startDate = startDateStr != null ? DateTime.tryParse(startDateStr)?.toLocal() : null;
+    final startDate =
+        startDateStr != null ? DateTime.tryParse(startDateStr)?.toLocal() : null;
 
     final dateStr = startDate != null
         ? () {
-            const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-            const days = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+            const months = [
+              'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+              'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
+            ];
+            const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
             return '${days[startDate.weekday - 1]}, ${months[startDate.month - 1]} ${startDate.day}';
           }()
         : 'DATE TBA';
 
-    final qrData = widget.registration['qr_code_data']?.toString().isNotEmpty == true
-        ? widget.registration['qr_code_data'].toString()
-        : widget.registration['id']?.toString() ?? 'ZEST_PASS';
+    final qrData =
+        widget.registration['qr_code_data']?.toString().isNotEmpty == true
+            ? widget.registration['qr_code_data'].toString()
+            : widget.registration['id']?.toString() ?? 'ZEST_PASS';
 
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.lime,
-          borderRadius: BorderRadius.circular(AppRadius.ticketCard),
-          boxShadow: [
+          gradient: ZestTokens.brandGradient,
+          borderRadius: BorderRadius.circular(ZestTokens.radiusHero),
+          boxShadow: const [
             BoxShadow(
-              color: AppColors.lime.withValues(alpha: 0.18),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
+              color: Color(0x330063F0),
+              blurRadius: 28,
+              offset: Offset(0, 10),
             ),
           ],
         ),
@@ -429,27 +390,35 @@ class _ZestLimeTicketState extends State<_ZestLimeTicket>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: AppColors.ink,
-                          borderRadius: AppRadius.circularPill,
+                          color: Colors.white.withValues(alpha: 0.22),
+                          borderRadius: ZestTokens.borderPill,
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.35),
+                          ),
                         ),
                         child: Text(
                           widget.isAttended
                               ? 'ATTENDED ✓'
-                              : (status == 'approved' ? 'VERIFIED PASS' : 'PENDING APPROVAL'),
-                          style: AppTextStyles.pillTag.copyWith(
-                            color: AppColors.lime,
+                              : (status == 'approved'
+                                  ? 'VERIFIED PASS'
+                                  : 'PENDING APPROVAL'),
+                          style: ZestTokens.labelCaps.copyWith(
+                            color: Colors.white,
                             fontSize: 10,
-                            letterSpacing: 0.8,
+                            letterSpacing: 0.6,
                           ),
                         ),
                       ),
                       Text(
                         dateStr,
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.ink.withValues(alpha: 0.75),
-                          fontWeight: FontWeight.w800,
+                        style: ZestTokens.caption.copyWith(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontWeight: FontWeight.w600,
                           fontSize: 11,
                         ),
                       ),
@@ -458,32 +427,42 @@ class _ZestLimeTicketState extends State<_ZestLimeTicket>
 
                   const SizedBox(height: 14),
 
-                  // Event Title (Bricolage 800 ink)
+                  // Event Title
                   Text(
                     eventTitle,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.title24.copyWith(
-                      color: AppColors.ink,
-                      height: 1.15,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      height: 1.2,
+                      letterSpacing: -0.4,
                     ),
                   ),
 
                   const SizedBox(height: 6),
 
-                  // Venue & Time
+                  // Venue
                   Row(
                     children: [
-                      const Icon(Icons.location_on_rounded, size: 14, color: AppColors.ink),
-                      const SizedBox(width: 4),
+                      const Icon(
+                        LucideIcons.mapPin,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 5),
                       Expanded(
                         child: Text(
                           venue,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.ink.withValues(alpha: 0.72),
-                            fontWeight: FontWeight.w600,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white.withValues(alpha: 0.85),
                           ),
                         ),
                       ),
@@ -494,27 +473,37 @@ class _ZestLimeTicketState extends State<_ZestLimeTicket>
 
                   // Attendee Info Box
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 9,
+                    ),
                     decoration: BoxDecoration(
-                      color: AppColors.ink.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.25),
+                      ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           widget.studentName,
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.ink,
-                            fontWeight: FontWeight.w800,
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                         ),
                         if (widget.rollNumber.isNotEmpty)
                           Text(
                             widget.rollNumber,
-                            style: AppTextStyles.caption.copyWith(
-                              color: AppColors.ink.withValues(alpha: 0.65),
-                              fontWeight: FontWeight.w700,
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white.withValues(alpha: 0.85),
                             ),
                           ),
                       ],
@@ -546,41 +535,53 @@ class _ZestLimeTicketState extends State<_ZestLimeTicket>
   Widget _buildScannerFooter(String qrData) {
     return Column(
       children: [
-        // 128px QR Code with Scan Line Animation
-        SizedBox(
-          width: 128,
-          height: 128,
+        // 130px QR Code on white card with Laser Line Animation
+        Container(
+          width: 140,
+          height: 140,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x20000000),
+                blurRadius: 16,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
           child: Stack(
             alignment: Alignment.center,
             children: [
               QrImageView(
                 data: qrData,
                 version: QrVersions.auto,
-                size: 128.0,
+                size: 120.0,
                 eyeStyle: const QrEyeStyle(
                   eyeShape: QrEyeShape.square,
-                  color: AppColors.ink,
+                  color: ZestTokens.ink,
                 ),
                 dataModuleStyle: const QrDataModuleStyle(
                   dataModuleShape: QrDataModuleShape.square,
-                  color: AppColors.ink,
+                  color: ZestTokens.ink,
                 ),
               ),
-              // Animated scan line sweeping down
+              // Animated sweeping laser line
               AnimatedBuilder(
                 animation: _scanController,
                 builder: (context, _) {
                   return Positioned(
-                    top: _scanController.value * 120,
+                    top: _scanController.value * 110,
                     left: 0,
                     right: 0,
                     child: Container(
-                      height: 3,
-                      decoration: BoxDecoration(
-                        color: AppColors.coral,
+                      height: 2.5,
+                      decoration: const BoxDecoration(
+                        color: ZestTokens.coral,
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.coral.withValues(alpha: 0.8),
+                            color: ZestTokens.coral,
                             blurRadius: 6,
                             spreadRadius: 2,
                           ),
@@ -596,12 +597,13 @@ class _ZestLimeTicketState extends State<_ZestLimeTicket>
 
         const SizedBox(height: 12),
 
-        // Caption per spec
+        // Caption
         Text(
           'Show this at the gate',
-          style: AppTextStyles.caption.copyWith(
-            color: AppColors.ink,
-            fontWeight: FontWeight.w800,
+          style: ZestTokens.caption.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
             letterSpacing: 0.3,
           ),
         ),
@@ -614,8 +616,11 @@ class _ZestLimeTicketState extends State<_ZestLimeTicket>
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: AppColors.ink,
+        color: Colors.white.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         children: [
@@ -626,9 +631,9 @@ class _ZestLimeTicketState extends State<_ZestLimeTicket>
               const SizedBox(width: 8),
               Text(
                 'Certificate ready + 80pts',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.lime,
-                  fontWeight: FontWeight.w800,
+                style: ZestTokens.bodyBold.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
@@ -636,8 +641,8 @@ class _ZestLimeTicketState extends State<_ZestLimeTicket>
           const SizedBox(height: 4),
           Text(
             'Attendance verified by campus faculty',
-            style: AppTextStyles.caption.copyWith(
-              color: AppColors.grey400,
+            style: ZestTokens.caption.copyWith(
+              color: Colors.white.withValues(alpha: 0.85),
               fontSize: 11,
             ),
           ),
@@ -648,7 +653,7 @@ class _ZestLimeTicketState extends State<_ZestLimeTicket>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Custom Painter for ticket side notches + 3px dashed divider at 35% ink
+// Custom Painter for ticket side notches + dashed divider
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _TicketNotchPainter extends CustomPainter {
@@ -657,18 +662,18 @@ class _TicketNotchPainter extends CustomPainter {
     const cutoutRadius = 14.0;
     const centerY = 12.0;
 
-    // Cutout circles that match the scaffold background (AppColors.ink)
+    // Cutout circles that match page background
     final cutoutPaint = Paint()
-      ..color = AppColors.ink
+      ..color = ZestTokens.page
       ..style = PaintingStyle.fill;
 
     canvas.drawCircle(Offset(0, centerY), cutoutRadius, cutoutPaint);
     canvas.drawCircle(Offset(size.width, centerY), cutoutRadius, cutoutPaint);
 
-    // Dashed line 3px thick, 35% ink opacity per spec
+    // Dashed white line
     final linePaint = Paint()
-      ..color = AppColors.ink.withValues(alpha: 0.35)
-      ..strokeWidth = 3.0
+      ..color = Colors.white.withValues(alpha: 0.4)
+      ..strokeWidth = 2.0
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
 

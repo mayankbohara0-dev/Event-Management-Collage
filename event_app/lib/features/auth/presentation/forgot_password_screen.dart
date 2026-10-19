@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_text_styles.dart';
-import '../../../core/widgets/zest_button.dart';
-import '../../../core/widgets/zest_logo.dart';
+import '../../../core/theme/theme.dart';
+import '../../../shared/widgets/shared_widgets.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -17,6 +14,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _emailController = TextEditingController();
   bool _isLoading = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -27,18 +25,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Future<void> _resetPassword() async {
     final email = _emailController.text.trim();
     if (email.isEmpty || !email.contains('@')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please enter a valid email address.', style: AppTextStyles.body14.copyWith(color: AppColors.paper)),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: AppRadius.circularMd),
-        ),
-      );
+      setState(() => _error = 'Please enter a valid email address.');
+      ZestSnack.error(context, 'Please enter a valid email address.');
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
 
     try {
       await Supabase.instance.client.auth.resetPasswordForEmail(
@@ -46,26 +41,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         redirectTo: 'http://localhost:8080/#/auth/reset-password',
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Check your email for the reset link!', style: AppTextStyles.body14.copyWith(color: AppColors.ink)),
-            backgroundColor: AppColors.lime,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: AppRadius.circularMd),
-          ),
-        );
+        ZestSnack.success(context, 'Check your email for the reset link!');
         context.go('/student/login');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed: $e', style: AppTextStyles.body14.copyWith(color: AppColors.paper)),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: AppRadius.circularMd),
-          ),
-        );
+        final msg = 'Failed: $e';
+        setState(() => _error = msg);
+        ZestSnack.error(context, msg);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -75,12 +58,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.ink,
+      backgroundColor: ZestTokens.page,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.paper, size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () => context.pop(),
         ),
       ),
@@ -88,75 +69,51 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
+            constraints: const BoxConstraints(maxWidth: 440),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const ZestLogo.markSmall(size: 48),
-                const SizedBox(height: 24),
-                Text(
-                  'Reset Password',
-                  style: AppTextStyles.title36.copyWith(
-                    color: AppColors.paper,
-                    height: 1.1,
+                const Center(child: ZestBlobLogo(size: 56, animateOnLoad: true)),
+                const SizedBox(height: 20),
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: ZestTokens.display.copyWith(fontSize: 30),
+                    children: [
+                      const TextSpan(text: 'Reset '),
+                      TextSpan(
+                        text: 'password',
+                        style: ZestTokens.accentItalic.copyWith(fontSize: 36),
+                      ),
+                      const TextSpan(text: '.'),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Enter your registered student email and we\'ll send you a secure link to reset your credentials.',
-                  style: AppTextStyles.body15.copyWith(color: AppColors.grey400),
+                  "Enter your registered campus email and we'll send you a recovery link.",
+                  textAlign: TextAlign.center,
+                  style: ZestTokens.body.copyWith(color: ZestTokens.ink2),
                 ),
-                const SizedBox(height: 32),
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceCard,
-                    borderRadius: AppRadius.circularCardLarge,
-                    border: Border.all(color: AppColors.borderDark, width: 1.5),
-                  ),
+                const SizedBox(height: 28),
+                ZestCard(
+                  padding: const EdgeInsets.all(22),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(
-                        'COLLEGE EMAIL',
-                        style: AppTextStyles.overline.copyWith(
-                          color: AppColors.grey400,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
+                      ZestTextField(
                         controller: _emailController,
+                        label: 'CAMPUS EMAIL',
+                        hintText: 'student@college.edu',
                         keyboardType: TextInputType.emailAddress,
-                        style: AppTextStyles.body15.copyWith(color: AppColors.paper),
-                        cursorColor: AppColors.lime,
-                        decoration: const InputDecoration(
-                          hintText: 'student@college.edu',
-                          hintStyle: TextStyle(color: AppColors.grey400, fontSize: 14),
-                          prefixIcon: Icon(Icons.alternate_email_rounded, color: AppColors.lime, size: 20),
-                          filled: true,
-                          fillColor: AppColors.surfaceDark,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                          border: OutlineInputBorder(
-                            borderRadius: AppRadius.circularInput,
-                            borderSide: BorderSide(color: AppColors.borderDark, width: 1.5),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: AppRadius.circularInput,
-                            borderSide: BorderSide(color: AppColors.borderDark, width: 1.5),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: AppRadius.circularInput,
-                            borderSide: BorderSide(color: AppColors.lime, width: 2),
-                          ),
-                        ),
+                        prefixIcon: const Icon(Icons.alternate_email_rounded, color: ZestTokens.ink3, size: 20),
+                        errorText: _error,
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 22),
                       ZestButton(
-                        label: 'Send Reset Link 📩',
-                        variant: ZestButtonVariant.primary,
+                        text: 'Send Recovery Link ⚡',
                         isLoading: _isLoading,
+                        fullWidth: true,
                         onPressed: _resetPassword,
                       ),
                     ],

@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_text_styles.dart';
-import '../../../core/widgets/zest_button.dart';
-import '../../../core/widgets/zest_logo.dart';
+import '../../../core/theme/theme.dart';
+import '../../../shared/widgets/shared_widgets.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({super.key});
@@ -17,7 +14,7 @@ class ResetPasswordScreen extends StatefulWidget {
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-  bool _obscurePassword = true;
+  String? _error;
 
   @override
   void dispose() {
@@ -28,44 +25,29 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Future<void> _updatePassword() async {
     final password = _passwordController.text.trim();
     if (password.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Password must be at least 6 characters', style: AppTextStyles.body14.copyWith(color: AppColors.paper)),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: AppRadius.circularMd),
-        ),
-      );
+      setState(() => _error = 'Password must be at least 6 characters.');
+      ZestSnack.error(context, 'Password must be at least 6 characters.');
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
 
     try {
       await Supabase.instance.client.auth.updateUser(
         UserAttributes(password: password),
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Password updated successfully! 🎉', style: AppTextStyles.body14.copyWith(color: AppColors.ink)),
-            backgroundColor: AppColors.lime,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: AppRadius.circularMd),
-          ),
-        );
+        ZestSnack.success(context, 'Password updated successfully! 🎉');
         context.go('/');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed: $e', style: AppTextStyles.body14.copyWith(color: AppColors.paper)),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: AppRadius.circularMd),
-          ),
-        );
+        final msg = 'Failed: $e';
+        setState(() => _error = msg);
+        ZestSnack.error(context, msg);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -75,12 +57,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.ink,
+      backgroundColor: ZestTokens.page,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.paper, size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           onPressed: () => context.pop(),
         ),
       ),
@@ -88,83 +68,52 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
+            constraints: const BoxConstraints(maxWidth: 440),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const ZestLogo.markSmall(size: 48),
-                const SizedBox(height: 24),
-                Text(
-                  'Set New Password',
-                  style: AppTextStyles.title36.copyWith(
-                    color: AppColors.paper,
-                    height: 1.1,
+                const Center(child: ZestBlobLogo(size: 56, animateOnLoad: true)),
+                const SizedBox(height: 20),
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: ZestTokens.display.copyWith(fontSize: 30),
+                    children: [
+                      const TextSpan(text: 'Set new '),
+                      TextSpan(
+                        text: 'password',
+                        style: ZestTokens.accentItalic.copyWith(fontSize: 36),
+                      ),
+                      const TextSpan(text: '.'),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Choose a strong password to protect your Zest account and passes.',
-                  style: AppTextStyles.body15.copyWith(color: AppColors.grey400),
+                  'Choose a strong password with at least 6 characters.',
+                  textAlign: TextAlign.center,
+                  style: ZestTokens.body.copyWith(color: ZestTokens.ink2),
                 ),
-                const SizedBox(height: 32),
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceCard,
-                    borderRadius: AppRadius.circularCardLarge,
-                    border: Border.all(color: AppColors.borderDark, width: 1.5),
-                  ),
+                const SizedBox(height: 28),
+                ZestCard(
+                  padding: const EdgeInsets.all(22),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(
-                        'NEW PASSWORD',
-                        style: AppTextStyles.overline.copyWith(
-                          color: AppColors.grey400,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
+                      ZestTextField(
                         controller: _passwordController,
-                        obscureText: _obscurePassword,
-                        style: AppTextStyles.body15.copyWith(color: AppColors.paper),
-                        cursorColor: AppColors.lime,
-                        decoration: InputDecoration(
-                          hintText: '••••••••',
-                          hintStyle: const TextStyle(color: AppColors.grey400, fontSize: 14),
-                          prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.lime, size: 20),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                              color: AppColors.grey400,
-                              size: 20,
-                            ),
-                            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                          ),
-                          filled: true,
-                          fillColor: AppColors.surfaceDark,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                          border: const OutlineInputBorder(
-                            borderRadius: AppRadius.circularInput,
-                            borderSide: BorderSide(color: AppColors.borderDark, width: 1.5),
-                          ),
-                          enabledBorder: const OutlineInputBorder(
-                            borderRadius: AppRadius.circularInput,
-                            borderSide: BorderSide(color: AppColors.borderDark, width: 1.5),
-                          ),
-                          focusedBorder: const OutlineInputBorder(
-                            borderRadius: AppRadius.circularInput,
-                            borderSide: BorderSide(color: AppColors.lime, width: 2),
-                          ),
-                        ),
+                        label: 'NEW PASSWORD',
+                        hintText: '••••••••',
+                        isPassword: true,
+                        prefixIcon: const Icon(Icons.lock_outline_rounded, color: ZestTokens.ink3, size: 20),
+                        errorText: _error,
+                        onSubmitted: (_) => _updatePassword(),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 22),
                       ZestButton(
-                        label: 'Save Password & Continue 🚀',
-                        variant: ZestButtonVariant.primary,
+                        text: 'Update Password ⚡',
                         isLoading: _isLoading,
+                        fullWidth: true,
                         onPressed: _updatePassword,
                       ),
                     ],

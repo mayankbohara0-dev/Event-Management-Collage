@@ -1,14 +1,12 @@
+import 'dart:typed_data';
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:typed_data';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_text_styles.dart';
-import '../../../core/widgets/zest_button.dart';
-import '../../../core/widgets/zest_logo.dart';
+import '../../../core/theme/theme.dart';
+import '../../../shared/widgets/shared_widgets.dart';
 
 class ProfileOnboardingScreen extends ConsumerStatefulWidget {
   final bool isEditing;
@@ -33,11 +31,15 @@ class _ProfileOnboardingScreenState
 
   Uint8List? _avatarBytes;
   String? _existingAvatarUrl;
+  int? _existingPoints;
   final ImagePicker _picker = ImagePicker();
+
 
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _isSuccess = false;
 
+  late final ConfettiController _confettiController;
   List<Map<String, dynamic>> _departments = [];
 
   static const List<String> _years = ['1', '2', '3', '4'];
@@ -47,6 +49,7 @@ class _ProfileOnboardingScreenState
   @override
   void initState() {
     super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 1));
     _fetchDepartments();
   }
 
@@ -90,9 +93,15 @@ class _ProfileOnboardingScreenState
               if (profileRes['division'] != null) {
                 _selectedDivision = profileRes['division'].toString();
               }
+              final pts = profileRes['points'] != null
+                  ? int.tryParse(profileRes['points'].toString())
+                  : null;
+              // Reset unearned legacy 60 default points to 0
+              _existingPoints = (pts == 60) ? 0 : pts;
             });
           }
         }
+
       }
 
       final res = await Supabase.instance.client
@@ -144,6 +153,7 @@ class _ProfileOnboardingScreenState
 
   @override
   void dispose() {
+    _confettiController.dispose();
     _nameController.dispose();
     _rollController.dispose();
     _prnController.dispose();
@@ -153,23 +163,13 @@ class _ProfileOnboardingScreenState
 
   Future<void> _save() async {
     if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Please enter your full name to continue.',
-            style: AppTextStyles.body14.copyWith(color: AppColors.paper),
-          ),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: AppRadius.circularMd),
-        ),
-      );
+      ZestSnack.error(context, 'Please enter your full name to continue.');
       return;
     }
+
     setState(() => _isSaving = true);
     try {
       final user = Supabase.instance.client.auth.currentUser!;
-      // Upload new avatar if one was picked, otherwise keep the existing URL
       String? resolvedAvatarUrl = _existingAvatarUrl;
       if (_avatarBytes != null) {
         final uploaded = await _uploadAvatar();
@@ -179,7 +179,9 @@ class _ProfileOnboardingScreenState
       final updateData = <String, dynamic>{
         'id': user.id,
         'name': _nameController.text.trim(),
+        'points': _existingPoints ?? 0,
         'roll_number': _rollController.text.trim().isEmpty
+
             ? null
             : _rollController.text.trim(),
         'enrollment_number': _prnController.text.trim().isEmpty
@@ -201,448 +203,535 @@ class _ProfileOnboardingScreenState
           .upsert(updateData);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Profile saved! 🎉',
-              style: AppTextStyles.body14.copyWith(color: AppColors.ink),
-            ),
-            backgroundColor: AppColors.lime,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: AppRadius.circularMd),
-          ),
-        );
-        if (widget.isEditing) {
-          context.pop();
-        } else {
-          context.go('/student/home');
+        setState(() => _isSuccess = true);
+        _confettiController.play();
+        ZestSnack.success(context, 'Profile saved! 🎉 Welcome to ZEST.');
+
+        await Future.delayed(const Duration(milliseconds: 1100));
+        if (mounted) {
+          if (widget.isEditing) {
+            context.pop();
+          } else {
+            context.go('/student/home');
+          }
         }
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              error.toString(),
-              style: AppTextStyles.body14.copyWith(color: AppColors.paper),
-            ),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: AppRadius.circularMd),
-          ),
-        );
+        ZestSnack.error(context, error.toString());
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.ink,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // ── Top Navigation Bar ─────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  if (widget.isEditing)
-                    GestureDetector(
-                      onTap: () => context.pop(),
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceCard,
-                          borderRadius: AppRadius.circularSm,
-                          border:
-                              Border.all(color: AppColors.borderDark, width: 1),
+  void _openDepartmentPicker() {
+    String searchQuery = '';
+
+    ZestBottomSheet.show(
+      context: context,
+      title: 'Select Department',
+      child: StatefulBuilder(
+        builder: (context, setSheetState) {
+          final filtered = _departments.where((d) {
+            final name = (d['name'] ?? '').toString().toLowerCase();
+            return name.contains(searchQuery.toLowerCase());
+          }).toList();
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ZestTextField(
+                  hintText: 'Search departments...',
+                  prefixIcon: const Icon(Icons.search_rounded, size: 20, color: ZestTokens.ink3),
+                  onChanged: (val) {
+                    setSheetState(() => searchQuery = val);
+                  },
+                ),
+                const SizedBox(height: 12),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 300),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: filtered.length,
+                    separatorBuilder: (context, index) => const Divider(color: ZestTokens.line, height: 1),
+
+                    itemBuilder: (context, index) {
+                      final dept = filtered[index];
+                      final isSelected = dept['id'].toString() == _selectedDepartmentId;
+
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                        title: Text(
+                          dept['name'] ?? '',
+                          style: ZestTokens.body.copyWith(
+                            color: isSelected ? ZestTokens.blue : ZestTokens.ink,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          color: AppColors.paper,
-                          size: 18,
-                        ),
-                      ),
-                    )
-                  else
-                    const ZestLogo.markSmall(size: 36),
-                  Text(
-                    widget.isEditing ? 'Edit Profile' : 'Create Profile',
-                    style: AppTextStyles.sectionHeader.copyWith(
-                      color: AppColors.paper,
-                    ),
+                        trailing: isSelected
+                            ? const Icon(Icons.check_circle_rounded, color: ZestTokens.blue, size: 20)
+                            : null,
+                        onTap: () {
+                          setState(() {
+                            _selectedDepartmentId = dept['id'].toString();
+                          });
+                          Navigator.of(context).pop();
+                        },
+                      );
+                    },
                   ),
-                  if (!widget.isEditing && !widget.isEditing)
-                    TextButton(
-                      onPressed: () => context.go('/student/home'),
-                      child: Text(
-                        'Skip',
-                        style: AppTextStyles.label13.copyWith(
-                          color: AppColors.grey400,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    )
-                  else
-                    const SizedBox(width: 44),
-                ],
-              ),
+                ),
+                const SizedBox(height: 16),
+              ],
             ),
-
-            // ── Form Body ─────────────────────────────────────────────────────
-            Expanded(
-              child: _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.lime,
-                        strokeWidth: 2.5,
-                      ),
-                    )
-                  : SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // ── Lime hero strip ───────────────────────────────
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              gradient: AppColors.limeGradient,
-                              borderRadius: AppRadius.circularCard,
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        widget.isEditing
-                                            ? "Update your info"
-                                            : "What's your profile?",
-                                        style: AppTextStyles.title24.copyWith(
-                                          color: AppColors.ink,
-                                          height: 1.1,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        widget.isEditing
-                                            ? 'Keep your campus identity fresh.'
-                                            : 'Help us personalise your experience.',
-                                        style: AppTextStyles.body14.copyWith(
-                                          color: AppColors.ink
-                                              .withValues(alpha: 0.65),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                // Avatar picker
-                                GestureDetector(
-                                  onTap: _pickImage,
-                                  child: Container(
-                                    width: 72,
-                                    height: 72,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color:
-                                          AppColors.ink.withValues(alpha: 0.12),
-                                      border: Border.all(
-                                          color: AppColors.ink
-                                              .withValues(alpha: 0.25),
-                                          width: 2),
-                                      image: _avatarBytes != null
-                                          ? DecorationImage(
-                                              image:
-                                                  MemoryImage(_avatarBytes!),
-                                              fit: BoxFit.cover)
-                                          : (_existingAvatarUrl != null
-                                              ? DecorationImage(
-                                                  image: NetworkImage(
-                                                      _existingAvatarUrl!),
-                                                  fit: BoxFit.cover)
-                                              : null),
-                                    ),
-                                    child: _avatarBytes == null &&
-                                            _existingAvatarUrl == null
-                                        ? const Icon(
-                                            Icons.add_a_photo_rounded,
-                                            size: 28,
-                                            color: AppColors.ink,
-                                          )
-                                        : null,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          // ── Personal Information Section ──────────────────
-                          _SectionLabel('Personal Information'),
-                          const SizedBox(height: 12),
-                          _field(
-                            label: 'FULL NAME *',
-                            controller: _nameController,
-                            hint: 'e.g. Mayank Bohara',
-                            icon: Icons.person_outline_rounded,
-                          ),
-                          const SizedBox(height: 12),
-                          _field(
-                            label: 'PHONE NUMBER',
-                            controller: _phoneController,
-                            hint: '+91 00000 00000',
-                            icon: Icons.phone_outlined,
-                            keyboardType: TextInputType.phone,
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          // ── Academic Details Section ──────────────────────
-                          _SectionLabel('Academic Details'),
-                          const SizedBox(height: 12),
-                          _field(
-                            label: 'PRN NUMBER',
-                            controller: _prnController,
-                            hint: 'e.g. 1234567890',
-                            icon: Icons.pin_outlined,
-                          ),
-                          const SizedBox(height: 12),
-                          _field(
-                            label: 'ROLL NUMBER',
-                            controller: _rollController,
-                            hint: 'e.g. 2023CS001',
-                            icon: Icons.badge_outlined,
-                          ),
-                          const SizedBox(height: 12),
-
-                          _isLoading
-                              ? const Center(
-                                  child: Padding(
-                                    padding: EdgeInsets.all(8.0),
-                                    child: CircularProgressIndicator(
-                                        color: AppColors.lime),
-                                  ),
-                                )
-                              : _dropdown<String>(
-                                  label: 'DEPARTMENT',
-                                  value: _selectedDepartmentId,
-                                  items: _departments
-                                      .map((d) => d['id'] as String)
-                                      .toList(),
-                                  itemLabel: (id) => _departments
-                                      .firstWhere((d) => d['id'] == id)['name'],
-                                  hint: 'Select Department',
-                                  icon: Icons.school_outlined,
-                                  onChanged: (v) => setState(
-                                      () => _selectedDepartmentId = v),
-                                ),
-
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _dropdown<String>(
-                                  label: 'YEAR',
-                                  value: _selectedYear,
-                                  items: _years,
-                                  itemLabel: (s) =>
-                                      '$s${s == '1' ? 'st' : s == '2' ? 'nd' : s == '3' ? 'rd' : 'th'} Year',
-                                  hint: 'Year',
-                                  icon: Icons.calendar_today_outlined,
-                                  onChanged: (v) =>
-                                      setState(() => _selectedYear = v),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _dropdown<String>(
-                                  label: 'SEMESTER',
-                                  value: _selectedSemester,
-                                  items: _semesters,
-                                  itemLabel: (s) => 'Sem $s',
-                                  hint: 'Semester',
-                                  icon: Icons.class_outlined,
-                                  onChanged: (v) =>
-                                      setState(() => _selectedSemester = v),
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 12),
-                          _dropdown<String>(
-                            label: 'DIVISION',
-                            value: _selectedDivision,
-                            items: _divisions,
-                            itemLabel: (s) => 'Division $s',
-                            hint: 'Select Division',
-                            icon: Icons.group_outlined,
-                            onChanged: (v) =>
-                                setState(() => _selectedDivision = v),
-                          ),
-
-                          const SizedBox(height: 32),
-
-                          // ── Primary Save Button ───────────────────────────
-                          ZestButton(
-                            label: widget.isEditing
-                                ? 'Save Profile ✓'
-                                : 'Continue to Events ⚡',
-                            variant: ZestButtonVariant.primary,
-                            isLoading: _isSaving,
-                            onPressed: _save,
-                          ),
-
-                          if (!widget.isEditing) ...[
-                            const SizedBox(height: 12),
-                            Center(
-                              child: TextButton(
-                                onPressed: () =>
-                                    context.go('/student/home'),
-                                child: Text(
-                                  'Skip for now',
-                                  style: AppTextStyles.label13.copyWith(
-                                    color: AppColors.grey400,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-
-                          const SizedBox(height: 24),
-                        ],
-                      ),
-                    ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  Widget _field({
-    required String label,
-    required TextEditingController controller,
-    required String hint,
-    required IconData icon,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: AppTextStyles.overline.copyWith(
-            color: AppColors.grey400,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          style: AppTextStyles.body15.copyWith(color: AppColors.paper),
-          decoration: InputDecoration(
-            hintText: hint,
-            prefixIcon: Icon(icon, color: AppColors.lime, size: 20),
-          ),
-        ),
-      ],
+  String _getDepartmentName() {
+    if (_selectedDepartmentId == null) return 'Choose Department';
+    final found = _departments.firstWhere(
+      (d) => d['id'].toString() == _selectedDepartmentId,
+      orElse: () => {'name': 'Choose Department'},
     );
+    return found['name'] ?? 'Choose Department';
   }
-
-  Widget _dropdown<T>({
-    required String label,
-    required T? value,
-    required List<T> items,
-    required String Function(T) itemLabel,
-    required String hint,
-    required IconData icon,
-    required void Function(T?) onChanged,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: AppTextStyles.overline.copyWith(
-            color: AppColors.grey400,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Container(
-          decoration: BoxDecoration(
-            color: AppColors.surfaceDark,
-            borderRadius: AppRadius.circularInput,
-            border: Border.all(color: AppColors.borderDark, width: 1.5),
-          ),
-          child: DropdownButtonFormField<T>(
-            initialValue: value,
-            onChanged: onChanged,
-            decoration: InputDecoration(
-              prefixIcon: Icon(icon, color: AppColors.lime, size: 20),
-              border: InputBorder.none,
-              contentPadding:
-                  const EdgeInsets.symmetric(vertical: 14, horizontal: 0),
-            ),
-            hint: Text(
-              hint,
-              style: AppTextStyles.body14.copyWith(color: AppColors.grey400),
-            ),
-            dropdownColor: AppColors.surfaceCard,
-            style: AppTextStyles.body15.copyWith(color: AppColors.paper),
-            items: items
-                .map((item) => DropdownMenuItem<T>(
-                      value: item,
-                      child: Text(itemLabel(item)),
-                    ))
-                .toList(),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String label;
-  const _SectionLabel(this.label);
 
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: ZestTokens.page,
+      appBar: AppBar(
+        leading: widget.isEditing
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                onPressed: () => context.pop(),
+              )
+            : const Padding(
+                padding: EdgeInsets.only(left: 18),
+                child: Center(child: ZestBlobLogo(size: 32)),
+              ),
+        title: Text(
+          widget.isEditing ? 'Edit Profile' : 'Student Profile',
+          style: ZestTokens.title.copyWith(fontSize: 20),
+        ),
+        actions: [
+          if (!widget.isEditing)
+            TextButton(
+              onPressed: () => context.go('/student/home'),
+              child: Text(
+                'Skip',
+                style: ZestTokens.caption.copyWith(
+                  color: ZestTokens.ink3,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: Stack(
+        children: [
+          if (_isLoading)
+            const Center(
+              child: ZestMascot(size: 70, mood: MascotMood.idle),
+            )
+          else
+            Column(
+              children: [
+                // Visual progress dots at top: Photo · Details · Academics
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildStepDot('1', 'Photo', true),
+                      _buildStepLine(),
+                      _buildStepDot('2', 'Details', _nameController.text.isNotEmpty),
+                      _buildStepLine(),
+                      _buildStepDot('3', 'Academics', _selectedDepartmentId != null),
+                    ],
+                  ),
+                ),
+
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // 1. Photo Card
+                        ZestCard(
+                          padding: const EdgeInsets.all(20),
+                          child: Row(
+                            children: [
+                              GestureDetector(
+                                onTap: _pickImage,
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    Container(
+                                      width: 84,
+                                      height: 84,
+                                      padding: const EdgeInsets.all(3),
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: ZestTokens.brandGradient,
+                                      ),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(2),
+                                        decoration: const BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Colors.white,
+                                        ),
+                                        child: ClipOval(
+                                          child: _avatarBytes != null
+                                              ? Image.memory(
+                                                  _avatarBytes!,
+                                                  fit: BoxFit.cover,
+                                                  width: 76,
+                                                  height: 76,
+                                                )
+                                              : (_existingAvatarUrl != null && _existingAvatarUrl!.isNotEmpty)
+                                                  ? Image.network(
+                                                      _existingAvatarUrl!,
+                                                      fit: BoxFit.cover,
+                                                      width: 76,
+                                                      height: 76,
+                                                      errorBuilder: (context, error, stackTrace) => _buildAvatarPlaceholder(),
+
+                                                    )
+                                                  : _buildAvatarPlaceholder(),
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      right: 0,
+                                      bottom: 0,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: const BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          gradient: ZestTokens.brandGradient,
+                                        ),
+                                        child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 14),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 18),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      widget.isEditing ? 'Profile Photo' : 'Add your photo',
+                                      style: ZestTokens.section.copyWith(fontSize: 17),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Displayed on your passes and campus leaderboard.',
+                                      style: ZestTokens.caption.copyWith(color: ZestTokens.ink2),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        // 2. Personal Details Card
+                        ZestCard(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Personal Details', style: ZestTokens.section.copyWith(fontSize: 17)),
+                              const SizedBox(height: 16),
+                              ZestTextField(
+                                controller: _nameController,
+                                label: 'FULL NAME *',
+                                hintText: 'Aarav Sharma',
+                                prefixIcon: const Icon(Icons.person_outline_rounded, color: ZestTokens.ink3, size: 20),
+                              ),
+                              const SizedBox(height: 14),
+                              ZestTextField(
+                                controller: _phoneController,
+                                label: 'PHONE NUMBER',
+                                hintText: '+91 98765 43210',
+                                keyboardType: TextInputType.phone,
+                                prefixIcon: const Icon(Icons.phone_outlined, color: ZestTokens.ink3, size: 20),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        // 3. Academic Details Card
+                        ZestCard(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Academic Information', style: ZestTokens.section.copyWith(fontSize: 17)),
+                              const SizedBox(height: 16),
+
+                              // Roll Number & PRN row
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ZestTextField(
+                                      controller: _rollController,
+                                      label: 'ROLL NUMBER',
+                                      hintText: '22BCS1048',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: ZestTextField(
+                                      controller: _prnController,
+                                      label: 'PRN / ENROLLMENT',
+                                      hintText: '1032220489',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Department picker button
+                              Text('DEPARTMENT', style: ZestTokens.caption.copyWith(fontWeight: FontWeight.w600, color: ZestTokens.ink)),
+                              const SizedBox(height: 8),
+                              GestureDetector(
+                                onTap: _openDepartmentPicker,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+                                  decoration: BoxDecoration(
+                                    color: ZestTokens.fill,
+                                    borderRadius: ZestTokens.borderInput,
+                                    border: Border.all(color: ZestTokens.line),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          _getDepartmentName(),
+                                          style: ZestTokens.body.copyWith(
+                                            color: _selectedDepartmentId != null ? ZestTokens.ink : ZestTokens.ink3,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const Icon(Icons.keyboard_arrow_down_rounded, color: ZestTokens.ink3),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Year pill grid
+                              Text('YEAR', style: ZestTokens.caption.copyWith(fontWeight: FontWeight.w600, color: ZestTokens.ink)),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: _years.map((y) {
+                                  final isSelected = _selectedYear == y;
+                                  return Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(right: 6.0),
+                                      child: _buildSelectPill(
+                                        y,
+                                        isSelected,
+                                        () => setState(() => _selectedYear = y),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Semester pill grid
+                              Text('SEMESTER', style: ZestTokens.caption.copyWith(fontWeight: FontWeight.w600, color: ZestTokens.ink)),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: _semesters.map((s) {
+                                  final isSelected = _selectedSemester == s;
+                                  return SizedBox(
+                                    width: 44,
+                                    child: _buildSelectPill(
+                                      s,
+                                      isSelected,
+                                      () => setState(() => _selectedSemester = s),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Division pill grid
+                              Text('DIVISION', style: ZestTokens.caption.copyWith(fontWeight: FontWeight.w600, color: ZestTokens.ink)),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: _divisions.map((d) {
+                                  final isSelected = _selectedDivision == d;
+                                  return SizedBox(
+                                    width: 44,
+                                    child: _buildSelectPill(
+                                      d,
+                                      isSelected,
+                                      () => setState(() => _selectedDivision = d),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Sticky Bottom Action Bar
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    border: Border(top: BorderSide(color: ZestTokens.line)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0x0A0B1220),
+                        blurRadius: 16,
+                        offset: Offset(0, -4),
+                      ),
+                    ],
+                  ),
+                  child: SafeArea(
+                    top: false,
+                    child: ZestButton(
+                      text: widget.isEditing
+                          ? 'Save Profile Changes'
+                          : 'Save profile & enter ZEST ⚡',
+                      fullWidth: true,
+                      isLoading: _isSaving,
+                      isSuccess: _isSuccess,
+                      onPressed: _save,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+          // Confetti celebration widget
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirectionality: BlastDirectionality.explosive,
+              shouldLoop: false,
+              colors: const [
+                ZestTokens.sky,
+                ZestTokens.core,
+                ZestTokens.lemon,
+                ZestTokens.coral,
+                ZestTokens.mint,
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAvatarPlaceholder() {
+    return Container(
+      width: 76,
+      height: 76,
+      color: const Color(0xFFE6F4FE),
+      child: const Center(
+        child: Icon(Icons.person_rounded, size: 40, color: ZestTokens.blue),
+      ),
+    );
+  }
+
+  Widget _buildStepDot(String num, String label, bool isDone) {
     return Row(
       children: [
         Container(
-          width: 3,
-          height: 18,
+          width: 22,
+          height: 22,
           decoration: BoxDecoration(
-            color: AppColors.lime,
-            borderRadius: AppRadius.circularPill,
+            shape: BoxShape.circle,
+            color: isDone ? ZestTokens.blue : ZestTokens.line,
+          ),
+          child: Center(
+            child: Text(
+              num,
+              style: TextStyle(
+                color: isDone ? Colors.white : ZestTokens.ink3,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 5),
         Text(
           label,
-          style: AppTextStyles.sectionHeader.copyWith(
-            color: AppColors.paper,
-            letterSpacing: -0.01,
+          style: ZestTokens.caption.copyWith(
+            fontWeight: isDone ? FontWeight.w600 : FontWeight.w500,
+            color: isDone ? ZestTokens.ink : ZestTokens.ink3,
+            fontSize: 12,
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildStepLine() {
+    return Container(
+      width: 20,
+      height: 1.5,
+      color: ZestTokens.line,
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+    );
+  }
+
+  Widget _buildSelectPill(String text, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 40,
+        decoration: BoxDecoration(
+          color: isSelected ? null : ZestTokens.fill,
+          gradient: isSelected ? ZestTokens.brandGradient : null,
+          borderRadius: ZestTokens.borderPill,
+          border: isSelected ? null : Border.all(color: ZestTokens.line),
+        ),
+        child: Center(
+          child: Text(
+            text,
+            style: TextStyle(
+              color: isSelected ? Colors.white : ZestTokens.ink,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

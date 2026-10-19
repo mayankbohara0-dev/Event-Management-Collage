@@ -1,23 +1,18 @@
+import 'dart:async';
+import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:add_2_calendar/add_2_calendar.dart';
-import 'dart:async';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_text_styles.dart';
-import '../../../core/widgets/empty_state.dart';
-import '../../../core/widgets/skeleton_loader.dart';
-import '../../../core/widgets/zest_button.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/theme/zest_tokens.dart';
+import '../../../shared/widgets/shared_widgets.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EventDetailsScreen — Full Zest Event Experience
-// Spec: 300px event-colored banner (bottom radius 42), floating circular back
-//       button, huge emoji / cover image, 38sp title, category ink pill with
-//       lime text, seats-left progress bar, countdown card, sticky register bar
-//       with ZestButton (Done state: "You're in! ✓").
+// Minimal, simple, modern, light UI matching Designjoy aesthetic.
 // ─────────────────────────────────────────────────────────────────────────────
 
 class EventDetailsScreen extends ConsumerStatefulWidget {
@@ -101,16 +96,16 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: AppColors.ink,
-        body: Center(
+        backgroundColor: ZestTokens.page,
+        body: const Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: const [
-              SkeletonLoader(width: double.infinity, height: 300),
+            children: [
+              ZestSkeleton(width: double.infinity, height: 300),
               SizedBox(height: 24),
-              SkeletonLoader(width: 220, height: 32),
+              ZestSkeleton(width: 220, height: 32),
               SizedBox(height: 12),
-              SkeletonLoader(width: 140, height: 16),
+              ZestSkeleton(width: 140, height: 16),
             ],
           ),
         ),
@@ -119,18 +114,19 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
 
     if (_error != null || _event == null) {
       return Scaffold(
-        backgroundColor: AppColors.ink,
+        backgroundColor: ZestTokens.page,
         appBar: AppBar(
-          backgroundColor: AppColors.ink,
-          foregroundColor: AppColors.white,
+          backgroundColor: ZestTokens.page,
+          foregroundColor: ZestTokens.ink,
+          elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded),
+            icon: const Icon(LucideIcons.arrowLeft),
             onPressed: () => context.pop(),
           ),
         ),
         body: Center(
-          child: EmptyState(
-            emoji: '🔍',
+          child: ZestEmptyState(
+            mascotMood: ZestMascotMood.sleepy,
             title: 'Event Not Found',
             subtitle: _error ?? 'This event might have been removed or is no longer accessible.',
             actionLabel: 'Back to Feed',
@@ -148,8 +144,9 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     final category = _event!['event_categories']?['name']?.toString() ?? 'General';
     final eligibility = _event!['eligibility']?.toString() ?? '';
     final rules = _event!['rules']?.toString() ?? '';
-    final maxCapacity = _event!['max_capacity'] != null
-        ? int.tryParse(_event!['max_capacity'].toString())
+    final rawCap = _event!['max_seats'] ?? _event!['max_capacity'];
+    final maxCapacity = rawCap != null
+        ? int.tryParse(rawCap.toString())
         : null;
 
     final startDateStr = _event!['start_date']?.toString();
@@ -177,413 +174,426 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         : 0.0;
 
     final emoji = _resolveEmoji(title, category);
+    final gradient = ZestTokens.categoryGradient(category);
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light.copyWith(
-        statusBarColor: Colors.transparent,
-      ),
-      child: Scaffold(
-        backgroundColor: AppColors.ink,
-        body: Stack(
-          children: [
-            CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(
-                parent: BouncingScrollPhysics(),
-              ),
-              slivers: [
-                // ── 300px Event Banner with Bottom Radius 42 ───────────────
-                SliverToBoxAdapter(
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(AppRadius.bottomSheetBanner),
-                      bottomRight: Radius.circular(AppRadius.bottomSheetBanner),
-                    ),
-                    child: SizedBox(
-                      height: 300,
-                      width: double.infinity,
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          if (coverImage != null && coverImage.isNotEmpty)
-                            Image.network(
-                              coverImage,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => _buildBannerFallback(emoji),
-                            )
-                          else
-                            _buildBannerFallback(emoji),
+    return Scaffold(
+      backgroundColor: ZestTokens.page,
+      body: Stack(
+        children: [
+          CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            slivers: [
+              // ── 300px Event Banner with Bottom Radius 40 ───────────────
+              SliverToBoxAdapter(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(40),
+                    bottomRight: Radius.circular(40),
+                  ),
+                  child: SizedBox(
+                    height: 300,
+                    width: double.infinity,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (coverImage != null && coverImage.isNotEmpty)
+                          Image.network(
+                            coverImage,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => _buildBannerFallback(emoji, gradient),
+                          )
+                        else
+                          _buildBannerFallback(emoji, gradient),
 
-                          // Dark Gradient Overlay
-                          Positioned.fill(
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.black.withValues(alpha: 0.35),
-                                    Colors.transparent,
-                                    Colors.black.withValues(alpha: 0.85),
-                                  ],
-                                  stops: const [0.0, 0.45, 1.0],
-                                ),
+                        // Soft Gradient Overlay
+                        Positioned.fill(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.black.withValues(alpha: 0.35),
+                                  Colors.transparent,
+                                  Colors.black.withValues(alpha: 0.75),
+                                ],
+                                stops: const [0.0, 0.45, 1.0],
                               ),
                             ),
                           ),
+                        ),
 
-                          // Floating Back Button
+                        // Floating Back Button
+                        Positioned(
+                          top: MediaQuery.of(context).padding.top + 12,
+                          left: 16,
+                          child: GestureDetector(
+                            onTap: () => context.pop(),
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: ZestTokens.line),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x1A000000),
+                                    blurRadius: 10,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                LucideIcons.arrowLeft,
+                                color: ZestTokens.ink,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Floating Calendar Sync Button
+                        if (startDate != null && endDate != null)
                           Positioned(
-                            top: MediaQuery.of(context).padding.top + 10,
-                            left: 16,
+                            top: MediaQuery.of(context).padding.top + 12,
+                            right: 16,
                             child: GestureDetector(
-                              onTap: () => context.pop(),
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                final Event calEvent = Event(
+                                  title: title,
+                                  description: shortDesc,
+                                  location: venue,
+                                  startDate: startDate,
+                                  endDate: endDate,
+                                );
+                                Add2Calendar.addEvent2Cal(calEvent);
+                              },
                               child: Container(
                                 width: 44,
                                 height: 44,
                                 decoration: BoxDecoration(
-                                  color: AppColors.ink.withValues(alpha: 0.75),
+                                  color: Colors.white,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: AppColors.borderDark),
+                                  border: Border.all(color: ZestTokens.line),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Color(0x1A000000),
+                                      blurRadius: 10,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
                                 child: const Icon(
-                                  Icons.arrow_back_rounded,
-                                  color: AppColors.white,
+                                  LucideIcons.calendarPlus,
+                                  color: ZestTokens.blue,
                                   size: 20,
                                 ),
                               ),
                             ),
                           ),
 
-                          // Floating Calendar Sync Button
-                          if (startDate != null && endDate != null)
-                            Positioned(
-                              top: MediaQuery.of(context).padding.top + 10,
-                              right: 16,
-                              child: GestureDetector(
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  final Event calEvent = Event(
-                                    title: title,
-                                    description: shortDesc,
-                                    location: venue,
-                                    startDate: startDate,
-                                    endDate: endDate,
-                                  );
-                                  Add2Calendar.addEvent2Cal(calEvent);
-                                },
-                                child: Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.ink.withValues(alpha: 0.75),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: AppColors.borderDark),
+                        // Bottom Banner Info (Category pill + Pass confirmed badge)
+                        Positioned(
+                          bottom: 20,
+                          left: 20,
+                          right: 20,
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.25),
+                                  borderRadius: ZestTokens.borderPill,
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.4),
                                   ),
-                                  child: const Icon(
-                                    Icons.calendar_month_rounded,
-                                    color: AppColors.lime,
-                                    size: 20,
+                                ),
+                                child: Text(
+                                  category.toUpperCase(),
+                                  style: ZestTokens.labelCaps.copyWith(
+                                    color: Colors.white,
+                                    fontSize: 10.5,
+                                    letterSpacing: 0.8,
                                   ),
                                 ),
                               ),
-                            ),
-
-                          // Bottom Banner Info (Category pill + Status)
-                          Positioned(
-                            bottom: 20,
-                            left: 20,
-                            right: 20,
-                            child: Row(
-                              children: [
+                              const Spacer(),
+                              if (_isRegistered)
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.ink,
-                                    borderRadius: AppRadius.circularPill,
-                                    border: Border.all(color: AppColors.lime.withValues(alpha: 0.4)),
+                                    color: Colors.white,
+                                    borderRadius: ZestTokens.borderPill,
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x20000000),
+                                        blurRadius: 10,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
-                                  child: Text(
-                                    category.toUpperCase(),
-                                    style: AppTextStyles.pillTag.copyWith(
-                                      color: AppColors.lime,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ),
-                                const Spacer(),
-                                if (_isRegistered)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.lime,
-                                      borderRadius: AppRadius.circularPill,
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(Icons.check_circle_rounded, size: 14, color: AppColors.ink),
-                                        const SizedBox(width: 5),
-                                        Text(
-                                          'PASS CONFIRMED',
-                                          style: AppTextStyles.metaLabel.copyWith(
-                                            color: AppColors.ink,
-                                            fontWeight: FontWeight.w900,
-                                          ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        LucideIcons.checkCircle2,
+                                        size: 14,
+                                        color: ZestTokens.success,
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        'PASS CONFIRMED',
+                                        style: ZestTokens.labelCaps.copyWith(
+                                          color: ZestTokens.blue,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 10,
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // ── Event Content Details ──────────────────────────────────
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(18, 24, 18, 140),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Title 38sp Bricolage 800
-                        Text(
-                          title,
-                          style: AppTextStyles.title38.copyWith(
-                            color: AppColors.white,
-                            height: 1.15,
-                          ),
-                        ),
-
-                        if (shortDesc.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            shortDesc,
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: AppColors.lime,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-
-                        const SizedBox(height: 24),
-
-                        // Countdown Timer Card
-                        if (startDate != null && !isPast) ...[
-                          _ZestCountdownCard(eventDate: startDate),
-                          const SizedBox(height: 20),
-                        ],
-
-                        // Capacity / Seats Left Progress Bar
-                        if (maxCapacity != null && maxCapacity > 0) ...[
-                          Container(
-                            padding: const EdgeInsets.all(18),
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceDark,
-                              borderRadius: BorderRadius.circular(AppRadius.card),
-                              border: Border.all(color: AppColors.borderDark),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      'Seat Availability',
-                                      style: AppTextStyles.title17.copyWith(
-                                        color: AppColors.white,
                                       ),
-                                    ),
-                                    Text(
-                                      remainingSeats != null && remainingSeats > 0
-                                          ? '$remainingSeats spots left ⚡'
-                                          : 'Sold Out!',
-                                      style: AppTextStyles.caption.copyWith(
-                                        color: (remainingSeats != null && remainingSeats <= 10)
-                                            ? AppColors.coral
-                                            : AppColors.lime,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-                                ClipRRect(
-                                  borderRadius: AppRadius.circularPill,
-                                  child: LinearProgressIndicator(
-                                    value: capacityProgress,
-                                    minHeight: 8,
-                                    backgroundColor: AppColors.ink3,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      capacityProgress > 0.9 ? AppColors.coral : AppColors.lime,
-                                    ),
+                                    ],
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-
-                        // Key Event Information Bento Grid
-                        Text(
-                          'Event Highlights 📍',
-                          style: AppTextStyles.title24.copyWith(
-                            color: AppColors.white,
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 14),
-
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildHighlightTile(
-                                icon: Icons.calendar_today_rounded,
-                                label: 'Date',
-                                value: dateString,
-                                accentColor: AppColors.coral,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: _buildHighlightTile(
-                                icon: Icons.access_time_rounded,
-                                label: 'Time',
-                                value: timeString,
-                                accentColor: AppColors.mustard,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 10),
-
-                        _buildHighlightTile(
-                          icon: Icons.location_on_rounded,
-                          label: 'Venue',
-                          value: venue,
-                          accentColor: AppColors.aqua,
-                        ),
-
-                        if (eligibility.isNotEmpty) ...[
-                          const SizedBox(height: 10),
-                          _buildHighlightTile(
-                            icon: Icons.verified_user_outlined,
-                            label: 'Eligibility',
-                            value: eligibility,
-                            accentColor: AppColors.lavender,
-                          ),
-                        ],
-
-                        const SizedBox(height: 28),
-
-                        // Long Description
-                        if (longDesc.isNotEmpty) ...[
-                          Text(
-                            'About this Event 📝',
-                            style: AppTextStyles.title24.copyWith(
-                              color: AppColors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(18),
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceDark,
-                              borderRadius: BorderRadius.circular(AppRadius.card),
-                              border: Border.all(color: AppColors.borderDark),
-                            ),
-                            child: Text(
-                              longDesc,
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.grey400,
-                                height: 1.6,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 28),
-                        ],
-
-                        // Event Guidelines / Rules
-                        if (rules.isNotEmpty) ...[
-                          Text(
-                            'Rules & Guidelines 📌',
-                            style: AppTextStyles.title24.copyWith(
-                              color: AppColors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(18),
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceDark,
-                              borderRadius: BorderRadius.circular(AppRadius.card),
-                              border: Border.all(color: AppColors.borderDark),
-                            ),
-                            child: Text(
-                              rules,
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.grey400,
-                                height: 1.6,
-                              ),
-                            ),
-                          ),
-                        ],
                       ],
                     ),
                   ),
                 ),
-              ],
-            ),
-
-            // ── Sticky Registration Bottom Bar ─────────────────────────
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Container(
-                padding: EdgeInsets.fromLTRB(
-                  18,
-                  14,
-                  18,
-                  MediaQuery.of(context).padding.bottom + 14,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.ink.withValues(alpha: 0.95),
-                  border: const Border(
-                    top: BorderSide(color: AppColors.borderDark, width: 1.5),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      blurRadius: 24,
-                      offset: const Offset(0, -4),
-                    ),
-                  ],
-                ),
-                child: _buildActionButton(context, isPast),
               ),
+
+              // ── Event Content Details ──────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    ZestTokens.horizontalPadding,
+                    22,
+                    ZestTokens.horizontalPadding,
+                    130,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title
+                      Text(
+                        title,
+                        style: ZestTokens.display.copyWith(
+                          fontSize: 28,
+                          letterSpacing: -0.6,
+                        ),
+                      ),
+
+                      if (shortDesc.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          shortDesc,
+                          style: ZestTokens.body.copyWith(
+                            color: ZestTokens.blue,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ],
+
+                      const SizedBox(height: 20),
+
+                      // Countdown Timer Card
+                      if (startDate != null && !isPast) ...[
+                        _ZestCountdownCard(eventDate: startDate),
+                        const SizedBox(height: 18),
+                      ],
+
+                      // Capacity / Seats Left Progress Bar
+                      if (maxCapacity != null && maxCapacity > 0) ...[
+                        ZestCard(
+                          padding: const EdgeInsets.all(18),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Seat Availability',
+                                    style: ZestTokens.bodyBold.copyWith(
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  Text(
+                                    remainingSeats != null && remainingSeats > 0
+                                        ? '$remainingSeats spots left ⚡'
+                                        : 'Sold Out!',
+                                    style: ZestTokens.caption.copyWith(
+                                      color: (remainingSeats != null && remainingSeats <= 10)
+                                          ? ZestTokens.coral
+                                          : ZestTokens.blue,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              ZestProgressBar(
+                                value: capacityProgress,
+                                height: 8,
+                                progressGradient: capacityProgress > 0.85
+                                    ? const LinearGradient(
+                                        colors: [ZestTokens.coral, Color(0xFFFF8FA3)],
+                                      )
+                                    : ZestTokens.brandGradient,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+
+                      // Key Event Information Bento Grid
+                      ZestSectionHeader(
+                        title: 'Event',
+                        accentWord: 'highlights',
+                      ),
+                      const SizedBox(height: 12),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildHighlightTile(
+                              icon: LucideIcons.calendar,
+                              label: 'Date',
+                              value: dateString,
+                              accentColor: ZestTokens.coral,
+                              bgTint: const Color(0xFFFFF1F2),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _buildHighlightTile(
+                              icon: LucideIcons.clock,
+                              label: 'Time',
+                              value: timeString,
+                              accentColor: const Color(0xFFD97706),
+                              bgTint: const Color(0xFFFEF3C7),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      _buildHighlightTile(
+                        icon: LucideIcons.mapPin,
+                        label: 'Venue',
+                        value: venue,
+                        accentColor: ZestTokens.blue,
+                        bgTint: const Color(0xFFE8F6FE),
+                      ),
+
+                      if (eligibility.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        _buildHighlightTile(
+                          icon: LucideIcons.shieldCheck,
+                          label: 'Eligibility',
+                          value: eligibility,
+                          accentColor: const Color(0xFF7E22CE),
+                          bgTint: const Color(0xFFFAF5FF),
+                        ),
+                      ],
+
+                      const SizedBox(height: 24),
+
+                      // Long Description
+                      if (longDesc.isNotEmpty) ...[
+                        ZestSectionHeader(
+                          title: 'About',
+                          accentWord: 'this event',
+                        ),
+                        const SizedBox(height: 12),
+                        ZestCard(
+                          padding: const EdgeInsets.all(18),
+                          child: Text(
+                            longDesc,
+                            style: ZestTokens.body.copyWith(
+                              color: ZestTokens.ink2,
+                              height: 1.6,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+
+                      // Event Guidelines / Rules
+                      if (rules.isNotEmpty) ...[
+                        ZestSectionHeader(
+                          title: 'Rules &',
+                          accentWord: 'guidelines',
+                        ),
+                        const SizedBox(height: 12),
+                        ZestCard(
+                          padding: const EdgeInsets.all(18),
+                          child: Text(
+                            rules,
+                            style: ZestTokens.body.copyWith(
+                              color: ZestTokens.ink2,
+                              height: 1.6,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // ── Sticky Registration Bottom Bar ─────────────────────────
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              padding: EdgeInsets.fromLTRB(
+                ZestTokens.horizontalPadding,
+                14,
+                ZestTokens.horizontalPadding,
+                MediaQuery.of(context).padding.bottom + 14,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  top: BorderSide(color: ZestTokens.line, width: 1.0),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x100B1220),
+                    blurRadius: 20,
+                    offset: Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: _buildActionButton(context, isPast),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildBannerFallback(String emoji) {
+  Widget _buildBannerFallback(String emoji, LinearGradient gradient) {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.ink, Color(0xFF26262C)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+      decoration: BoxDecoration(
+        gradient: gradient,
       ),
       child: Center(
         child: Text(
@@ -599,24 +609,20 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     required String label,
     required String value,
     required Color accentColor,
+    required Color bgTint,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.borderDark),
-      ),
+    return ZestCard(
+      padding: const EdgeInsets.all(14),
       child: Row(
         children: [
           Container(
-            width: 42,
-            height: 42,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(14),
+              color: bgTint,
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: accentColor, size: 20),
+            child: Icon(icon, color: accentColor, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -625,9 +631,9 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
               children: [
                 Text(
                   label,
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.grey400,
-                    fontWeight: FontWeight.w600,
+                  style: ZestTokens.caption.copyWith(
+                    color: ZestTokens.ink3,
+                    fontSize: 11,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -635,9 +641,8 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.title17.copyWith(
-                    color: AppColors.white,
-                    fontSize: 14,
+                  style: ZestTokens.bodyBold.copyWith(
+                    fontSize: 13.5,
                   ),
                 ),
               ],
@@ -650,8 +655,8 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
 
   Widget _buildActionButton(BuildContext context, bool isPast) {
     if (isPast) {
-      return ZestButton(
-        label: 'Event Concluded 🏁',
+      return const ZestButton(
+        text: 'Event Concluded 🏁',
         variant: ZestButtonVariant.ghost,
         fullWidth: true,
         onPressed: null,
@@ -660,18 +665,16 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
 
     if (_isRegistered) {
       return ZestButton(
-        label: 'View Your Entry Pass 🎟️',
-        icon: Icons.confirmation_number_rounded,
-        isDone: true,
-        doneLabel: "You're in! View Pass 🎟️",
+        text: "You're in! View Pass 🎟️",
+        prefixIcon: LucideIcons.ticket,
         fullWidth: true,
         onPressed: () => context.go('/student/home'),
       );
     }
 
     return ZestButton(
-      label: 'Claim Your Spot ⚡',
-      icon: Icons.bolt_rounded,
+      text: 'Claim Your Spot ⚡',
+      prefixIcon: LucideIcons.zap,
       fullWidth: true,
       onPressed: () => context.push('/student/event/${widget.eventId}/register'),
     );
@@ -725,26 +728,18 @@ class _ZestCountdownCardState extends State<_ZestCountdownCard> {
   Widget build(BuildContext context) {
     if (_timeLeft == Duration.zero) return const SizedBox.shrink();
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.borderDark),
-      ),
+    return ZestCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           Row(
             children: [
-              const Text('⏱️', style: TextStyle(fontSize: 22)),
+              const Text('⏱️', style: TextStyle(fontSize: 20)),
               const SizedBox(width: 8),
               Text(
                 'Starts in',
-                style: AppTextStyles.title17.copyWith(
-                  color: AppColors.white,
-                  fontSize: 14,
-                ),
+                style: ZestTokens.bodyBold.copyWith(fontSize: 13.5),
               ),
             ],
           ),
@@ -761,11 +756,13 @@ class _ZestCountdownCardState extends State<_ZestCountdownCard> {
   }
 
   Widget _colon() {
-    return Text(
+    return const Text(
       ':',
-      style: AppTextStyles.title24.copyWith(
-        color: AppColors.lime,
-        fontWeight: FontWeight.w900,
+      style: TextStyle(
+        fontFamily: 'Inter',
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        color: ZestTokens.blue,
       ),
     );
   }
@@ -775,27 +772,28 @@ class _ZestCountdownCardState extends State<_ZestCountdownCard> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
           decoration: BoxDecoration(
-            color: AppColors.ink,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.borderDark),
+            color: const Color(0xFFE8F6FE),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
             val,
-            style: AppTextStyles.title17.copyWith(
-              color: AppColors.lime,
-              fontWeight: FontWeight.w900,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: ZestTokens.blue,
             ),
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 3),
         Text(
           label,
-          style: AppTextStyles.caption.copyWith(
+          style: ZestTokens.caption.copyWith(
             fontSize: 9,
-            fontWeight: FontWeight.w800,
-            color: AppColors.grey400,
+            fontWeight: FontWeight.w700,
+            color: ZestTokens.ink3,
           ),
         ),
       ],

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/floating_pill_nav_bar.dart';
+import '../../../core/theme/zest_tokens.dart';
+import '../../../shared/widgets/zest_floating_nav_bar.dart';
 import 'widgets/home_feed_tab.dart';
 import 'widgets/explore_tab.dart';
 import 'widgets/my_events_tab.dart';
@@ -11,8 +11,8 @@ import 'widgets/student_profile_tab.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Zest Student Home Shell
-// 5-tab navigation per spec: Home, Explore, My Events, Leaderboard, Profile
-// FloatingPillNavBar with sliding lime circle indicator
+// 5-tab navigation: Home, Explore, My Passes, Leaderboard, Profile
+// Floating ZestFloatingNavBar with sliding brandGradient circle indicator
 // ─────────────────────────────────────────────────────────────────────────────
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -38,43 +38,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  // ── 5-tab nav items per spec:
-  //    0: Home (house icon)
-  //    1: Explore (compass)
-  //    2: My Events (ticket)
-  //    3: Leaderboard (trophy)
-  //    4: Profile (person)
-  static const _navItems = [
-    ZestNavItem(
-      icon: Icons.home_outlined,
-      activeIcon: Icons.home_rounded,
-      label: 'Home',
-    ),
-    ZestNavItem(
-      icon: Icons.explore_outlined,
-      activeIcon: Icons.explore_rounded,
-      label: 'Explore',
-    ),
-    ZestNavItem(
-      icon: Icons.confirmation_number_outlined,
-      activeIcon: Icons.confirmation_number_rounded,
-      label: 'My Events',
-    ),
-    ZestNavItem(
-      icon: Icons.emoji_events_outlined,
-      activeIcon: Icons.emoji_events_rounded,
-      label: 'Leaderboard',
-    ),
-    ZestNavItem(
-      icon: Icons.person_outline_rounded,
-      activeIcon: Icons.person_rounded,
-      label: 'Profile',
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
-    // Each tab builds lazily — IndexedStack preserves state
     final pages = [
       // Tab 0: Home Feed
       HomeFeedTab(
@@ -87,7 +52,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ExploreTab(
         onScrollDirectionChange: setNavVisible,
       ),
-      // Tab 2: My Events / Tickets
+      // Tab 2: My Events / Passes
       MyEventsTab(
         onProfileTap: () => _goToTab(4),
         onExploreTap: () => _goToTab(1),
@@ -99,9 +64,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ];
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light, // light status bar icons on dark bg
+      value: SystemUiOverlayStyle.dark, // dark status bar icons on light page
       child: Scaffold(
-        backgroundColor: AppColors.ink,
+        backgroundColor: ZestTokens.page,
         body: Stack(
           children: [
             // ── Tab content ────────────────────────────────────────────
@@ -111,16 +76,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
 
             // ── Floating Pill Nav Bar ──────────────────────────────────
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: FloatingPillNavBar(
-                items: _navItems,
-                selectedIndex: _selectedIndex,
-                onTap: _goToTab,
-                isVisible: _navVisible,
-              ),
+            ZestFloatingNavBar(
+              currentIndex: _selectedIndex,
+              onTap: _goToTab,
+              isVisible: _navVisible,
             ),
           ],
         ),
@@ -128,3 +87,4 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 }
+

@@ -4,16 +4,13 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_text_styles.dart';
-import '../../../core/widgets/zest_button.dart';
-import '../../../core/widgets/zest_logo.dart';
+import '../../../core/theme/theme.dart';
+import '../../../shared/widgets/shared_widgets.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LandingScreen — handles auth check and shows either:
-//   • _AnimatedSplash  (while checking, shown for 2.5s with lime gradient)
-//   • _AuthLanding     (if unauthenticated after check)
+//   • _AnimatedSplash  (while checking, shown for 2.5s with white->#EAF6FF radial)
+//   • _AuthLanding     (if unauthenticated after check, calm modern light UI)
 // ─────────────────────────────────────────────────────────────────────────────
 
 class LandingScreen extends StatefulWidget {
@@ -140,9 +137,10 @@ class _LandingScreenState extends State<LandingScreen> {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // _AnimatedSplash
-// Spec: full-screen lime gradient, 168px logo icon (radius 42, soft shadow)
-//   pops in with springy scale from 0.3 + slight rotation, two sparkles twinkle,
-//   "zest" wordmark 78sp rises at ~550ms, tagline 15sp bold fades at ~800ms.
+// White→#EAF6FF radial background. Center: ZestBlobLogo 120px pops in
+// (scale .6→1, easeOutBack, 500ms), eyes blink once; soft glow ring pulses;
+// wordmark "zest" (Inter 600, 36) rises at 550ms; tagline fades at 800ms
+// with "zest" in Instrument Serif Italic.
 // ─────────────────────────────────────────────────────────────────────────────
 class _AnimatedSplash extends StatelessWidget {
   const _AnimatedSplash();
@@ -150,124 +148,284 @@ class _AnimatedSplash extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark, // dark icons on lime bg
+      value: SystemUiOverlayStyle.dark,
       child: Scaffold(
-        backgroundColor: AppColors.lime1,
+        backgroundColor: Colors.white,
         body: Container(
           decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [AppColors.lime1, AppColors.lime2],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+            gradient: RadialGradient(
+              center: Alignment.center,
+              radius: 0.9,
+              colors: [Colors.white, Color(0xFFEAF6FF)],
             ),
           ),
           child: SafeArea(
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                // ── Cropped Z watermark (ink, bottom-right corner) ──────────
-                Positioned(
-                  right: -60,
-                  bottom: -40,
-                  child: ZestLogo.watermark(
-                    size: 340,
-                    color: AppColors.ink.withValues(alpha: 0.08),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Pulse glow ring behind logo
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        width: 140,
+                        height: 140,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: ZestTokens.core.withValues(alpha: 0.12),
+                        ),
+                      )
+                          .animate(onPlay: (c) => c.repeat(reverse: true))
+                          .scale(
+                            begin: const Offset(0.9, 0.9),
+                            end: const Offset(1.2, 1.2),
+                            duration: 1800.ms,
+                            curve: Curves.easeInOut,
+                          )
+                          .fadeIn(duration: 400.ms),
+
+                      // 120px ZestBlobLogo pops in
+                      const ZestBlobLogo(size: 120, animateOnLoad: true),
+                    ],
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  // "zest" wordmark (Inter 600, 36sp) rises + fades at 550ms
+                  Text(
+                    'zest',
+                    style: ZestTokens.display.copyWith(
+                      fontSize: 38,
+                      fontWeight: FontWeight.w600,
+                      color: ZestTokens.ink,
+                      letterSpacing: -1.2,
+                      height: 1.0,
+                    ),
                   )
                       .animate()
-                      .fadeIn(duration: 600.ms, delay: 300.ms)
-                      .slide(
-                        begin: const Offset(0.15, 0.15),
-                        end: Offset.zero,
-                        duration: 900.ms,
+                      .fadeIn(delay: 550.ms, duration: 500.ms)
+                      .slideY(
+                        begin: 0.25,
+                        end: 0,
+                        delay: 550.ms,
+                        duration: 500.ms,
                         curve: Curves.easeOutCubic,
                       ),
+
+                  const SizedBox(height: 12),
+
+                  // Tagline with "zest" in Instrument Serif Italic
+                  RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: ZestTokens.body.copyWith(
+                        fontSize: 16,
+                        color: ZestTokens.ink2,
+                      ),
+                      children: [
+                        const TextSpan(text: 'Add some '),
+                        TextSpan(
+                          text: 'zest',
+                          style: ZestTokens.accentItalic.copyWith(fontSize: 20),
+                        ),
+                        const TextSpan(text: ' to your campus life'),
+                      ],
+                    ),
+                  )
+                      .animate()
+                      .fadeIn(delay: 800.ms, duration: 600.ms)
+                      .slideY(
+                        begin: 0.2,
+                        end: 0,
+                        delay: 800.ms,
+                        duration: 500.ms,
+                        curve: Curves.easeOutCubic,
+                      ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// _AuthLanding — shown after auth check if user is not signed in
+// Designjoy-style calm light aesthetic on page background
+// ─────────────────────────────────────────────────────────────────────────────
+class _AuthLanding extends StatelessWidget {
+  const _AuthLanding();
+
+  @override
+  Widget build(BuildContext context) {
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        backgroundColor: ZestTokens.page,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ── Top Header Bar ─────────────────────────────────────────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const ZestBlobLogo(size: 34),
+                        const SizedBox(width: 10),
+                        Text(
+                          'zest',
+                          style: ZestTokens.title.copyWith(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFECFDF5),
+                        borderRadius: ZestTokens.borderPill,
+                        border: Border.all(color: const Color(0xFFA7F3D0)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF10B981),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'CAMPUS LIVE',
+                            style: TextStyle(
+                              color: Color(0xFF059669),
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.6,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
 
-                // ── Main branding column ────────────────────────────────────
-                Center(
+                const SizedBox(height: 28),
+
+                // ── Main Hero Card ─────────────────────────────────────────
+                ZestCard(
+                  padding: const EdgeInsets.all(24),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ── Logo icon: 168px, radius 42, springy scale from 0.3 ──
-                      _SparkleWrapper(
-                        child: Container(
-                          width: 168,
-                          height: 168,
-                          decoration: BoxDecoration(
-                            borderRadius: const BorderRadius.all(
-                              Radius.circular(AppRadius.appIconTile),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.ink.withValues(alpha: 0.18),
-                                blurRadius: 40,
-                                offset: const Offset(0, 16),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: const BorderRadius.all(
-                              Radius.circular(AppRadius.appIconTile),
-                            ),
-                            child: const ZestLogo.icon(size: 168),
-                          ),
-                        )
-                            .animate()
-                            .scale(
-                              begin: const Offset(0.3, 0.3),
-                              end: const Offset(1.0, 1.0),
-                              duration: 700.ms,
-                              curve: Curves.elasticOut,
-                            )
-                            .rotate(
-                              begin: -0.05,
-                              end: 0,
-                              duration: 700.ms,
-                              curve: Curves.elasticOut,
-                            )
-                            .fadeIn(duration: 300.ms),
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      // ── "zest" wordmark — 78sp, ink, rises at 550ms ────────
-                      Text(
-                        'zest',
-                        style: AppTextStyles.display78.copyWith(
-                          color: AppColors.ink,
-                          height: 1.0,
+                      // Eyebrow pill
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
                         ),
-                      )
-                          .animate()
-                          .fadeIn(delay: 550.ms, duration: 500.ms)
-                          .slideY(
-                            begin: 0.25,
-                            end: 0,
-                            delay: 550.ms,
-                            duration: 500.ms,
-                            curve: Curves.easeOutCubic,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE6F4FE),
+                          borderRadius: ZestTokens.borderPill,
+                        ),
+                        child: Text(
+                          'CAMPUS EVENTS, SORTED',
+                          style: ZestTokens.labelCaps.copyWith(
+                            color: ZestTokens.blue,
+                            fontSize: 10.5,
                           ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
 
+                      // Heading with single italic serif accent word
+                      RichText(
+                        text: TextSpan(
+                          style: ZestTokens.display.copyWith(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w700,
+                            height: 1.15,
+                          ),
+                          children: [
+                            const TextSpan(text: 'Campus life, with a '),
+                            TextSpan(
+                              text: 'twist',
+                              style: ZestTokens.accentItalic.copyWith(
+                                fontSize: 38,
+                              ),
+                            ),
+                            const TextSpan(text: '.'),
+                          ],
+                        ),
+                      ),
                       const SizedBox(height: 12),
 
-                      // ── Tagline — 15sp, ink 80% opacity, fades at 800ms ───
                       Text(
-                        'Add some zest to your campus life.',
-                        textAlign: TextAlign.center,
-                        style: AppTextStyles.body15.copyWith(
-                          color: AppColors.ink.withValues(alpha: 0.80),
-                          fontWeight: FontWeight.w700,
+                        'Find events, grab an animated QR pass, and earn real XP for showing up. One app instead of forms and paper lists.',
+                        style: ZestTokens.body.copyWith(
+                          color: ZestTokens.ink2,
+                          height: 1.5,
                         ),
-                      )
-                          .animate()
-                          .fadeIn(delay: 800.ms, duration: 600.ms)
-                          .slideY(
-                            begin: 0.2,
-                            end: 0,
-                            delay: 800.ms,
-                            duration: 500.ms,
-                            curve: Curves.easeOutCubic,
-                          ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Feature chips
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: const [
+                          _AuthFeaturePill('🎟️ Instant QR Pass'),
+                          _AuthFeaturePill('⚡ Gate Check-in'),
+                          _AuthFeaturePill('🏆 Campus XP'),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // ── Bottom Action Card ─────────────────────────────────────
+                ZestCard(
+                  padding: const EdgeInsets.all(22),
+                  child: Column(
+                    children: [
+                      ZestButton(
+                        text: 'Enter as Student ⚡',
+                        fullWidth: true,
+                        onPressed: () => context.go('/student/login'),
+                      ),
+                      const SizedBox(height: 12),
+                      ZestButton(
+                        text: 'Admin & Organizer Suite 🛡️',
+                        variant: ZestButtonVariant.secondary,
+                        fullWidth: true,
+                        onPressed: () => context.go('/admin/login'),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Free for college students • Built for campuses',
+                        textAlign: TextAlign.center,
+                        style: ZestTokens.caption.copyWith(
+                          color: ZestTokens.ink3,
+                          fontSize: 12,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -280,333 +438,24 @@ class _AnimatedSplash extends StatelessWidget {
   }
 }
 
-// ── Twinkling sparkle wrapper — two ink sparkles beside the logo ────────────
-class _SparkleWrapper extends StatelessWidget {
-  const _SparkleWrapper({required this.child});
-  final Widget child;
+class _AuthFeaturePill extends StatelessWidget {
+  final String text;
+  const _AuthFeaturePill(this.text);
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      alignment: Alignment.center,
-      children: [
-        child,
-        // Top-right sparkle
-        Positioned(
-          top: -8,
-          right: -18,
-          child: _Sparkle(size: 20, delay: 200.ms, color: AppColors.ink),
-        ),
-        // Bottom-left sparkle
-        Positioned(
-          bottom: 4,
-          left: -22,
-          child: _Sparkle(size: 14, delay: 600.ms, color: AppColors.ink.withValues(alpha: 0.6)),
-        ),
-      ],
-    );
-  }
-}
-
-class _Sparkle extends StatelessWidget {
-  const _Sparkle({required this.size, required this.delay, required this.color});
-  final double size;
-  final Duration delay;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(size, size),
-      painter: _SparklePainter(color: color),
-    )
-        .animate(onPlay: (c) => c.repeat(reverse: true))
-        .scale(
-          begin: const Offset(1.0, 1.0),
-          end: const Offset(0.5, 0.5),
-          delay: delay,
-          duration: 1000.ms,
-          curve: Curves.easeInOut,
-        )
-        .rotate(
-          begin: 0,
-          end: 0.11, // ~40 degrees
-          delay: delay,
-          duration: 1000.ms,
-          curve: Curves.easeInOut,
-        );
-  }
-}
-
-class _SparklePainter extends CustomPainter {
-  const _SparklePainter({required this.color});
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final cx = size.width / 2;
-    final cy = size.height / 2;
-    const arms = 4;
-    const pi = 3.14159265358979;
-
-    final path = Path();
-    for (int i = 0; i < arms * 2; i++) {
-      final angle = (i * pi / arms) - pi / 2;
-      final r = i.isEven ? size.width * 0.5 : size.width * 0.18;
-      final px = cx + r * _cos(angle);
-      final py = cy + r * _sin(angle);
-      if (i == 0) {
-        path.moveTo(px, py);
-      } else {
-        path.lineTo(px, py);
-      }
-    }
-    path.close();
-    canvas.drawPath(path, paint);
-  }
-
-  double _cos(double rad) {
-    // Simplified cos approximation (good enough for small angles)
-    final n = rad % (2 * 3.14159265358979);
-    if (n < 1.5708) return 1 - n * n / 2 + n * n * n * n / 24;
-    if (n < 3.1416) return -(n - 3.1416) * (n - 3.1416) / 2 + 1;
-    if (n < 4.7124) return -(n - 3.1416) * (n - 3.1416) / 2 + 1;
-    return 1 - (n - 6.2832) * (n - 6.2832) / 2;
-  }
-
-  double _sin(double rad) => _cos(rad - 1.5708);
-
-  @override
-  bool shouldRepaint(_SparklePainter old) => old.color != color;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// _AuthLanding — shown after auth check if user is not signed in
-// High-energy neo-bold design on ink background
-// ─────────────────────────────────────────────────────────────────────────────
-class _AuthLanding extends StatelessWidget {
-  const _AuthLanding();
-
-  @override
-  Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light, // light icons on ink bg
-      child: Scaffold(
-        backgroundColor: AppColors.ink,
-        body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight - 32),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // ── Header Bar ─────────────────────────────────────────
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const ZestLogo.lockup(height: 36, isDarkBg: true),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: AppColors.ink2,
-                              borderRadius: AppRadius.circularPill,
-                              border: Border.all(
-                                  color: AppColors.borderDark, width: 1),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.lime,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'CAMPUS LIVE',
-                                  style: AppTextStyles.overline.copyWith(
-                                    color: AppColors.lime,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // ── Hero Section ───────────────────────────────────────
-                      Container(
-                        padding: const EdgeInsets.all(28),
-                        decoration: BoxDecoration(
-                          color: AppColors.ink2,
-                          borderRadius: AppRadius.circularCardLarge,
-                          border: Border.all(
-                              color: AppColors.borderDark, width: 1.5),
-                        ),
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            // Background Z watermark
-                            Positioned(
-                              right: -40,
-                              bottom: -40,
-                              child: ZestLogo.watermark(
-                                size: 260,
-                                color: AppColors.ink3.withValues(alpha: 0.35),
-                              ),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Overline chip
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.lime.withValues(alpha: 0.15),
-                                    borderRadius: AppRadius.circularPill,
-                                    border: Border.all(
-                                        color: AppColors.lime.withValues(
-                                            alpha: 0.3)),
-                                  ),
-                                  child: Text(
-                                    'THE EVENT PLATFORM',
-                                    style: AppTextStyles.overline.copyWith(
-                                      color: AppColors.lime,
-                                      letterSpacing: 1.0,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                // Display headline
-                                RichText(
-                                  text: TextSpan(
-                                    style: AppTextStyles.title40.copyWith(
-                                      color: AppColors.paper,
-                                      height: 1.05,
-                                    ),
-                                    children: [
-                                      const TextSpan(
-                                          text: 'DISCOVER.\nREGISTER.\n'),
-                                      TextSpan(
-                                        text: 'DOMINATE.',
-                                        style: TextStyle(
-                                          color: AppColors.lime,
-                                          fontWeight: FontWeight.w800,
-                                          shadows: [
-                                            Shadow(
-                                              color: AppColors.lime
-                                                  .withValues(alpha: 0.3),
-                                              blurRadius: 16,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Instant tickets, offline QR scanning, club management, and live college leaderboards in one pocket app.',
-                                  style: AppTextStyles.body15.copyWith(
-                                    color: AppColors.grey400,
-                                    height: 1.45,
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  children: [
-                                    _featurePill('🎟️ Instant Passes'),
-                                    _featurePill('⚡ Fast Gate Scan'),
-                                    _featurePill('🏆 Student XP'),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // ── Bottom Action Card ─────────────────────────────────
-                      Container(
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          color: AppColors.ink2,
-                          borderRadius: AppRadius.circularCardLarge,
-                          border: Border.all(
-                              color: AppColors.borderDark, width: 1.5),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ZestButton(
-                              label: 'Enter as Student ⚡',
-                              onPressed: () => context.go('/student/login'),
-                            ),
-                            const SizedBox(height: 12),
-                            ZestButton(
-                              label: 'Admin & Gate Access 🛡️',
-                              variant: ZestButtonVariant.secondary,
-                              onPressed: () => context.go('/admin/login'),
-                            ),
-                            const SizedBox(height: 18),
-                            Text(
-                              'By continuing, you agree to the Zest Terms of Service and Privacy Policy.',
-                              textAlign: TextAlign.center,
-                              style: AppTextStyles.caption11.copyWith(
-                                color: AppColors.grey400,
-                                height: 1.4,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  static Widget _featurePill(String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: AppColors.ink3,
-        borderRadius: AppRadius.circularPill,
-        border: Border.all(color: AppColors.borderDark, width: 1),
+        color: ZestTokens.fill,
+        borderRadius: ZestTokens.borderPill,
+        border: Border.all(color: ZestTokens.line),
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 13,
+        style: ZestTokens.caption.copyWith(
+          color: ZestTokens.ink,
           fontWeight: FontWeight.w600,
-          color: AppColors.paper,
         ),
       ),
     );

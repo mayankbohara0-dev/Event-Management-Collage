@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_radius.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/skeleton_loader.dart';
+import '../../../../core/theme/zest_tokens.dart';
+import '../../../../shared/widgets/shared_widgets.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LeaderboardTab — Campus Rankings & Gamification
-// Spec: Lime gradient header (radius 38), Weekly/All-Time pill toggle,
-//       animated progress bars, leaderboard rows with rank badges.
+// Minimal, clean, modern light UI matching Designjoy aesthetic.
 // ─────────────────────────────────────────────────────────────────────────────
 
 class LeaderboardTab extends StatefulWidget {
@@ -43,7 +40,6 @@ class _LeaderboardTabState extends State<LeaderboardTab> {
 
       final list = List<Map<String, dynamic>>.from(res as List);
       if (list.isNotEmpty) {
-        // Calculate total points
         for (final item in list) {
           final pScore = (item['participation_score'] as num?)?.toInt() ?? 0;
           final vScore = (item['volunteer_score'] as num?)?.toInt() ?? 0;
@@ -120,222 +116,226 @@ class _LeaderboardTabState extends State<LeaderboardTab> {
         ? (_leaderboard.first['total_points'] as num?)?.toDouble() ?? 1000.0
         : 1000.0;
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark.copyWith(
-        statusBarColor: Colors.transparent,
-      ),
-      child: Scaffold(
-        backgroundColor: AppColors.ink,
-        body: RefreshIndicator(
-          color: AppColors.ink,
-          backgroundColor: AppColors.lime,
-          onRefresh: _loadLeaderboard,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
+    return Scaffold(
+      backgroundColor: ZestTokens.page,
+      body: RefreshIndicator(
+        color: ZestTokens.blue,
+        backgroundColor: Colors.white,
+        onRefresh: _loadLeaderboard,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
+          slivers: [
+            // Safe area top
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: MediaQuery.of(context).padding.top + 16,
+              ),
             ),
-            slivers: [
-              // ── Lime Gradient Header (Bottom Radius 38) ───────────────
-              SliverToBoxAdapter(
-                child: Container(
-                  padding: EdgeInsets.fromLTRB(
-                    18,
-                    MediaQuery.of(context).padding.top + 20,
-                    18,
-                    28,
-                  ),
-                  decoration: const BoxDecoration(
-                    gradient: AppColors.limeGradient,
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(AppRadius.limeHeader),
-                      bottomRight: Radius.circular(AppRadius.limeHeader),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Subtitle tag
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.ink.withValues(alpha: 0.12),
-                              borderRadius: AppRadius.circularPill,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Text('🏆', style: TextStyle(fontSize: 13)),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'CAMPUS RANKINGS',
-                                  style: AppTextStyles.metaLabel.copyWith(
-                                    color: AppColors.ink,
-                                    letterSpacing: 1.2,
-                                  ),
-                                ),
-                              ],
-                            ),
+
+            // ── Screen Header ──────────────────────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: ZestTokens.horizontalPadding,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Subtitle tag + LIVE indicator
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
                           ),
-                          // Live dot
-                          Row(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F6FE),
+                            borderRadius: ZestTokens.borderPill,
+                            border: Border.all(color: ZestTokens.sky.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.ink,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
+                              const Text('🏆', style: TextStyle(fontSize: 12)),
+                              const SizedBox(width: 5),
                               Text(
-                                'LIVE',
-                                style: AppTextStyles.caption.copyWith(
-                                  color: AppColors.ink,
-                                  fontWeight: FontWeight.w800,
+                                'CAMPUS RANKINGS',
+                                style: ZestTokens.labelCaps.copyWith(
+                                  color: ZestTokens.blue,
+                                  fontSize: 10,
+                                  letterSpacing: 0.8,
                                 ),
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        'Leaderboard',
-                        style: AppTextStyles.title38.copyWith(
-                          color: AppColors.ink,
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Compete in campus events, collect XP and top the hall of fame.',
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.ink.withValues(alpha: 0.72),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Filter Segmented Pill Toggle
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: AppColors.ink.withValues(alpha: 0.12),
-                          borderRadius: AppRadius.circularPill,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: List.generate(_filterOptions.length, (i) {
-                            final isSel = i == _selectedFilterIndex;
-                            return GestureDetector(
-                              onTap: () {
-                                HapticFeedback.selectionClick();
-                                setState(() => _selectedFilterIndex = i);
-                              },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 9,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isSel ? AppColors.ink : Colors.transparent,
-                                  borderRadius: AppRadius.circularPill,
-                                ),
-                                child: Text(
-                                  _filterOptions[i],
-                                  style: AppTextStyles.caption.copyWith(
-                                    color: isSel ? AppColors.lime : AppColors.ink,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                        // Live dot indicator
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 9,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: ZestTokens.borderPill,
+                            border: Border.all(color: ZestTokens.line),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 7,
+                                height: 7,
+                                decoration: const BoxDecoration(
+                                  color: ZestTokens.success,
+                                  shape: BoxShape.circle,
                                 ),
                               ),
-                            );
-                          }),
+                              const SizedBox(width: 5),
+                              Text(
+                                'LIVE',
+                                style: ZestTokens.labelCaps.copyWith(
+                                  color: ZestTokens.ink,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Leader',
+                            style: ZestTokens.display.copyWith(fontSize: 32),
+                          ),
+                          TextSpan(
+                            text: 'board',
+                            style: ZestTokens.accentItalic.copyWith(
+                              fontSize: 36,
+                              color: ZestTokens.blue,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Compete in campus events, collect XP and top the hall of fame',
+                      style: ZestTokens.body.copyWith(
+                        color: ZestTokens.ink2,
+                        fontSize: 14,
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Filter Toggle
+                    ZestSegmentedToggle(
+                      segments: _filterOptions,
+                      selectedIndex: _selectedFilterIndex,
+                      onChanged: (i) {
+                        HapticFeedback.selectionClick();
+                        setState(() => _selectedFilterIndex = i);
+                      },
+                    ),
+                  ],
                 ),
               ),
+            ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-              // ── Top 3 Podium (when data loaded) ───────────────────────
-              if (!_isLoading && _leaderboard.length >= 3)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    child: _buildPodium(),
-                  ),
-                ),
-
-              if (!_isLoading && _leaderboard.length >= 3)
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-              // ── Header for Full List ──────────────────────────────────
+            // ── Top 3 Podium ───────────────────────────────────────────
+            if (!_isLoading && _leaderboard.length >= 3)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18),
-                  child: Text(
-                    'Full Rankings',
-                    style: AppTextStyles.sectionHeader.copyWith(
-                      color: AppColors.white,
-                    ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: ZestTokens.horizontalPadding,
                   ),
+                  child: _buildPodium(),
                 ),
               ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+            if (!_isLoading && _leaderboard.length >= 3)
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-              // ── Rankings List ─────────────────────────────────────────
-              if (_isLoading)
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (_, i) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: SkeletonLoader(
-                          width: double.infinity,
-                          height: 78,
-                          radius: AppRadius.listRow,
-                        ),
+            // ── Section Header for Full List ───────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: ZestTokens.horizontalPadding,
+                ),
+                child: ZestSectionHeader(
+                  title: 'Full',
+                  accentWord: 'rankings',
+                  badgeText: '${_leaderboard.length} students',
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+            // ── Rankings List ──────────────────────────────────────────
+            if (_isLoading)
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: ZestTokens.horizontalPadding,
+                ),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (_, i) => const Padding(
+                      padding: EdgeInsets.only(bottom: 12),
+                      child: ZestSkeleton(
+                        width: double.infinity,
+                        height: 76,
+                        borderRadius: BorderRadius.all(Radius.circular(20)),
                       ),
-                      childCount: 6,
                     ),
-                  ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 120),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final item = _leaderboard[index];
-                        final rank = index + 1;
-                        final points = (item['total_points'] as num?)?.toInt() ?? 0;
-                        final progress = (topScore > 0 ? points / topScore : 0.0)
-                            .clamp(0.05, 1.0);
-
-                        return _buildLeaderboardRow(
-                          rank: rank,
-                          item: item,
-                          points: points,
-                          progress: progress,
-                        );
-                      },
-                      childCount: _leaderboard.length,
-                    ),
+                    childCount: 6,
                   ),
                 ),
-            ],
-          ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  ZestTokens.horizontalPadding,
+                  0,
+                  ZestTokens.horizontalPadding,
+                  110,
+                ),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final item = _leaderboard[index];
+                      final rank = index + 1;
+                      final points =
+                          (item['total_points'] as num?)?.toInt() ?? 0;
+                      final progress = (topScore > 0 ? points / topScore : 0.0)
+                          .clamp(0.05, 1.0);
+
+                      return _buildLeaderboardRow(
+                        rank: rank,
+                        item: item,
+                        points: points,
+                        progress: progress,
+                      );
+                    },
+                    childCount: _leaderboard.length,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -355,8 +355,8 @@ class _LeaderboardTabState extends State<LeaderboardTab> {
           child: _buildPodiumCard(
             item: second,
             rank: 2,
-            rankColor: AppColors.aqua,
-            height: 160,
+            rankColor: ZestTokens.blue,
+            height: 165,
             badgeEmoji: '🥈',
           ),
         ),
@@ -366,8 +366,8 @@ class _LeaderboardTabState extends State<LeaderboardTab> {
           child: _buildPodiumCard(
             item: first,
             rank: 1,
-            rankColor: AppColors.mustard,
-            height: 190,
+            rankColor: ZestTokens.lemon,
+            height: 195,
             badgeEmoji: '👑',
             isFirst: true,
           ),
@@ -378,8 +378,8 @@ class _LeaderboardTabState extends State<LeaderboardTab> {
           child: _buildPodiumCard(
             item: third,
             rank: 3,
-            rankColor: AppColors.coral,
-            height: 145,
+            rankColor: ZestTokens.coral,
+            height: 150,
             badgeEmoji: '🥉',
           ),
         ),
@@ -402,14 +402,21 @@ class _LeaderboardTabState extends State<LeaderboardTab> {
       height: height,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isFirst ? AppColors.surfaceCard : AppColors.surfaceDark,
-        borderRadius: BorderRadius.circular(AppRadius.card),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isFirst
-              ? AppColors.lime.withValues(alpha: 0.4)
-              : AppColors.borderDark,
-          width: isFirst ? 2 : 1,
+          color: isFirst ? ZestTokens.core : ZestTokens.line,
+          width: isFirst ? 1.5 : 1,
         ),
+        boxShadow: isFirst
+            ? const [
+                BoxShadow(
+                  color: Color(0x200063F0),
+                  blurRadius: 20,
+                  offset: Offset(0, 8),
+                ),
+              ]
+            : ZestTokens.cardShadow,
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -423,9 +430,8 @@ class _LeaderboardTabState extends State<LeaderboardTab> {
             name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.white,
-              fontWeight: FontWeight.w800,
+            style: ZestTokens.bodyBold.copyWith(
+              fontSize: 14,
             ),
           ),
           const SizedBox(height: 2),
@@ -433,25 +439,27 @@ class _LeaderboardTabState extends State<LeaderboardTab> {
           // Points
           Text(
             '$points pts',
-            style: AppTextStyles.caption.copyWith(
-              color: isFirst ? AppColors.lime : AppColors.grey400,
-              fontWeight: FontWeight.w800,
+            style: ZestTokens.caption.copyWith(
+              color: isFirst ? ZestTokens.blue : ZestTokens.ink2,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
             ),
           ),
           const Spacer(),
 
           // Rank Pill
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
             decoration: BoxDecoration(
-              color: rankColor.withValues(alpha: 0.18),
-              borderRadius: AppRadius.circularPill,
+              color: isFirst ? const Color(0xFFE8F6FE) : ZestTokens.fill,
+              borderRadius: ZestTokens.borderPill,
             ),
             child: Text(
               '#$rank',
-              style: AppTextStyles.metaLabel.copyWith(
-                color: rankColor,
-                fontWeight: FontWeight.w900,
+              style: ZestTokens.labelCaps.copyWith(
+                color: isFirst ? ZestTokens.blue : ZestTokens.ink2,
+                fontWeight: FontWeight.w700,
+                fontSize: 11,
               ),
             ),
           ),
@@ -472,129 +480,128 @@ class _LeaderboardTabState extends State<LeaderboardTab> {
         ? item['departments']['name']?.toString() ?? 'Campus Member'
         : 'Campus Member';
 
+    final isTop3 = rank <= 3;
     Color rankColor;
     if (rank == 1) {
-      rankColor = AppColors.mustard;
+      rankColor = const Color(0xFFD97706);
     } else if (rank == 2) {
-      rankColor = AppColors.aqua;
+      rankColor = ZestTokens.blue;
     } else if (rank == 3) {
-      rankColor = AppColors.coral;
+      rankColor = ZestTokens.coral;
     } else {
-      rankColor = AppColors.grey400;
+      rankColor = ZestTokens.ink3;
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
-        borderRadius: BorderRadius.circular(AppRadius.listRow),
-        border: Border.all(color: AppColors.borderDark, width: 1),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              // Rank indicator
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: rankColor.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  '$rank',
-                  style: TextStyle(
-                    fontFamily: 'Bricolage Grotesque',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: rankColor,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: ZestCard(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                // Rank indicator
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: isTop3
+                        ? rankColor.withValues(alpha: 0.12)
+                        : ZestTokens.fill,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '$rank',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: rankColor,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
+                const SizedBox(width: 12),
 
-              // Student Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.title17.copyWith(
-                        color: AppColors.white,
+                // Student Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: ZestTokens.bodyBold.copyWith(
+                          fontSize: 14.5,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      dept,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.grey400,
+                      const SizedBox(height: 2),
+                      Text(
+                        dept,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: ZestTokens.caption.copyWith(
+                          color: ZestTokens.ink3,
+                          fontSize: 12,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Points badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: AppColors.ink,
-                  borderRadius: AppRadius.circularPill,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '$points',
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.lime,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(width: 3),
-                    Text(
-                      'pts',
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.grey400,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-
-          // Animated progress bar
-          ClipRRect(
-            borderRadius: AppRadius.circularPill,
-            child: TweenAnimationBuilder<double>(
-              tween: Tween<double>(begin: 0.0, end: progress),
-              duration: const Duration(milliseconds: 1200),
-              curve: Curves.easeOutCubic,
-              builder: (context, value, _) {
-                return LinearProgressIndicator(
-                  value: value,
-                  minHeight: 6,
-                  backgroundColor: AppColors.ink,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    rank <= 3 ? AppColors.lime : AppColors.grey400,
+                    ],
                   ),
-                );
-              },
+                ),
+
+                // Points badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F6FE),
+                    borderRadius: ZestTokens.borderPill,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '$points',
+                        style: ZestTokens.caption.copyWith(
+                          color: ZestTokens.blue,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        'pts',
+                        style: ZestTokens.caption.copyWith(
+                          color: ZestTokens.ink3,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+
+            const SizedBox(height: 10),
+
+            // Animated progress bar
+            ZestProgressBar(
+              value: progress,
+              height: 5,
+              progressGradient: isTop3
+                  ? ZestTokens.brandGradient
+                  : LinearGradient(
+                      colors: [
+                        ZestTokens.ink3.withValues(alpha: 0.4),
+                        ZestTokens.ink3.withValues(alpha: 0.6),
+                      ],
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }

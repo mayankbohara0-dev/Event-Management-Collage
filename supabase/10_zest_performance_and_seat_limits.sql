@@ -10,7 +10,9 @@ ALTER TABLE admin_profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS fcm_token TEXT;
 ALTER TABLE admin_profiles ADD COLUMN IF NOT EXISTS fcm_token TEXT;
 
-ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS points INTEGER DEFAULT 60;
+ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS points INTEGER DEFAULT 0;
+ALTER TABLE student_profiles ALTER COLUMN points SET DEFAULT 0;
+
 
 -- ── 1. Ensure Notifications Table Exists ──────────────────────────────────────
 CREATE TABLE IF NOT EXISTS notifications (

@@ -1,11 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_text_styles.dart';
-import '../../../core/widgets/zest_button.dart';
-import '../../../core/widgets/zest_logo.dart';
+import '../../../core/theme/theme.dart';
+import '../../../shared/widgets/shared_widgets.dart';
 
 class EmailVerificationScreen extends StatefulWidget {
   final String email;
@@ -17,29 +15,58 @@ class EmailVerificationScreen extends StatefulWidget {
 
 class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   bool _isResending = false;
-  bool _resentSuccess = false;
+  int _countdown = 30;
+  Timer? _countdownTimer;
+  bool _canResend = false;
+  final bool _isVerified = false;
+
+  @override
+
+
+
+  void initState() {
+    super.initState();
+    _startCountdown();
+  }
+
+  void _startCountdown() {
+    setState(() {
+      _countdown = 30;
+      _canResend = false;
+    });
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_countdown > 1) {
+        if (mounted) setState(() => _countdown--);
+      } else {
+        timer.cancel();
+        if (mounted) setState(() => _canResend = true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
 
   Future<void> _resendEmail() async {
-    setState(() {
-      _isResending = true;
-      _resentSuccess = false;
-    });
+    if (!_canResend || _isResending) return;
+
+    setState(() => _isResending = true);
     try {
       await Supabase.instance.client.auth.resend(
         type: OtpType.signup,
         email: widget.email,
       );
-      if (mounted) setState(() => _resentSuccess = true);
+      if (mounted) {
+        ZestSnack.success(context, 'Verification email resent! Check your inbox.');
+        _startCountdown();
+      }
     } on AuthException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message, style: AppTextStyles.body14.copyWith(color: AppColors.paper)),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: AppRadius.circularMd),
-          ),
-        );
+        ZestSnack.error(context, e.message);
       }
     } finally {
       if (mounted) setState(() => _isResending = false);
@@ -49,146 +76,105 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.ink,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top Nav
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      backgroundColor: ZestTokens.page,
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          onPressed: () => context.go('/student/login'),
+        ),
+      ),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: ZestCard(
+              padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  GestureDetector(
-                    onTap: () => context.go('/student/login'),
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceCard,
-                        borderRadius: AppRadius.circularSm,
-                        border: Border.all(color: AppColors.borderDark, width: 1),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        color: AppColors.paper,
-                        size: 18,
+                  // Centered mascot: sleepy -> happy when verified
+                  ZestMascot(
+                    size: 90,
+                    tint: MascotTint.lemon,
+                    mood: _isVerified ? MascotMood.happy : MascotMood.sleepy,
+                  ),
+                  const SizedBox(height: 22),
+
+                  RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: ZestTokens.display.copyWith(fontSize: 28),
+                      children: [
+                        const TextSpan(text: 'Verify your '),
+                        TextSpan(
+                          text: 'email',
+                          style: ZestTokens.accentItalic.copyWith(fontSize: 34),
+                        ),
+                        const TextSpan(text: '.'),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  Text(
+                    'We sent a verification link to:',
+                    style: ZestTokens.body.copyWith(color: ZestTokens.ink2),
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: ZestTokens.fill,
+                      borderRadius: ZestTokens.borderPill,
+                    ),
+                    child: Text(
+                      widget.email,
+                      style: ZestTokens.bodyBold.copyWith(
+                        color: ZestTokens.blue,
+                        fontSize: 14,
                       ),
                     ),
                   ),
-                  const ZestLogo.lockup(height: 32, isDarkBg: true),
-                  const SizedBox(width: 44),
+
+                  const SizedBox(height: 18),
+                  Text(
+                    'Please click the link in your email to activate your account and start claiming event passes.',
+                    textAlign: TextAlign.center,
+                    style: ZestTokens.caption.copyWith(
+                      color: ZestTokens.ink3,
+                      height: 1.45,
+                    ),
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  // Resend Button with 30s countdown ring
+                  ZestButton(
+                    text: _isResending
+                        ? 'Resending...'
+                        : _canResend
+                            ? 'Resend Verification Email'
+                            : 'Resend in $_countdown s',
+                    variant: ZestButtonVariant.primary,
+                    fullWidth: true,
+                    isLoading: _isResending,
+                    onPressed: _canResend ? _resendEmail : null,
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  ZestButton(
+                    text: 'Back to Sign In',
+                    variant: ZestButtonVariant.ghost,
+                    fullWidth: true,
+                    onPressed: () => context.go('/student/login'),
+                  ),
                 ],
               ),
             ),
-
-            // Content
-            Expanded(
-              child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 440),
-                    child: Container(
-                      padding: const EdgeInsets.all(28),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceCard,
-                        borderRadius: AppRadius.circularCardLarge,
-                        border: Border.all(color: AppColors.borderDark, width: 1.5),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Verification Badge Icon
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceDark,
-                              borderRadius: AppRadius.circularHeroCard,
-                              border: Border.all(color: AppColors.lime, width: 2),
-                            ),
-                            child: const Icon(
-                              Icons.mark_email_unread_rounded,
-                              size: 40,
-                              color: AppColors.lime,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-
-                          Text(
-                            'Check your inbox!',
-                            textAlign: TextAlign.center,
-                            style: AppTextStyles.title32.copyWith(color: AppColors.paper),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'We sent an activation link to:',
-                            textAlign: TextAlign.center,
-                            style: AppTextStyles.body14.copyWith(color: AppColors.grey400),
-                          ),
-                          const SizedBox(height: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceDark,
-                              borderRadius: AppRadius.circularPill,
-                              border: Border.all(color: AppColors.borderDark),
-                            ),
-                            child: Text(
-                              widget.email,
-                              textAlign: TextAlign.center,
-                              style: AppTextStyles.label14Bold.copyWith(color: AppColors.lime),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Tap the verification link in your college mailbox to activate your student pass, then sign in below.',
-                            textAlign: TextAlign.center,
-                            style: AppTextStyles.body14.copyWith(color: AppColors.grey400, height: 1.5),
-                          ),
-
-                          if (_resentSuccess) ...[
-                            const SizedBox(height: 16),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: AppColors.lime.withValues(alpha: 0.15),
-                                borderRadius: AppRadius.circularPill,
-                                border: Border.all(color: AppColors.lime.withValues(alpha: 0.3)),
-                              ),
-                              child: Text(
-                                '✓ Fresh email sent!',
-                                style: AppTextStyles.caption12.copyWith(color: AppColors.lime, fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                          ],
-
-                          const SizedBox(height: 32),
-
-                          // I've verified button
-                          ZestButton(
-                            label: "I've Verified — Sign In ⚡",
-                            variant: ZestButtonVariant.primary,
-                            onPressed: () => context.go('/student/login'),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Resend button
-                          ZestButton(
-                            label: _isResending ? 'Sending...' : 'Resend Email 🔄',
-                            variant: ZestButtonVariant.ghost,
-                            isLoading: _isResending,
-                            onPressed: _resendEmail,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

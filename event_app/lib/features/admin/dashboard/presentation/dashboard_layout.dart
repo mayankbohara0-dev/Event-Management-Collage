@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../shared/widgets/shared_widgets.dart';
 import '../../admin_colors.dart';
 
 // Re-export so other admin screens can still use `import 'dashboard_layout.dart'`
@@ -216,15 +217,7 @@ class _MobileLayout extends StatelessWidget {
         ),
         title: Row(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                'assets/logo.png',
-                width: 30,
-                height: 30,
-                fit: BoxFit.cover,
-              ),
-            ),
+            const ZestBlobLogo(size: 30),
             const SizedBox(width: 10),
             Text(
               'Zest Admin',
@@ -316,15 +309,7 @@ class _MobileDrawer extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.asset(
-                      'assets/logo.png',
-                      width: 42,
-                      height: 42,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+                  const ZestBlobLogo(size: 38),
                   const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,15 +455,7 @@ class _SidebarHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Image.asset(
-              'assets/logo.png',
-              width: 36,
-              height: 36,
-              fit: BoxFit.cover,
-            ),
-          ),
+          const ZestBlobLogo(size: 34),
           if (expanded) ...[
             const SizedBox(width: 10),
             Expanded(

@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 // Landing
 import '../features/landing/presentation/landing_screen.dart';
+import '../features/dev/widget_gallery_screen.dart';
 
 // Student Features
 import '../features/auth/presentation/login_screen.dart' as student_auth;
@@ -45,7 +46,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // ── Unauthenticated user ─────────────────────────────────────────
       if (session == null) {
         // Allow public routes through
-        final publicRoutes = ['/', '/student/login', '/admin/login', '/auth/forgot-password', '/auth/reset-password', '/auth/verify-email'];
+        final publicRoutes = ['/', '/dev/gallery', '/student/login', '/admin/login', '/auth/forgot-password', '/auth/reset-password', '/auth/verify-email'];
         if (publicRoutes.contains(path)) return null;
         // Bounce everything else back to landing
         return '/';
@@ -59,6 +60,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/',
         builder: (context, state) => const LandingScreen(),
+      ),
+      GoRoute(
+        path: '/dev/gallery',
+        builder: (context, state) => const WidgetGalleryScreen(),
       ),
 
       // ---------- Student Routes ----------

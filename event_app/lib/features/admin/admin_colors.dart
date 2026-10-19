@@ -1,60 +1,52 @@
 // lib/features/admin/admin_colors.dart
 //
 // Single source of truth for all admin design tokens.
-// Aligned with the Zest landing page design system:
-//   ink blacks + neon lime accent + dark surfaces.
+// Aligned with the Zest brand system:
+//   Designjoy-style minimal light UI + blue lemon blob branding.
 
 import 'package:flutter/material.dart';
+import '../../core/theme/zest_tokens.dart';
 
 class AdminColors {
-  // ── Backgrounds (matches landing page ink canvas) ──────────────────────────
-  static const Color bg           = Color(0xFF141416); // --color-ink
-  static const Color sidebar      = Color(0xFF1D1D22); // --color-surface-dark
-  static const Color surface      = Color(0xFF1D1D22); // --color-surface-dark
-  static const Color surfaceLight = Color(0xFF26262C); // --color-surface-card
+  // ── Backgrounds (clean light Designjoy canvas) ───────────────────────────
+  static const Color bg           = ZestTokens.page;
+  static const Color sidebar      = Colors.white;
+  static const Color surface      = Colors.white;
+  static const Color surfaceLight = ZestTokens.fill;
 
-  // ── Brand (neon lime — official Zest brand color) ─────────────────────────
-  static const Color accent       = Color(0xFFB8FF1A); // --color-lime-flat
-  static const Color accentDark   = Color(0xFF7DFF2A); // --color-lime-2
-  static const Color accentBright = Color(0xFFC2FF3A); // --color-lime-1
-  static const Color onAccent     = Color(0xFF141416); // dark ink text for buttons
-  static const Color gold         = Color(0xFFF9B233); // --color-mustard
+  // ── Brand (Zest core & blue) ─────────────────────────────────────────────
+  static const Color accent       = ZestTokens.blue;
+  static const Color accentDark   = ZestTokens.blueDeep;
+  static const Color accentBright = ZestTokens.core;
+  static const Color onAccent     = Colors.white;
+  static const Color gold         = ZestTokens.lemon;
 
-  // ── Semantic ──────────────────────────────────────────────────────────────
-  static const Color success      = Color(0xFF10B981);
-  static const Color error        = Color(0xFFEF4444);
-  static const Color warning      = Color(0xFFF59E0B);
+  // ── Semantic ─────────────────────────────────────────────────────────────
+  static const Color success      = ZestTokens.success;
+  static const Color error        = ZestTokens.danger;
+  static const Color warning      = ZestTokens.warning;
 
-  // ── Text ──────────────────────────────────────────────────────────────────
-  static const Color textPrimary   = Color(0xFFFFFFFF); // --color-paper
-  static const Color textSecondary = Color(0xFFA0A0B0); // --color-text-muted-dark
+  // ── Text ─────────────────────────────────────────────────────────────────
+  static const Color textPrimary   = ZestTokens.ink;
+  static const Color textSecondary = ZestTokens.ink2;
 
-  // ── Border ────────────────────────────────────────────────────────────────
-  static const Color border        = Color(0xFF2F3038); // --color-border-dark
-  static const Color borderCard    = Color(0xFF3A3C47);
+  // ── Border ───────────────────────────────────────────────────────────────
+  static const Color border        = ZestTokens.line;
+  static const Color borderCard    = ZestTokens.line;
 
-  // ── Gradients ─────────────────────────────────────────────────────────────
-  /// Hero header gradient — neon lime (matches landing page lime canvas)
-  static const LinearGradient heroGradient = LinearGradient(
-    colors: [Color(0xFFC2FF3A), Color(0xFF7DFF2A)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-
-  static const LinearGradient limeGradient = LinearGradient(
-    colors: [Color(0xFFC2FF3A), Color(0xFF7DFF2A)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
+  // ── Gradients ────────────────────────────────────────────────────────────
+  static const LinearGradient heroGradient = ZestTokens.brandGradient;
+  static const LinearGradient limeGradient = ZestTokens.brandGradient;
+  static const LinearGradient brandGradient = ZestTokens.brandGradient;
 
   static const LinearGradient darkGradient = LinearGradient(
-    colors: [Color(0xFF1D1D22), Color(0xFF26262C)],
+    colors: [Color(0xFF0B1220), Color(0xFF1E293B)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient goldGradient = LinearGradient(
-    colors: [Color(0xFFF9B233), Color(0xFFFF9500)],
+    colors: [Color(0xFFFFD84D), Color(0xFFF59E0B)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

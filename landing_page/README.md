@@ -1,104 +1,120 @@
-# 🍋 Zest — Landing Page
+# 🍋 ZEST — Landing Page
 
-> Bold, fast, Gen-Z campus event landing page built around the signature **Zest Lime & Cropped Z** logo.
+> Premium, calm, modern product landing page for **ZEST** ("Add some zest to your campus life") — college event management and student life app. Built with Next.js 14+ (App Router), TypeScript, Tailwind CSS, and Framer Motion in the spirit of Designjoy.
 
 ---
 
-## 🚀 Quick Start (No Build Step)
-
-This is a vanilla HTML5 / CSS3 / JavaScript static site. You can run it with any static web server:
+## 🚀 Quick Start (Local Development)
 
 ```bash
-# Using Python
-python -m http.server 3000
+# Navigate to landing_page folder
+cd landing_page
 
-# Using Node / npx
-npx serve .
+# Install dependencies (if not already installed)
+npm install
+
+# Run the local development server
+npm run dev
+
+# Open http://localhost:3000 in your browser
 ```
 
-Open `http://localhost:3000` in your browser.
+To create a production static build:
+```bash
+npm run build
+npm run start
+```
 
 ---
 
-## 🎨 Brand System & Design Tokens
-
-All tokens are defined in [`css/tokens.css`](css/tokens.css):
-
-| Variable | Value | Purpose |
-|---|---|---|
-| `--color-lime-1` | `#C2FF3A` | Primary neon lime gradient start |
-| `--color-lime-2` | `#7DFF2A` | Primary neon lime gradient end |
-| `--color-lime-flat` | `#B8FF1A` | Solid lime fallback |
-| `--color-ink` | `#141416` | Main dark background & text color |
-| `--color-offwhite` | `#F4F5EF` | Light background canvas |
-| `--font-display` | `Bricolage Grotesque` | Heavy display headings |
-| `--font-body` | `Inter` | Clean readable body copy |
-
-### Contrast Rules
-- **Black text on lime ALWAYS** (`#141416` on `#B8FF1A`). Never white text on lime.
-- **White text on dark sections** (`#FFFFFF` on `#141416`).
-
----
-
-## 📂 File Architecture
+## 📂 Architecture & File Map
 
 ```
 landing_page/
-├── index.html           # Main 14-section landing page
-├── privacy.html         # Privacy Policy
-├── terms.html           # Terms of Service
-├── assets/              # Vector SVGs, icons, and logo
-│   ├── logo.svg         # Clean vector logo (cropped Z + sparkle)
-│   ├── sparkle.svg      # 4-point twinkle sparkle
-│   └── logo.png         # High-resolution raster app icon
-├── css/
-│   ├── tokens.css       # Design variables, fluid clamps
-│   ├── base.css         # Reset, grain noise overlay, typography
-│   ├── components.css   # Navbar, buttons, cursor, modal, stickers
-│   ├── animations.css   # Keyframes, marquees, reduced-motion overrides
-│   └── sections.css     # 14 distinct page sections
-└── js/
-    ├── main.js          # Controller, dark mode toggle, FAQ accordion
-    ├── intro.js         # Quick <1.2s logo entrance animation
-    ├── scroll.js        # Text scrub reveal, step tracker, stats counter
-    ├── forms.js         # Waitlist validation, confetti, modal focus trap
-    └── cursor.js        # Magnetic interactive lime dot cursor
+├── app/
+│   ├── (landing)/
+│   │   └── page.tsx           # Main landing page combining all sections in sequence
+│   ├── privacy/
+│   │   └── page.tsx           # Privacy Policy page
+│   ├── terms/
+│   │   └── page.tsx           # Terms of Service page
+│   ├── globals.css            # Design tokens, CSS variables, keyframe animations
+│   └── layout.tsx             # Root layout with Inter & Instrument Serif fonts, SEO & schema
+├── components/
+│   ├── brand/
+│   │   ├── BlobLogo.tsx       # Exact SVG squircle lemon logo with glow filters
+│   │   ├── Mascot.tsx         # Interactive mascot (eye blinks, cursor tracking, tints)
+│   │   ├── MeshCard.tsx       # 4 Recipe mesh gradient cards (Sky, Sunset, Violet, Mint)
+│   │   ├── MagneticButton.tsx # Magnetic cursor hover & press-squish buttons
+│   │   └── SectionHeading.tsx # Mask-up word reveals + single italic serif accent word
+│   └── landing/
+│       ├── Nav.tsx            # Sticky navigation with scroll indicator & mobile sheet
+│       ├── Hero.tsx           # Hero section with mock phone, chips, and mascot
+│       ├── HowItWorks.tsx     # 3 tall gradient workflow cards with mini UIs
+│       ├── Marquee.tsx        # Infinite clubs marquee with edge fade masks
+│       ├── Story.tsx          # Word-by-word scroll opacity reveal card
+│       ├── FeaturesCarousel.tsx # Horizontal snap carousel with glossy glass tiles
+│       ├── Quote.tsx          # Instrument Serif quote testimonial
+│       ├── Bento.tsx          # Two-up bento (fanning screens & organizer pill cloud)
+│       ├── PassDemo.tsx       # Interactive QR ticket, laser sweep, +80 XP confetti
+│       ├── LeaderboardPreview.tsx # Podium & reordering live campus ranks
+│       ├── PricingCTA.tsx     # Designjoy-style Sky mesh card + dark organizer card
+│       ├── FAQ.tsx            # Single-open accordion + sticky contact box
+│       ├── FinalCTA.tsx       # Dark section, calendar card & 7 bouncing mascots
+│       └── Footer.tsx         # Logo, credits, legal links, and copyright
+└── lib/
+    ├── landing-data.ts        # ⭐ ALL copy, stats, FAQ, and placeholders live here!
+    └── motion.ts              # Framer motion variants, easing, and reduced-motion fallback
 ```
 
 ---
 
-## 🔌 Wiring the Waitlist to Supabase
+## ✏️ How to Edit Copy & Replace Placeholders
 
-To store waitlist signups directly in Supabase:
-1. Create a `waitlist` table in Supabase:
-   ```sql
-   create table waitlist (
-     id uuid primary key default uuid_generate_v4(),
-     email text unique not null,
-     created_at timestamptz default now()
-   );
-   alter table waitlist enable row level security;
-   create policy "Allow anonymous inserts" on waitlist for insert with check (true);
-   ```
-2. In [`js/forms.js`](js/forms.js), add a `fetch` POST request to your Supabase REST endpoint:
-   ```javascript
-   await fetch('https://YOUR_PROJECT.supabase.co/rest/v1/waitlist', {
-     method: 'POST',
-     headers: {
-       'apikey': 'YOUR_ANON_KEY',
-       'Content-Type': 'application/json'
-     },
-     body: JSON.stringify({ email: emailInput.value })
-   });
-   ```
+**You do NOT need to touch JSX components to edit text or numbers.**
+All content is centralized in [`lib/landing-data.ts`](lib/landing-data.ts).
+
+Search for `// TODO` in [`lib/landing-data.ts`](lib/landing-data.ts) to find and replace placeholders:
+
+1. **Store Links / App Downloads**:
+   - `landingData.navigation.ctaPrimary.href`
+   - `landingData.hero.ctaPrimary.href`
+   - `landingData.pricing.cards.studentCard.href`
+2. **Organizer Inquiries & Contact Email**:
+   - `landingData.faq.contactBox.email` (default: `hello@zestcampus.app`)
+   - `landingData.footer.links`
+3. **Clubs / Societies**:
+   - `landingData.socialProof.clubs` (edit names to match your campus clubs)
+4. **Testimonials**:
+   - `landingData.quote` (replace with student council lead or fest convenor quote)
+5. **Pricing / Pilot Plan**:
+   - `landingData.pricing.cards.organizerCard` (update pricing tiers or campus pilot statements)
 
 ---
 
-## 🚢 Deployment
+## 🎨 Design Tokens
 
-### Netlify / Vercel
-Simply drag and drop the `landing_page` directory into Netlify, or push to GitHub and set the publish directory to `landing_page`.
+- **Sky**: `#38BDF8`
+- **Core Blue**: `#0AA5F0`
+- **Deep Blue**: `#0063F0` / `#0050C8`
+- **Ink (Text & Dark Cards)**: `#0B1220`
+- **Page Canvas**: `#F5F7FB`
+- **Playful Accents**: Lemon (`#FFD84D`), Coral (`#FF6B8A`), Aqua (`#6CE3FF`), Lavender (`#8E8BEA`), Mint (`#3DDC97`)
+- **Typography**: Inter (Body/UI) + **Instrument Serif Italic** for the single accent word in each heading.
 
-### GitHub Pages
-1. Go to repository **Settings** → **Pages**.
-2. Select branch and specify `/landing_page` folder (or copy contents to `docs/`).
+---
+
+## 🌐 Deploy to Vercel
+
+### Option 1: Vercel CLI
+```bash
+cd landing_page
+npx vercel
+```
+
+### Option 2: GitHub Integration
+1. Push this repository to GitHub.
+2. In the [Vercel Dashboard](https://vercel.com/dashboard), click **Add New Project**.
+3. Select your repository.
+4. Set the **Root Directory** to `landing_page`.
+5. Click **Deploy**. Vercel will automatically build and deploy the Next.js static site.

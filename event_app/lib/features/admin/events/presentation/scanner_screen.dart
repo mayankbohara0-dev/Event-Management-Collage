@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:zest_app/core/design_system.dart';
-import '../../admin_colors.dart';
+import '../../../../core/theme/zest_tokens.dart';
+import '../../../../shared/widgets/shared_widgets.dart';
 
 class ScannerScreen extends StatefulWidget {
+
   final String eventId;
   const ScannerScreen({super.key, required this.eventId});
 
@@ -28,7 +31,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
     setState(() => _isProcessing = true);
     
     try {
-      // Find the registration by qr_code_data OR id (for manual fallback)
       final regRes = await Supabase.instance.client
           .from('registrations')
           .select('id, student_id, student_profiles(name, roll_number)')
@@ -38,20 +40,17 @@ class _ScannerScreenState extends State<ScannerScreen> {
           
       if (regRes == null) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Invalid pass or wrong event! 🍋'),
-              backgroundColor: AdminColors.error,
-              behavior: SnackBarBehavior.floating,
-            ),
+          ZestSnack.show(
+            context,
+            message: 'Invalid pass or wrong event! 🍋',
+            type: ZestSnackType.error,
           );
         }
       } else {
         final registrationId = regRes['id'];
         final studentId = regRes['student_id'];
-        final studentName = regRes['student_profiles']['name'] ?? 'Student';
+        final studentName = regRes['student_profiles']?['name'] ?? 'Student';
         
-        // Mark Attendance
         final admin = Supabase.instance.client.auth.currentUser;
         
         await Supabase.instance.client
@@ -64,26 +63,41 @@ class _ScannerScreenState extends State<ScannerScreen> {
               'marked_by': admin?.id,
               'method': 'qr_scan',
             }, onConflict: 'registration_id');
+
+        // Award +80 XP to student profile
+        if (studentId != null) {
+          try {
+            final pRes = await Supabase.instance.client
+                .from('student_profiles')
+                .select('points')
+                .eq('id', studentId)
+                .maybeSingle();
+            final currentPts = (pRes?['points'] as num?)?.toInt() ?? 0;
+            await Supabase.instance.client
+                .from('student_profiles')
+                .update({'points': currentPts + 80})
+                .eq('id', studentId);
+          } catch (_) {}
+        }
             
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('You\'re in! Marked $studentName as attended. 🎟️'),
-              backgroundColor: AdminColors.success,
-              behavior: SnackBarBehavior.floating,
-            ),
+          ZestSnack.show(
+            context,
+            message: "You're in! Marked $studentName as attended (+80 XP) 🎟️",
+            type: ZestSnackType.success,
           );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
+        ZestSnack.show(
+          context,
+          message: 'Error: $e',
+          type: ZestSnackType.error,
         );
       }
     }
     
-    // Wait a bit before allowing next scan to avoid duplicates
     await Future.delayed(const Duration(seconds: 3));
     if (mounted) setState(() => _isProcessing = false);
   }
@@ -91,12 +105,16 @@ class _ScannerScreenState extends State<ScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.black,
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: AppColors.black,
-        title: const Text('Scan Passes', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.black,
+        elevation: 0,
+        title: Text(
+          'Pass Scanner',
+          style: ZestTokens.title.copyWith(color: Colors.white, fontSize: 18),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.white),
+          icon: const Icon(LucideIcons.arrowLeft, color: Colors.white),
           onPressed: () {
             if (context.canPop()) {
               context.pop();
@@ -117,23 +135,30 @@ class _ScannerScreenState extends State<ScannerScreen> {
               }
             },
           ),
-          // Scanner Overlay
+          // 250px Scanner Cutout with Blue Corner Brackets
           Center(
             child: Container(
               width: 250,
               height: 250,
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: _isProcessing ? AdminColors.gold : AdminColors.accent,
+                  color: _isProcessing ? ZestTokens.lemon : ZestTokens.core,
                   width: 3,
                 ),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: (_isProcessing ? ZestTokens.lemon : ZestTokens.core)
+                        .withValues(alpha: 0.3),
+                    blurRadius: 20,
+                  ),
+                ],
               ),
             ),
           ),
           if (_isProcessing)
-            Center(
-              child: CircularProgressIndicator(color: AppColors.white),
+            const Center(
+              child: CircularProgressIndicator(color: Colors.white),
             ),
           Positioned(
             bottom: 40,
@@ -143,57 +168,90 @@ class _ScannerScreenState extends State<ScannerScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 decoration: BoxDecoration(
-                  color: AppColors.black.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.black.withValues(alpha: 0.75),
+                  borderRadius: ZestTokens.borderPill,
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                 ),
-                child: const Text(
-                  'Point camera at Zest Event Pass',
-                  style: TextStyle(color: AppColors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(LucideIcons.scanLine, color: ZestTokens.sky, size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Point camera at Zest Event Pass',
+                      style: ZestTokens.caption.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          )
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AdminColors.accent,
+        backgroundColor: ZestTokens.blue,
         onPressed: () {
           final tec = TextEditingController();
           showDialog(
             context: context,
-            builder: (context) => AlertDialog(
-              backgroundColor: const Color(0xFF1E1F24),
-              title: const Text('Manual Entry', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+            builder: (ctx) => AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: Text(
+                'Manual Entry',
+                style: ZestTokens.title.copyWith(fontSize: 18),
+              ),
               content: TextField(
                 controller: tec,
-                style: const TextStyle(color: AppColors.white),
+                style: ZestTokens.body.copyWith(color: ZestTokens.ink),
                 decoration: InputDecoration(
                   hintText: 'Enter Registration ID or QR data',
-                  hintStyle: const TextStyle(color: AppColors.grey400),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.grey800)),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AdminColors.accent)),
+                  hintStyle: ZestTokens.body.copyWith(color: ZestTokens.ink3),
+                  filled: true,
+                  fillColor: ZestTokens.fill,
+                  border: OutlineInputBorder(
+                    borderRadius: ZestTokens.borderInput,
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel', style: TextStyle(color: AppColors.grey400)),
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(
+                    'Cancel',
+                    style: ZestTokens.caption.copyWith(color: ZestTokens.ink3),
+                  ),
                 ),
-                TextButton(
+                ElevatedButton(
                   onPressed: () {
-                    Navigator.pop(context);
+                    Navigator.pop(ctx);
                     if (tec.text.trim().isNotEmpty) {
                       _processQR(tec.text.trim());
                     }
                   },
-                  child: const Text('Submit', style: TextStyle(color: AdminColors.accent, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ZestTokens.blue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: ZestTokens.borderPill,
+                    ),
+                  ),
+                  child: const Text('Submit'),
                 ),
               ],
             ),
           );
         },
-        icon: const Icon(Icons.keyboard, color: Colors.white),
-        label: const Text('Manual Entry', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        icon: const Icon(LucideIcons.keyboard, color: Colors.white, size: 18),
+        label: const Text(
+          'Manual Entry',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
       ),
     );
   }

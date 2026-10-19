@@ -7,7 +7,7 @@ import 'firebase_options.dart';
 
 import 'core/env.dart';
 import 'core/router.dart';
-import 'core/design_system.dart';
+import 'core/theme/theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,9 +27,9 @@ void main() async {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF141416),
-      systemNavigationBarIconBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: ZestTokens.page,
+      systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
 
@@ -51,9 +51,8 @@ class ZestApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'Zest',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark,
-      darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.dark,
+      theme: ZestTheme.light(),
+      themeMode: ThemeMode.light,
       routerConfig: router,
     );
   }

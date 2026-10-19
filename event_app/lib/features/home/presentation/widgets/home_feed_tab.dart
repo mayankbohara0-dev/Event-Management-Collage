@@ -2,28 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_radius.dart';
-import '../../../../core/theme/app_shadows.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/empty_state.dart';
-import '../../../../core/widgets/hero_event_card.dart';
-import '../../../../core/widgets/skeleton_loader.dart';
-import '../../../../core/widgets/zest_logo.dart';
+import '../../../../core/theme/zest_tokens.dart';
+import '../../../../shared/widgets/shared_widgets.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HomeFeedTab — Zest Student Feed
-// Spec-exact implementation:
-// 1. Lime gradient header (bottom corners radius 38), 44px logo mark, date,
-//    "Hi, {Name} 👋" 22sp, notification bell with coral dot, white search pill.
-// 2. Journey card overlapping header by 14px (ink bg, radius 34, 56sp lime
-//    points counter, animated progress bar, Z watermark).
-// 3. Category chips (padding 11×18, rounded pill, active/inactive states).
-// 4. Featured Spotlight carousel (250×290, radius 34, solid color, 64sp emoji,
-//    27sp Bricolage title, 48px ink circle with lime arrow).
-// 5. Fresh Events list rows (radius 26, 12px padding, 60px thumbnail with emoji,
-//    title 17sp w800, date/venue, lime "Register" / "Going ✓" pill).
+// Minimal, simple, modern, light UI matching the blue lemon blob brand.
 // ─────────────────────────────────────────────────────────────────────────────
 
 class HomeFeedTab extends ConsumerStatefulWidget {
@@ -113,11 +100,21 @@ class _HomeFeedTabState extends ConsumerState<HomeFeedTab> {
           .select('id, name')
           .order('name');
 
-      final events = await Supabase.instance.client
-          .from('events')
-          .select('id, title, short_description, start_date, end_date, venue, cover_image_url, category_id, max_capacity, event_categories(name)')
-          .eq('visibility', 'published')
-          .order('start_date', ascending: true);
+      dynamic events;
+      try {
+        events = await Supabase.instance.client
+            .from('events')
+            .select('id, title, short_description, start_date, end_date, venue, cover_image_url, category_id, max_seats, event_categories(name)')
+            .eq('visibility', 'published')
+            .order('start_date', ascending: true);
+      } catch (err) {
+        debugPrint('Detailed select failed, falling back to basic: $err');
+        events = await Supabase.instance.client
+            .from('events')
+            .select('id, title, short_description, start_date, end_date, venue, cover_image_url, category_id, max_seats')
+            .eq('visibility', 'published')
+            .order('start_date', ascending: true);
+      }
 
       if (mounted) {
         setState(() {
@@ -158,8 +155,8 @@ class _HomeFeedTabState extends ConsumerState<HomeFeedTab> {
 
   String _dateString() {
     final now = DateTime.now();
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     return '${days[now.weekday - 1].toUpperCase()}, ${months[now.month - 1].toUpperCase()} ${now.day}';
   }
 
@@ -167,128 +164,130 @@ class _HomeFeedTabState extends ConsumerState<HomeFeedTab> {
   Widget build(BuildContext context) {
     final name = _profile?['name']?.toString() ?? 'Student';
     final firstName = name.split(' ').first;
-    final points = _profile?['points'] != null
-        ? int.tryParse(_profile!['points'].toString()) ?? 140
-        : 140;
+    final rawPoints = _profile?['points'] != null
+        ? int.tryParse(_profile!['points'].toString()) ?? 0
+        : 0;
+    // Fix legacy default 60 points if user has never attended an event
+    final points = (rawPoints == 60 && _attendedCount == 0) ? 0 : rawPoints;
     final zestLevel = (points ~/ 50) + 1;
     final pointsIntoLevel = points % 50;
-    final levelProgress = (pointsIntoLevel / 50.0).clamp(0.05, 1.0);
+    final levelProgress = points == 0 ? 0.0 : (pointsIntoLevel / 50.0).clamp(0.05, 1.0);
 
-    // Build category list
     final categoryList = ['All', ..._categories.map((c) => c['name']?.toString() ?? '')];
     final featuredEvents = _events.take(5).toList();
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark.copyWith(
-        statusBarColor: Colors.transparent,
-      ),
-      child: Scaffold(
-        backgroundColor: AppColors.ink,
-        body: RefreshIndicator(
-          color: AppColors.ink,
-          backgroundColor: AppColors.lime,
-          onRefresh: _loadData,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics(),
-            ),
-            slivers: [
-              // ── 1. Lime Gradient Header (Bottom Radius 38) ─────────────
-              SliverToBoxAdapter(
-                child: Container(
-                  padding: EdgeInsets.fromLTRB(
-                    18,
-                    MediaQuery.of(context).padding.top + 16,
-                    18,
-                    36,
-                  ),
-                  decoration: const BoxDecoration(
-                    gradient: AppColors.limeGradient,
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(AppRadius.limeHeader),
-                      bottomRight: Radius.circular(AppRadius.limeHeader),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Top Row: Logo, Date/Greeting, Bell Notification
-                      Row(
-                        children: [
-                          // 44px Zest Logo Mark
-                          GestureDetector(
-                            onTap: widget.onProfileTap,
-                            child: Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: AppColors.ink,
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              alignment: Alignment.center,
-                              child: const ZestLogo.markSmall(size: 26),
-                            ),
-                          ),
-                          const SizedBox(width: 14),
+    return Scaffold(
+      backgroundColor: ZestTokens.page,
+      body: RefreshIndicator(
+        color: ZestTokens.blue,
+        backgroundColor: Colors.white,
+        onRefresh: _loadData,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
+          slivers: [
+            // ── 1. Top Header ──────────────────────────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  ZestTokens.horizontalPadding,
+                  MediaQuery.of(context).padding.top + 14,
+                  ZestTokens.horizontalPadding,
+                  12,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Top Bar: Logo, Date/Greeting, Bell Notification
+                    Row(
+                      children: [
+                        // 40px Zest Blob Logo
+                        GestureDetector(
+                          onTap: widget.onProfileTap,
+                          child: const ZestBlobLogo(size: 40),
+                        ),
+                        const SizedBox(width: 14),
 
-                          // Date & Hi, Name
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _dateString(),
-                                  style: AppTextStyles.metaLabel.copyWith(
-                                    color: AppColors.ink.withValues(alpha: 0.65),
-                                    fontSize: 11,
-                                    letterSpacing: 1.0,
-                                  ),
+                        // Date & Hi, Name
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _dateString(),
+                                style: ZestTokens.labelCaps.copyWith(
+                                  fontSize: 11,
+                                  color: ZestTokens.ink3,
+                                  letterSpacing: 0.8,
                                 ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Hi, $firstName 👋',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTextStyles.title22.copyWith(
-                                    color: AppColors.ink,
-                                    fontWeight: FontWeight.w900,
-                                  ),
+                              ),
+                              const SizedBox(height: 2),
+                              RichText(
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: 'Hi, ',
+                                      style: ZestTokens.title.copyWith(fontSize: 22),
+                                    ),
+                                    TextSpan(
+                                      text: firstName,
+                                      style: ZestTokens.accentItalic.copyWith(
+                                        fontSize: 26,
+                                        color: ZestTokens.blue,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: ' 👋',
+                                      style: ZestTokens.title.copyWith(fontSize: 20),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Notification Bell with Coral Dot
+                        GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            context.push('/notifications');
+                          },
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: ZestTokens.line),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x0A0B1220),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 2),
                                 ),
                               ],
                             ),
-                          ),
-
-                          // Notification Bell with Coral Dot
-                          GestureDetector(
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              context.push('/notifications');
-                            },
                             child: Stack(
-                              clipBehavior: Clip.none,
+                              alignment: Alignment.center,
                               children: [
-                                Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.ink.withValues(alpha: 0.12),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.notifications_outlined,
-                                    color: AppColors.ink,
-                                    size: 22,
-                                  ),
+                                const Icon(
+                                  LucideIcons.bell,
+                                  color: ZestTokens.ink,
+                                  size: 20,
                                 ),
                                 if (_unreadNotifications > 0)
                                   Positioned(
                                     top: 10,
                                     right: 10,
                                     child: Container(
-                                      width: 9,
-                                      height: 9,
+                                      width: 8,
+                                      height: 8,
                                       decoration: const BoxDecoration(
-                                        color: AppColors.coral,
+                                        color: ZestTokens.coral,
                                         shape: BoxShape.circle,
                                       ),
                                     ),
@@ -296,308 +295,267 @@ class _HomeFeedTabState extends ConsumerState<HomeFeedTab> {
                               ],
                             ),
                           ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    // Search Pill
+                    Container(
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: ZestTokens.borderPill,
+                        border: Border.all(color: ZestTokens.line),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x080B1220),
+                            blurRadius: 16,
+                            offset: Offset(0, 4),
+                          ),
                         ],
                       ),
-
-                      const SizedBox(height: 20),
-
-                      // White Search Pill
-                      Container(
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: AppRadius.circularPill,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.ink.withValues(alpha: 0.08),
-                              blurRadius: 16,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (val) {
-                            setState(() {
-                              _searchQuery = val;
-                              _applyFilters();
-                            });
-                          },
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppColors.ink,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Search fresh events, clubs...',
-                            hintStyle: AppTextStyles.bodyMedium.copyWith(
-                              color: AppColors.grey400,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            prefixIcon: const Icon(
-                              Icons.search_rounded,
-                              color: AppColors.ink,
-                              size: 22,
-                            ),
-                            suffixIcon: _searchQuery.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.ink),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      setState(() {
-                                        _searchQuery = '';
-                                        _applyFilters();
-                                      });
-                                    },
-                                  )
-                                : null,
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // ── 2. Journey Card (Overlapping Lime Header by 14px) ───────
-              SliverToBoxAdapter(
-                child: Transform.translate(
-                  offset: const Offset(0, -14),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    child: _buildJourneyCard(
-                      points: points,
-                      level: zestLevel,
-                      progress: levelProgress,
-                      nextTarget: (zestLevel * 50),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-              // ── 3. Category Chips (11×18 padding, fully rounded) ────────
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 44,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    itemCount: categoryList.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 8),
-                    itemBuilder: (context, i) {
-                      final cat = categoryList[i];
-                      final isSelected = i == _selectedCategoryIndex;
-                      return GestureDetector(
-                        onTap: () {
-                          HapticFeedback.selectionClick();
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (val) {
                           setState(() {
-                            _selectedCategoryIndex = i;
-                            _selectedCategory = cat;
+                            _searchQuery = val;
                             _applyFilters();
                           });
                         },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 11,
+                        style: ZestTokens.body.copyWith(
+                          color: ZestTokens.ink,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Search fresh events, clubs...',
+                          hintStyle: ZestTokens.body.copyWith(
+                            color: ZestTokens.ink3,
                           ),
-                          decoration: BoxDecoration(
-                            color: isSelected ? AppColors.lime : AppColors.surfaceDark,
-                            borderRadius: AppRadius.circularPill,
-                            border: Border.all(
-                              color: isSelected ? AppColors.lime : AppColors.borderDark,
-                              width: 1.5,
-                            ),
+                          prefixIcon: const Icon(
+                            LucideIcons.search,
+                            color: ZestTokens.ink3,
+                            size: 19,
                           ),
-                          child: Center(
-                            child: Text(
-                              cat,
-                              style: AppTextStyles.caption.copyWith(
-                                color: isSelected ? AppColors.ink : AppColors.white,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(
+                                    LucideIcons.x,
+                                    size: 18,
+                                    color: ZestTokens.ink2,
+                                  ),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() {
+                                      _searchQuery = '';
+                                      _applyFilters();
+                                    });
+                                  },
+                                )
+                              : null,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 13,
                           ),
                         ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 6)),
+
+            // ── 2. Journey Card ────────────────────────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: ZestTokens.horizontalPadding,
+                ),
+                child: _buildJourneyCard(
+                  points: points,
+                  level: zestLevel,
+                  progress: levelProgress,
+                  nextTarget: (zestLevel * 50),
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+            // ── 3. Category Chips ──────────────────────────────────────────
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 40,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: ZestTokens.horizontalPadding,
+                  ),
+                  itemCount: categoryList.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemBuilder: (context, i) {
+                    final cat = categoryList[i];
+                    final isSelected = i == _selectedCategoryIndex;
+                    return ZestChip(
+                      label: cat,
+                      isSelected: isSelected,
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() {
+                          _selectedCategoryIndex = i;
+                          _selectedCategory = cat;
+                          _applyFilters();
+                        });
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+            // ── 4. Featured Spotlight Carousel ─────────────────────────────
+            if (featuredEvents.isNotEmpty &&
+                _searchQuery.isEmpty &&
+                _selectedCategory == 'All') ...[
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: ZestTokens.horizontalPadding,
+                  ),
+                  child: ZestSectionHeader(
+                    title: 'Featured',
+                    accentWord: 'spotlight',
+                    actionLabel: widget.onExploreTap != null ? 'See all' : null,
+                    onActionTap: widget.onExploreTap,
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 14)),
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: 290,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: ZestTokens.horizontalPadding,
+                    ),
+                    itemCount: featuredEvents.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 16),
+                    itemBuilder: (context, i) {
+                      final e = featuredEvents[i];
+                      final catName =
+                          e['event_categories']?['name']?.toString() ?? 'Featured';
+                      final date = _formatDate(e['start_date']?.toString());
+                      final venue = e['venue']?.toString() ?? 'Campus';
+
+                      return _buildFeaturedCard(
+                        event: e,
+                        category: catName,
+                        date: date,
+                        venue: venue,
+                        onTap: () => context.push('/student/event/${e['id']}'),
                       );
                     },
                   ),
                 ),
               ),
-
               const SliverToBoxAdapter(child: SizedBox(height: 28)),
+            ],
 
-              // ── 4. Featured Spotlight Carousel ─────────────────────────
-              if (featuredEvents.isNotEmpty && _searchQuery.isEmpty && _selectedCategory == 'All') ...[
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Featured Spotlight ⭐',
-                          style: AppTextStyles.title24.copyWith(
-                            color: AppColors.white,
-                          ),
-                        ),
-                        if (widget.onExploreTap != null)
-                          GestureDetector(
-                            onTap: widget.onExploreTap,
-                            child: Text(
-                              'See all',
-                              style: AppTextStyles.caption.copyWith(
-                                color: AppColors.lime,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                      ],
+            // ── 5. Fresh Events Section Header ─────────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: ZestTokens.horizontalPadding,
+                ),
+                child: ZestSectionHeader(
+                  title: _selectedCategory == 'All' ? 'Fresh' : _selectedCategory,
+                  accentWord: 'events',
+                  badgeText: '${_filtered.length} events',
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+            // ── Events List Rows ───────────────────────────────────────────
+            if (_isLoading)
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: ZestTokens.horizontalPadding,
+                ),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (_, i) => const Padding(
+                      padding: EdgeInsets.only(bottom: 12),
+                      child: ZestSkeleton(
+                        width: double.infinity,
+                        height: 84,
+                        borderRadius: BorderRadius.all(Radius.circular(20)),
+                      ),
                     ),
+                    childCount: 4,
                   ),
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: 305,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
-                      itemCount: featuredEvents.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 16),
-                      itemBuilder: (context, i) {
-                        final e = featuredEvents[i];
-                        final catName = e['event_categories']?['name']?.toString() ?? 'Featured';
-                        final date = _formatDate(e['start_date']?.toString());
-                        final venue = e['venue']?.toString();
-
-                        return HeroEventCard(
-                          title: e['title']?.toString() ?? 'Campus Event',
-                          subtitle: e['short_description']?.toString() ?? 'Join the campus buzz',
-                          tag: catName,
-                          date: date,
-                          venue: venue,
-                          colorIndex: i,
-                          heroTag: 'hero_featured_${e['id']}',
-                          onTap: () => context.push('/student/event/${e['id']}'),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 32)),
-              ],
-
-              // ── 5. Fresh Events Section Header ─────────────────────────
+              )
+            else if (_filtered.isEmpty)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _selectedCategory == 'All'
-                            ? 'Fresh Events 🎪'
-                            : '$_selectedCategory Events',
-                        style: AppTextStyles.title24.copyWith(
-                          color: AppColors.white,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceDark,
-                          borderRadius: AppRadius.circularPill,
-                          border: Border.all(color: AppColors.borderDark),
-                        ),
-                        child: Text(
-                          '${_filtered.length} events',
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.grey400,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
+                  padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+                  child: ZestEmptyState(
+                    mascotMood: ZestMascotMood.sleepy,
+                    title: 'No Events Found',
+                    subtitle: _searchQuery.isNotEmpty
+                        ? "No events match '$_searchQuery'. Try clearing your search!"
+                        : 'No events in this category yet. Check back soon for fresh drops!',
+                    actionLabel:
+                        _searchQuery.isNotEmpty || _selectedCategory != 'All'
+                            ? 'Clear Filters'
+                            : null,
+                    onAction: () {
+                      setState(() {
+                        _searchController.clear();
+                        _searchQuery = '';
+                        _selectedCategoryIndex = 0;
+                        _selectedCategory = 'All';
+                        _applyFilters();
+                      });
+                    },
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: ZestTokens.horizontalPadding,
+                ),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final event = _filtered[index];
+                      final isRegistered =
+                          _registeredEventIds.contains(event['id']);
+                      return _buildEventListRow(
+                        event: event,
+                        isRegistered: isRegistered,
+                        onTap: () =>
+                            context.push('/student/event/${event['id']}'),
+                      );
+                    },
+                    childCount: _filtered.length,
                   ),
                 ),
               ),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 14)),
-
-              // ── Events List Rows ───────────────────────────────────────
-              if (_isLoading)
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (_, i) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: SkeletonLoader(
-                          width: double.infinity,
-                          height: 84,
-                          radius: AppRadius.listRow,
-                        ),
-                      ),
-                      childCount: 4,
-                    ),
-                  ),
-                )
-              else if (_filtered.isEmpty)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: EmptyState(
-                      emoji: '🍋',
-                      title: 'No Events Found',
-                      subtitle: _searchQuery.isNotEmpty
-                          ? "No events match '$_searchQuery'. Try clearing your search!"
-                          : 'No events in this category yet. Check back soon for fresh drops!',
-                      actionLabel: _searchQuery.isNotEmpty || _selectedCategory != 'All'
-                          ? 'Clear Filters'
-                          : null,
-                      onAction: () {
-                        setState(() {
-                          _searchController.clear();
-                          _searchQuery = '';
-                          _selectedCategoryIndex = 0;
-                          _selectedCategory = 'All';
-                          _applyFilters();
-                        });
-                      },
-                    ),
-                  ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final event = _filtered[index];
-                        final isRegistered = _registeredEventIds.contains(event['id']);
-                        return _buildEventListRow(
-                          event: event,
-                          colorIndex: index,
-                          isRegistered: isRegistered,
-                          onTap: () => context.push('/student/event/${event['id']}'),
-                        );
-                      },
-                      childCount: _filtered.length,
-                    ),
-                  ),
-                ),
-
-              // Bottom padding for floating pill nav bar
-              const SliverToBoxAdapter(child: SizedBox(height: 120)),
-            ],
-          ),
+            // Bottom padding for floating pill nav bar
+            const SliverToBoxAdapter(child: SizedBox(height: 110)),
+          ],
         ),
       ),
     );
@@ -612,28 +570,31 @@ class _HomeFeedTabState extends ConsumerState<HomeFeedTab> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.ink,
-        borderRadius: BorderRadius.circular(AppRadius.journeyCard),
-        border: Border.all(color: AppColors.borderDark, width: 1.5),
-        boxShadow: AppShadows.card,
+        gradient: ZestTokens.brandGradient,
+        borderRadius: ZestTokens.borderHero,
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x330063F0),
+            blurRadius: 28,
+            offset: Offset(0, 10),
+          ),
+        ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.journeyCard),
+        borderRadius: ZestTokens.borderHero,
         child: Stack(
           children: [
-            // Watermark Z in bottom-right
+            // Watermark lemon blob in bottom-right
             Positioned(
-              right: -20,
-              bottom: -25,
+              right: -30,
+              bottom: -30,
               child: Opacity(
-                opacity: 0.05,
-                child: Text(
-                  'Z',
-                  style: TextStyle(
-                    fontFamily: 'Bricolage Grotesque',
-                    fontSize: 180,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.white,
+                opacity: 0.12,
+                child: SizedBox(
+                  width: 200,
+                  height: 200,
+                  child: CustomPaint(
+                    painter: _WatermarkBlobPainter(),
                   ),
                 ),
               ),
@@ -650,32 +611,48 @@ class _HomeFeedTabState extends ConsumerState<HomeFeedTab> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
-                          color: AppColors.lime.withValues(alpha: 0.15),
-                          borderRadius: AppRadius.circularPill,
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: ZestTokens.borderPill,
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Text(
                           'YOUR ZEST XP',
-                          style: AppTextStyles.pillTag.copyWith(
-                            color: AppColors.lime,
-                            fontSize: 11,
+                          style: ZestTokens.labelCaps.copyWith(
+                            color: Colors.white,
+                            fontSize: 10.5,
                             letterSpacing: 0.8,
                           ),
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceCard,
-                          borderRadius: AppRadius.circularPill,
-                          border: Border.all(color: AppColors.borderDark),
+                          color: Colors.white,
+                          borderRadius: ZestTokens.borderPill,
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x1A000000),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Text(
-                          'LEVEL $level',
-                          style: AppTextStyles.metaLabel.copyWith(
-                            color: AppColors.lime,
-                            fontWeight: FontWeight.w900,
+                          'LEVEL $level • ${_getLevelTitle(level).toUpperCase()}',
+                          style: ZestTokens.labelCaps.copyWith(
+                            color: ZestTokens.blue,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.6,
                           ),
                         ),
                       ),
@@ -684,30 +661,30 @@ class _HomeFeedTabState extends ConsumerState<HomeFeedTab> {
 
                   const SizedBox(height: 14),
 
-                  // Big Points Counter (56sp Bricolage Lime)
+                  // Big Points Counter
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.baseline,
                     textBaseline: TextBaseline.alphabetic,
                     children: [
-                      TweenAnimationBuilder<int>(
-                        tween: IntTween(begin: 0, end: points),
-                        duration: const Duration(milliseconds: 1300),
-                        curve: Curves.easeOutCubic,
-                        builder: (context, value, _) {
-                          return Text(
-                            '$value',
-                            style: AppTextStyles.display56.copyWith(
-                              color: AppColors.lime,
-                              height: 1.0,
-                            ),
-                          );
-                        },
+                      CountUpText(
+                        value: points,
+                        textStyle: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 52,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -1.5,
+                          color: Colors.white,
+                          height: 1.0,
+                        ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Text(
                         'pts',
-                        style: AppTextStyles.title24.copyWith(
-                          color: AppColors.grey400,
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 20,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white.withValues(alpha: 0.8),
                         ),
                       ),
                     ],
@@ -715,32 +692,23 @@ class _HomeFeedTabState extends ConsumerState<HomeFeedTab> {
 
                   const SizedBox(height: 6),
 
-                  // Progress explanation
+                  // Progress description
                   Text(
                     '${nextTarget - points} pts to Level ${level + 1} • $_registeredCount passes • $_attendedCount attended',
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.grey400,
-                      fontWeight: FontWeight.w600,
+                    style: ZestTokens.caption.copyWith(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
 
                   const SizedBox(height: 14),
 
-                  // Animated Progress Bar
-                  ClipRRect(
-                    borderRadius: AppRadius.circularPill,
-                    child: TweenAnimationBuilder<double>(
-                      tween: Tween<double>(begin: 0.0, end: progress),
-                      duration: const Duration(milliseconds: 1600),
-                      curve: Curves.easeOutCubic,
-                      builder: (context, value, _) {
-                        return LinearProgressIndicator(
-                          value: value,
-                          minHeight: 8,
-                          backgroundColor: AppColors.ink3,
-                          valueColor: const AlwaysStoppedAnimation<Color>(AppColors.lime),
-                        );
-                      },
+                  // 8px Progress Bar
+                  ZestProgressBar(
+                    value: progress,
+                    height: 8,
+                    progressGradient: const LinearGradient(
+                      colors: [ZestTokens.lemon, Colors.white],
                     ),
                   ),
                 ],
@@ -752,10 +720,158 @@ class _HomeFeedTabState extends ConsumerState<HomeFeedTab> {
     );
   }
 
+  // ── Featured Spotlight Card ────────────────────────────────────────────────
+  Widget _buildFeaturedCard({
+    required Map<String, dynamic> event,
+    required String category,
+    required String date,
+    required String venue,
+    required VoidCallback onTap,
+  }) {
+    final gradient = ZestTokens.categoryGradient(category);
+    final emoji = _categoryEmoji(category);
+    final title = event['title']?.toString() ?? 'Featured Event';
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 250,
+        height: 290,
+        decoration: BoxDecoration(
+          gradient: gradient,
+          borderRadius: ZestTokens.borderHero,
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x200063F0),
+              blurRadius: 20,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(22),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top row: Tag Pill + Big Emoji
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.22),
+                    borderRadius: ZestTokens.borderPill,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Text(
+                    category.toUpperCase(),
+                    style: ZestTokens.labelCaps.copyWith(
+                      color: Colors.white,
+                      fontSize: 10,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                ),
+                Text(
+                  emoji,
+                  style: const TextStyle(fontSize: 42, height: 1.0),
+                ),
+              ],
+            ),
+
+            const Spacer(),
+
+            // Title
+            Text(
+              title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+                height: 1.2,
+                letterSpacing: -0.4,
+              ),
+            ),
+            const SizedBox(height: 6),
+
+            // Date / Venue
+            Text(
+              '$date • $venue',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Colors.white.withValues(alpha: 0.85),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Bottom Row: "FEATURED" pill + white circle with blue arrow
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: ZestTokens.borderPill,
+                  ),
+                  child: Text(
+                    'FEATURED',
+                    style: ZestTokens.labelCaps.copyWith(
+                      color: Colors.white,
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0x1A000000),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      LucideIcons.arrowRight,
+                      color: ZestTokens.blue,
+                      size: 18,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ── Spec-Exact Event List Row ──────────────────────────────────────────────
   Widget _buildEventListRow({
     required Map<String, dynamic> event,
-    required int colorIndex,
     required bool isRegistered,
     required VoidCallback onTap,
   }) {
@@ -764,111 +880,98 @@ class _HomeFeedTabState extends ConsumerState<HomeFeedTab> {
     final catName = event['event_categories']?['name']?.toString() ?? 'General';
     final date = _formatDate(event['start_date']?.toString());
     final emoji = _categoryEmoji(catName);
+    final gradient = ZestTokens.categoryGradient(catName);
 
-    const thumbnailColors = [
-      AppColors.coral,
-      AppColors.lavender,
-      AppColors.mustard,
-      AppColors.aqua,
-      AppColors.teal,
-      AppColors.orange,
-    ];
-    final thumbColor = thumbnailColors[colorIndex % thumbnailColors.length];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: ZestCard(
+        padding: const EdgeInsets.all(12),
+        onTap: onTap,
+        child: Row(
+          children: [
+            // 56px thumbnail with category gradient + emoji
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                gradient: gradient,
+                borderRadius: const BorderRadius.all(Radius.circular(16)),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                emoji,
+                style: const TextStyle(fontSize: 26),
+              ),
+            ),
+            const SizedBox(width: 14),
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
-        borderRadius: BorderRadius.circular(AppRadius.listRow),
-        border: Border.all(color: AppColors.borderDark, width: 1),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(AppRadius.listRow),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadius.listRow),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                // 60px thumbnail with solid event color + 28sp emoji
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: thumbColor,
-                    borderRadius: BorderRadius.circular(AppRadius.thumbnail),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    emoji,
-                    style: const TextStyle(fontSize: 28),
-                  ),
-                ),
-                const SizedBox(width: 14),
-
-                // Center Info: Title 17sp w800, date/venue 13sp muted
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.title17.copyWith(
-                          color: AppColors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '$date • $venue',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.grey400,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-
-                // Right: Lime Pill "Register" or "Going ✓"
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isRegistered
-                        ? AppColors.ink
-                        : AppColors.lime,
-                    borderRadius: AppRadius.circularPill,
-                    border: isRegistered
-                        ? Border.all(color: AppColors.lime.withValues(alpha: 0.5))
-                        : null,
-                  ),
-                  child: Text(
-                    isRegistered ? 'Going ✓' : 'Register',
-                    style: AppTextStyles.caption.copyWith(
-                      color: isRegistered ? AppColors.lime : AppColors.ink,
-                      fontWeight: FontWeight.w800,
+            // Center Info: Title + date/venue
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ZestTokens.bodyBold.copyWith(
+                      fontSize: 15,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 3),
+                  Text(
+                    '$date • $venue',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ZestTokens.caption.copyWith(
+                      color: ZestTokens.ink2,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+            const SizedBox(width: 10),
+
+            // Right: Pill "Register" or "Going ✓"
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                color: isRegistered
+                    ? const Color(0xFFE8F6FE)
+                    : ZestTokens.blue,
+                borderRadius: ZestTokens.borderPill,
+                border: isRegistered
+                    ? Border.all(color: ZestTokens.sky)
+                    : null,
+              ),
+              child: Text(
+                isRegistered ? 'Going ✓' : 'Register',
+                style: ZestTokens.caption.copyWith(
+                  color: isRegistered ? ZestTokens.blue : Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  String _getLevelTitle(int level) {
+    if (level <= 1) return 'Fresher';
+    if (level == 2) return 'Explorer';
+    if (level == 3) return 'Trailblazer';
+    if (level == 4) return 'Champion';
+    return 'Campus Legend';
   }
 
   static String _formatDate(String? dateStr) {
     if (dateStr == null) return 'TBA';
     final d = DateTime.tryParse(dateStr)?.toLocal();
     if (d == null) return 'TBA';
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return '${months[d.month - 1]} ${d.day}';
   }
 
@@ -882,4 +985,24 @@ class _HomeFeedTabState extends ConsumerState<HomeFeedTab> {
     if (lower.contains('lit') || lower.contains('quiz')) return '📚';
     return '⚡';
   }
+}
+
+class _WatermarkBlobPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    final path = Path();
+    path.addRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, 0, size.width, size.height),
+        Radius.circular(size.width * 0.45),
+      ),
+    );
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

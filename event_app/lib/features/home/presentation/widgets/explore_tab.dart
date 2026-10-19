@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_radius.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/empty_state.dart';
-import '../../../../core/widgets/skeleton_loader.dart';
+import '../../../../core/theme/zest_tokens.dart';
+import '../../../../shared/widgets/shared_widgets.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ExploreTab — Discover all campus events
-// Spec: "Explore" 38sp title + muted subtitle, search pill, explore cards
-//   (radius 30, thumbnail + title + meta, seats-left progress bar 8px, caption)
-//   Empty state: 'No events match "query"'
+// Minimal, clean, modern light UI matching Designjoy aesthetic.
 // ─────────────────────────────────────────────────────────────────────────────
 
 class ExploreTab extends StatefulWidget {
@@ -46,13 +43,25 @@ class _ExploreTabState extends State<ExploreTab> {
   Future<void> _loadEvents() async {
     setState(() => _isLoading = true);
     try {
-      final events = await Supabase.instance.client
-          .from('events')
-          .select(
-              'id, title, short_description, start_date, venue, cover_image_url, '
-              'max_capacity, event_categories(name)')
-          .eq('visibility', 'published')
-          .order('start_date', ascending: true);
+      dynamic events;
+      try {
+        events = await Supabase.instance.client
+            .from('events')
+            .select(
+                'id, title, short_description, start_date, venue, cover_image_url, '
+                'max_seats, event_categories(name)')
+            .eq('visibility', 'published')
+            .order('start_date', ascending: true);
+      } catch (err) {
+        debugPrint('Explore detailed select failed, fallback to basic: $err');
+        events = await Supabase.instance.client
+            .from('events')
+            .select(
+                'id, title, short_description, start_date, venue, cover_image_url, '
+                'max_seats')
+            .eq('visibility', 'published')
+            .order('start_date', ascending: true);
+      }
 
       if (mounted) {
         setState(() {
@@ -81,16 +90,6 @@ class _ExploreTabState extends State<ExploreTab> {
     }).toList();
   }
 
-  static const _eventColors = [
-    AppColors.coral,
-    AppColors.lavender,
-    AppColors.mustard,
-    AppColors.aqua,
-    AppColors.mint,
-  ];
-
-  Color _colorForIndex(int i) => _eventColors[i % _eventColors.length];
-
   String _formatDate(String? iso) {
     if (iso == null) return '';
     try {
@@ -107,37 +106,56 @@ class _ExploreTabState extends State<ExploreTab> {
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
-      child: RefreshIndicator(
-        color: AppColors.lime,
-        backgroundColor: AppColors.ink2,
+    return Scaffold(
+      backgroundColor: ZestTokens.page,
+      body: RefreshIndicator(
+        color: ZestTokens.blue,
+        backgroundColor: Colors.white,
         onRefresh: _loadEvents,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(
-              parent: BouncingScrollPhysics()),
+            parent: BouncingScrollPhysics(),
+          ),
           slivers: [
             // Safe area top
-            const SliverToBoxAdapter(child: SizedBox(height: 52)),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: MediaQuery.of(context).padding.top + 16,
+              ),
+            ),
 
             // ── Title + Subtitle ───────────────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(18, 0, 18, 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: ZestTokens.horizontalPadding,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Explore',
-                      style: AppTextStyles.title38.copyWith(
-                        color: AppColors.paper,
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Explore ',
+                            style: ZestTokens.display.copyWith(fontSize: 32),
+                          ),
+                          TextSpan(
+                            text: 'events',
+                            style: ZestTokens.accentItalic.copyWith(
+                              fontSize: 36,
+                              color: ZestTokens.blue,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Discover what\'s happening on campus',
-                      style: AppTextStyles.body15.copyWith(
-                        color: AppColors.grey400,
+                      'Discover what\'s happening across campus',
+                      style: ZestTokens.body.copyWith(
+                        color: ZestTokens.ink2,
+                        fontSize: 14,
                       ),
                     ),
                   ],
@@ -150,12 +168,22 @@ class _ExploreTabState extends State<ExploreTab> {
             // ── Search Pill ───────────────────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: ZestTokens.horizontalPadding,
+                ),
                 child: Container(
+                  height: 48,
                   decoration: BoxDecoration(
-                    color: AppColors.ink2,
-                    borderRadius: AppRadius.circularPill,
-                    border: Border.all(color: AppColors.borderDark, width: 1.5),
+                    color: Colors.white,
+                    borderRadius: ZestTokens.borderPill,
+                    border: Border.all(color: ZestTokens.line),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x080B1220),
+                        blurRadius: 16,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: TextField(
                     controller: _searchController,
@@ -165,20 +193,27 @@ class _ExploreTabState extends State<ExploreTab> {
                         _applyFilter();
                       });
                     },
-                    style: AppTextStyles.body15.copyWith(
-                      color: AppColors.paper,
+                    style: ZestTokens.body.copyWith(
+                      color: ZestTokens.ink,
+                      fontWeight: FontWeight.w500,
                     ),
                     decoration: InputDecoration(
                       hintText: 'Search events, workshops, clubs...',
-                      hintStyle: AppTextStyles.body15.copyWith(
-                        color: AppColors.grey400,
+                      hintStyle: ZestTokens.body.copyWith(
+                        color: ZestTokens.ink3,
                       ),
-                      prefixIcon: const Icon(Icons.search_rounded,
-                          color: AppColors.grey400, size: 22),
+                      prefixIcon: const Icon(
+                        LucideIcons.search,
+                        color: ZestTokens.ink3,
+                        size: 19,
+                      ),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.close_rounded,
-                                  size: 18, color: AppColors.grey400),
+                              icon: const Icon(
+                                LucideIcons.x,
+                                size: 18,
+                                color: ZestTokens.ink2,
+                              ),
                               onPressed: () {
                                 _searchController.clear();
                                 setState(() {
@@ -190,7 +225,9 @@ class _ExploreTabState extends State<ExploreTab> {
                           : null,
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 16),
+                        horizontal: 16,
+                        vertical: 13,
+                      ),
                     ),
                   ),
                 ),
@@ -202,15 +239,17 @@ class _ExploreTabState extends State<ExploreTab> {
             // ── Event Cards ───────────────────────────────────────────
             if (_isLoading)
               SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 18),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: ZestTokens.horizontalPadding,
+                ),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
-                    (_, i) => Padding(
-                      padding: const EdgeInsets.only(bottom: 14),
-                      child: SkeletonLoader(
+                    (_, i) => const Padding(
+                      padding: EdgeInsets.only(bottom: 14),
+                      child: ZestSkeleton(
                         width: double.infinity,
-                        height: 120,
-                        radius: AppRadius.exploreCard,
+                        height: 124,
+                        borderRadius: BorderRadius.all(Radius.circular(20)),
                       ),
                     ),
                     childCount: 5,
@@ -220,33 +259,46 @@ class _ExploreTabState extends State<ExploreTab> {
             else if (_filtered.isEmpty)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18),
-                  child: EmptyState(
-                    emoji: '🔍',
+                  padding: const EdgeInsets.all(32),
+                  child: ZestEmptyState(
+                    mascotMood: ZestMascotMood.sleepy,
                     title: _searchQuery.isEmpty
                         ? 'No events yet'
                         : 'No events match "$_searchQuery"',
                     subtitle: _searchQuery.isEmpty
                         ? 'Check back soon for new events!'
-                        : 'Try a different search term.',
+                        : 'Try searching for something else.',
+                    actionLabel: _searchQuery.isNotEmpty ? 'Clear Search' : null,
+                    onAction: () {
+                      setState(() {
+                        _searchController.clear();
+                        _searchQuery = '';
+                        _applyFilter();
+                      });
+                    },
                   ),
                 ),
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(18, 0, 18, 120),
+                padding: const EdgeInsets.fromLTRB(
+                  ZestTokens.horizontalPadding,
+                  0,
+                  ZestTokens.horizontalPadding,
+                  110,
+                ),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, i) {
                       final e = _filtered[i];
-                      final color = _colorForIndex(i);
                       final date = _formatDate(e['start_date']?.toString());
-                      final venue = e['venue']?.toString() ?? '';
+                      final venue = e['venue']?.toString() ?? 'Campus';
                       final title = e['title']?.toString() ?? 'Event';
-                      final cat = e['event_categories']?['name']?.toString() ?? '';
-                      final capacity = e['max_capacity'] is int
-                          ? (e['max_capacity'] as int)
-                          : int.tryParse(e['max_capacity']?.toString() ?? '') ?? 100;
+                      final cat = e['event_categories']?['name']?.toString() ?? 'General';
+                      final rawCap = e['max_seats'] ?? e['max_capacity'];
+                      final capacity = rawCap is int
+                          ? rawCap
+                          : int.tryParse(rawCap?.toString() ?? '') ?? 100;
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 14),
@@ -255,9 +307,8 @@ class _ExploreTabState extends State<ExploreTab> {
                           category: cat,
                           date: date,
                           venue: venue,
-                          color: color,
                           seatsTotal: capacity,
-                          seatsLeft: (capacity * 0.35).toInt(), // placeholder until we join registrations
+                          seatsLeft: (capacity * 0.35).toInt(),
                           onTap: () => context.push('/student/event/${e['id']}'),
                         ),
                       );
@@ -274,8 +325,7 @@ class _ExploreTabState extends State<ExploreTab> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// _ExploreCard — spec: radius 30, padding 18, thumbnail + title + meta,
-//   seats-left progress bar (8px, ink fill), "N of M seats left" caption
+// _ExploreCard — Modern light Designjoy card
 // ─────────────────────────────────────────────────────────────────────────────
 class _ExploreCard extends StatelessWidget {
   const _ExploreCard({
@@ -283,7 +333,6 @@ class _ExploreCard extends StatelessWidget {
     required this.category,
     required this.date,
     required this.venue,
-    required this.color,
     required this.seatsTotal,
     required this.seatsLeft,
     this.onTap,
@@ -293,7 +342,6 @@ class _ExploreCard extends StatelessWidget {
   final String category;
   final String date;
   final String venue;
-  final Color color;
   final int seatsTotal;
   final int seatsLeft;
   final VoidCallback? onTap;
@@ -301,112 +349,144 @@ class _ExploreCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = seatsTotal > 0 ? seatsLeft / seatsTotal : 0.0;
+    final isLowSeats = progress < 0.25;
+    final gradient = ZestTokens.categoryGradient(category);
 
-    return GestureDetector(
+    return ZestCard(
+      padding: const EdgeInsets.all(16),
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: AppColors.ink2,
-          borderRadius: AppRadius.circularExplore,
-          border: Border.all(color: AppColors.borderDark, width: 1.5),
-        ),
-        child: Row(
-          children: [
-            // Thumbnail
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.25),
-                borderRadius: const BorderRadius.all(
-                    Radius.circular(AppRadius.thumbnail)),
-              ),
-              child: Center(
-                child: Text(
-                  _emojiForCategory(category),
-                  style: const TextStyle(fontSize: 26),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // 64px category gradient thumbnail
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              gradient: gradient,
+              borderRadius: const BorderRadius.all(Radius.circular(18)),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              _emojiForCategory(category),
+              style: const TextStyle(fontSize: 28),
+            ),
+          ),
+          const SizedBox(width: 14),
+
+          // Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Category tag pill
+                if (category.isNotEmpty)
+                  Text(
+                    category.toUpperCase(),
+                    style: ZestTokens.labelCaps.copyWith(
+                      color: ZestTokens.blue,
+                      fontSize: 10,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                const SizedBox(height: 2),
+                Text(
+                  title,
+                  style: ZestTokens.bodyBold.copyWith(
+                    fontSize: 15,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ),
-            const SizedBox(width: 14),
-
-            // Info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Category tag
-                  if (category.isNotEmpty)
-                    Text(
-                      category.toUpperCase(),
-                      style: AppTextStyles.caption12.copyWith(
-                        color: color,
-                        letterSpacing: 0.6,
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    if (date.isNotEmpty) ...[
+                      const Icon(
+                        LucideIcons.calendar,
+                        size: 12,
+                        color: ZestTokens.ink3,
                       ),
-                    ),
-                  const SizedBox(height: 2),
-                  Text(
-                    title,
-                    style: AppTextStyles.title17.copyWith(
-                      color: AppColors.paper,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      if (date.isNotEmpty) ...[
-                        const Icon(Icons.calendar_today_outlined,
-                            size: 11, color: AppColors.grey400),
-                        const SizedBox(width: 3),
-                        Text(date,
-                            style: AppTextStyles.caption12
-                                .copyWith(color: AppColors.grey400)),
-                        const SizedBox(width: 8),
-                      ],
-                      if (venue.isNotEmpty) ...[
-                        const Icon(Icons.location_on_outlined,
-                            size: 11, color: AppColors.grey400),
-                        const SizedBox(width: 3),
-                        Flexible(
-                          child: Text(venue,
-                              style: AppTextStyles.caption12
-                                  .copyWith(color: AppColors.grey400),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
+                      const SizedBox(width: 4),
+                      Text(
+                        date,
+                        style: ZestTokens.caption.copyWith(
+                          fontSize: 12,
+                          color: ZestTokens.ink2,
                         ),
-                      ],
+                      ),
+                      const SizedBox(width: 10),
                     ],
-                  ),
-                  const SizedBox(height: 10),
-                  // Seats progress bar
-                  ClipRRect(
-                    borderRadius: AppRadius.circularPill,
-                    child: LinearProgressIndicator(
-                      value: progress.clamp(0.0, 1.0),
-                      minHeight: 8,
-                      backgroundColor: AppColors.ink3,
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(color),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '$seatsLeft of $seatsTotal seats left',
-                    style: AppTextStyles.caption12
-                        .copyWith(color: AppColors.grey400),
-                  ),
-                ],
-              ),
-            ),
+                    if (venue.isNotEmpty) ...[
+                      const Icon(
+                        LucideIcons.mapPin,
+                        size: 12,
+                        color: ZestTokens.ink3,
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          venue,
+                          style: ZestTokens.caption.copyWith(
+                            fontSize: 12,
+                            color: ZestTokens.ink2,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 10),
 
-            const SizedBox(width: 10),
-            const Icon(Icons.chevron_right_rounded,
-                color: AppColors.grey400, size: 20),
-          ],
-        ),
+                // Seats progress bar
+                ZestProgressBar(
+                  value: progress.clamp(0.05, 1.0),
+                  height: 6,
+                  progressGradient: isLowSeats
+                      ? const LinearGradient(
+                          colors: [ZestTokens.coral, Color(0xFFFF8FA3)],
+                        )
+                      : ZestTokens.brandGradient,
+                ),
+                const SizedBox(height: 5),
+
+                // Seats caption
+                Row(
+                  children: [
+                    if (isLowSeats) ...[
+                      const Text('⚡ ', style: TextStyle(fontSize: 11)),
+                      Text(
+                        '$seatsLeft spots left!',
+                        style: ZestTokens.caption.copyWith(
+                          color: ZestTokens.coral,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ] else ...[
+                      Text(
+                        '$seatsLeft of $seatsTotal seats left',
+                        style: ZestTokens.caption.copyWith(
+                          color: ZestTokens.ink3,
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 10),
+          const Icon(
+            LucideIcons.chevronRight,
+            color: ZestTokens.ink3,
+            size: 20,
+          ),
+        ],
       ),
     );
   }
@@ -416,10 +496,10 @@ class _ExploreCard extends StatelessWidget {
     if (c.contains('tech') || c.contains('hack')) return '💻';
     if (c.contains('cultur') || c.contains('fest')) return '🎭';
     if (c.contains('sport')) return '🏅';
-    if (c.contains('workshop')) return '🔧';
+    if (c.contains('workshop')) return '🔬';
     if (c.contains('music')) return '🎵';
     if (c.contains('art')) return '🎨';
-    if (c.contains('food')) return '🍕';
+    if (c.contains('quiz')) return '🧠';
     return '⭐';
   }
 }

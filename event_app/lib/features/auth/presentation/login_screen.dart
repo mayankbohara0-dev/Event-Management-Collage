@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_text_styles.dart';
-import '../../../core/widgets/zest_button.dart';
-import '../../../core/widgets/zest_logo.dart';
+import '../../../core/theme/theme.dart';
+import '../../../shared/widgets/shared_widgets.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -20,7 +18,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _isSignUp = false;
-  bool _obscurePassword = true;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -30,31 +28,45 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _submit() async {
-    final email = _emailController.text.trim();
+    final email = _emailController.text.trim().toLowerCase();
     final password = _passwordController.text;
 
     if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Please fill in both email and password.',
-            style: AppTextStyles.body14.copyWith(color: AppColors.paper),
-          ),
-          backgroundColor: AppColors.surfaceDark,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: AppRadius.circularMd),
-        ),
-      );
+      setState(() => _errorMessage = 'Please enter both email and password.');
+      ZestSnack.error(context, 'Please enter both email and password.');
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
     try {
       if (_isSignUp) {
         final res = await Supabase.instance.client.auth.signUp(
           email: email,
           password: password,
         );
+        if (res.user != null) {
+          final adminCheck = await Supabase.instance.client
+              .from('admin_profiles')
+              .select('id')
+              .eq('id', res.user!.id)
+              .maybeSingle();
+          if (adminCheck != null) {
+            if (mounted) {
+              ZestSnack.show(
+                context,
+                message: 'Admin account detected. Redirecting to Admin Dashboard... 🛡️',
+                type: ZestSnackType.info,
+              );
+              context.go('/admin/dashboard');
+            }
+            return;
+          }
+        }
+
         if (mounted) {
           if (res.session != null) {
             context.go('/student/onboarding');
@@ -71,6 +83,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           password: password,
         );
         if (mounted && res.user != null) {
+          final adminCheck = await Supabase.instance.client
+              .from('admin_profiles')
+              .select('id, role')
+              .eq('id', res.user!.id)
+              .maybeSingle();
+
+          if (adminCheck != null) {
+            if (mounted) {
+              ZestSnack.show(
+                context,
+                message: 'Admin account detected. Redirecting to Admin Dashboard... 🛡️',
+                type: ZestSnackType.info,
+              );
+              context.go('/admin/dashboard');
+            }
+            return;
+          }
+
           final profile = await Supabase.instance.client
               .from('student_profiles')
               .select('id, name')
@@ -88,368 +118,206 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } on AuthException catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              error.message,
-              style: AppTextStyles.body14.copyWith(color: AppColors.paper),
-            ),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: AppRadius.circularMd),
-          ),
-        );
+        setState(() => _errorMessage = error.message);
+        ZestSnack.error(context, error.message);
       }
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              error.toString(),
-              style: AppTextStyles.body14.copyWith(color: AppColors.paper),
-            ),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: AppRadius.circularMd),
-          ),
-        );
+        final msg = error.toString();
+        setState(() => _errorMessage = msg);
+        ZestSnack.error(context, msg);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _toggleMode(bool signUp) {
-    if (_isSignUp != signUp) {
-      setState(() => _isSignUp = signUp);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.ink,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Watermark Z top right
-            Positioned(
-              top: -40,
-              right: -50,
-              child: ZestLogo.watermark(
-                size: 260,
-                color: AppColors.surfaceCard.withValues(alpha: 0.45),
-              ),
-            ),
+      backgroundColor: ZestTokens.page,
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          onPressed: () => context.go('/'),
+        ),
+      ),
+      body: Stack(
+        children: [
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Top Logo 56px
+                  const Center(child: ZestBlobLogo(size: 56, animateOnLoad: true)),
+                  const SizedBox(height: 20),
 
-            Column(
-              children: [
-                // ── Top Navigation Bar ─────────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      GestureDetector(
-                        onTap: () => context.go('/'),
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceCard,
-                            borderRadius: AppRadius.circularSm,
-                            border: Border.all(color: AppColors.borderDark, width: 1),
-                          ),
-                          child: const Icon(
-                            Icons.arrow_back_ios_new_rounded,
-                            color: AppColors.paper,
-                            size: 18,
-                          ),
+                  // Animated Headline ("Welcome back" / "Join the fun")
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: RichText(
+                      key: ValueKey<bool>(_isSignUp),
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: ZestTokens.display.copyWith(
+                          fontSize: 32,
+                          color: ZestTokens.ink,
                         ),
+                        children: [
+                          TextSpan(text: _isSignUp ? 'Join the ' : 'Welcome '),
+                          TextSpan(
+                            text: _isSignUp ? 'fun' : 'back',
+                            style: ZestTokens.accentItalic.copyWith(fontSize: 38),
+                          ),
+                          const TextSpan(text: '.'),
+                        ],
                       ),
-                      const ZestLogo.lockup(height: 32, isDarkBg: true),
-                      const SizedBox(width: 44), // Balances the back button
-                    ],
+                    ),
                   ),
-                ),
 
-                // ── Scrollable Form Area ───────────────────────────────────────
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  const SizedBox(height: 8),
+                  Text(
+                    _isSignUp
+                        ? 'Create your student pass wallet and start earning XP.'
+                        : 'Sign in to access tickets, event passes & leaderboards.',
+                    textAlign: TextAlign.center,
+                    style: ZestTokens.body.copyWith(color: ZestTokens.ink2),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Toggle Sign In / Create Account
+                  ZestSegmentedToggle(
+                    options: const ['Sign In', 'Create Account'],
+                    selectedIndex: _isSignUp ? 1 : 0,
+                    onChanged: (idx) {
+                      setState(() {
+                        _isSignUp = idx == 1;
+                        _errorMessage = null;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Main White Form Card with staggered inputs
+                  ZestCard(
+                    padding: const EdgeInsets.all(22),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const SizedBox(height: 12),
-
-                        // Animated Headline
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 300),
-                          child: Column(
-                            key: ValueKey<bool>(_isSignUp),
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _isSignUp ? 'Join the squad 🎉' : 'Welcome back! 👋',
-                                style: AppTextStyles.title36.copyWith(
-                                  color: AppColors.paper,
-                                  height: 1.1,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                _isSignUp
-                                    ? 'Fresh campus events, squeezed daily. ⚡'
-                                    : 'Sign in to access tickets, passes & leaderboard.',
-                                style: AppTextStyles.body15.copyWith(
-                                  color: AppColors.grey400,
-                                ),
-                              ),
-                            ],
+                        // Email input
+                        ZestTextField(
+                          controller: _emailController,
+                          label: 'COLLEGE EMAIL',
+                          hintText: 'student@college.edu',
+                          keyboardType: TextInputType.emailAddress,
+                          prefixIcon: const Icon(
+                            Icons.alternate_email_rounded,
+                            color: ZestTokens.ink3,
+                            size: 19,
                           ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // Mode Selector Pills
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceDark,
-                            borderRadius: AppRadius.circularPill,
-                            border: Border.all(color: AppColors.borderDark, width: 1),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => _toggleMode(false),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    decoration: BoxDecoration(
-                                      color: !_isSignUp ? AppColors.lime : Colors.transparent,
-                                      borderRadius: AppRadius.circularPill,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        'Sign In',
-                                        style: AppTextStyles.buttonSmall.copyWith(
-                                          color: !_isSignUp ? AppColors.ink : AppColors.grey400,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => _toggleMode(true),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    decoration: BoxDecoration(
-                                      color: _isSignUp ? AppColors.lime : Colors.transparent,
-                                      borderRadius: AppRadius.circularPill,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        'Create Account',
-                                        style: AppTextStyles.buttonSmall.copyWith(
-                                          color: _isSignUp ? AppColors.ink : AppColors.grey400,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // Form Bento Card
-                        Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceCard,
-                            borderRadius: AppRadius.circularCardLarge,
-                            border: Border.all(color: AppColors.borderDark, width: 1.5),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Email Input
-                              Text(
-                                'COLLEGE EMAIL',
-                                style: AppTextStyles.overline.copyWith(
-                                  color: AppColors.grey400,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              TextField(
-                                controller: _emailController,
-                                keyboardType: TextInputType.emailAddress,
-                                textInputAction: TextInputAction.next,
-                                style: AppTextStyles.body15.copyWith(color: AppColors.paper),
-                                cursorColor: AppColors.lime,
-                                decoration: const InputDecoration(
-                                  hintText: 'student@college.edu',
-                                  hintStyle: TextStyle(color: AppColors.grey400, fontSize: 14),
-                                  prefixIcon: Icon(Icons.alternate_email_rounded, color: AppColors.lime, size: 20),
-                                  filled: true,
-                                  fillColor: AppColors.surfaceDark,
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                                  border: OutlineInputBorder(
-                                    borderRadius: AppRadius.circularInput,
-                                    borderSide: BorderSide(color: AppColors.borderDark, width: 1.5),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: AppRadius.circularInput,
-                                    borderSide: BorderSide(color: AppColors.borderDark, width: 1.5),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: AppRadius.circularInput,
-                                    borderSide: BorderSide(color: AppColors.lime, width: 2),
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(height: 20),
-
-                              // Password Input
-                              Text(
-                                'PASSWORD',
-                                style: AppTextStyles.overline.copyWith(
-                                  color: AppColors.grey400,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              TextField(
-                                controller: _passwordController,
-                                obscureText: _obscurePassword,
-                                textInputAction: TextInputAction.done,
-                                onSubmitted: (_) => _submit(),
-                                style: AppTextStyles.body15.copyWith(color: AppColors.paper),
-                                cursorColor: AppColors.lime,
-                                decoration: InputDecoration(
-                                  hintText: '••••••••',
-                                  hintStyle: const TextStyle(color: AppColors.grey400, fontSize: 14),
-                                  prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.lime, size: 20),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                                      color: AppColors.grey400,
-                                      size: 20,
-                                    ),
-                                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                                  ),
-                                  filled: true,
-                                  fillColor: AppColors.surfaceDark,
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                                  border: const OutlineInputBorder(
-                                    borderRadius: AppRadius.circularInput,
-                                    borderSide: BorderSide(color: AppColors.borderDark, width: 1.5),
-                                  ),
-                                  enabledBorder: const OutlineInputBorder(
-                                    borderRadius: AppRadius.circularInput,
-                                    borderSide: BorderSide(color: AppColors.borderDark, width: 1.5),
-                                  ),
-                                  focusedBorder: const OutlineInputBorder(
-                                    borderRadius: AppRadius.circularInput,
-                                    borderSide: BorderSide(color: AppColors.lime, width: 2),
-                                  ),
-                                ),
-                              ),
-
-                              // Forgot password link (Sign in only)
-                              if (!_isSignUp) ...[
-                                const SizedBox(height: 12),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: GestureDetector(
-                                    onTap: () => context.push('/auth/forgot-password'),
-                                    child: Text(
-                                      'Forgot password?',
-                                      style: AppTextStyles.label13.copyWith(
-                                        color: AppColors.lime,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-
-                              const SizedBox(height: 28),
-
-                              // Primary Submit Button
-                              ZestButton(
-                                label: _isSignUp ? 'Create Student Account 🚀' : 'Sign In ⚡',
-                                variant: ZestButtonVariant.primary,
-                                isLoading: _isLoading,
-                                onPressed: _submit,
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        // Switch mode footer
-                        Center(
-                          child: GestureDetector(
-                            onTap: () => _toggleMode(!_isSignUp),
-                            child: RichText(
-                              text: TextSpan(
-                                style: AppTextStyles.body14.copyWith(color: AppColors.grey400),
-                                children: [
-                                  TextSpan(
-                                    text: _isSignUp ? 'Already registered? ' : "New student? ",
-                                  ),
-                                  TextSpan(
-                                    text: _isSignUp ? 'Sign In' : 'Create an account',
-                                    style: const TextStyle(
-                                      color: AppColors.lime,
-                                      fontWeight: FontWeight.w800,
-                                      decoration: TextDecoration.underline,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
+                          errorText: _errorMessage,
+                        )
+                            .animate()
+                            .fadeIn(duration: 400.ms)
+                            .slideY(begin: 0.1, end: 0, duration: 300.ms),
 
                         const SizedBox(height: 18),
 
-                        // Organizer / Admin portal link
-                        Center(
-                          child: GestureDetector(
-                            onTap: () => context.go('/admin/login'),
-                            child: Text(
-                              'Club Organizer or Admin? Sign in here 🛡️',
-                              style: AppTextStyles.caption12.copyWith(
-                                color: AppColors.grey400,
-                                decoration: TextDecoration.underline,
+                        // Password input
+                        ZestTextField(
+                          controller: _passwordController,
+                          label: 'PASSWORD',
+                          hintText: '••••••••',
+                          isPassword: true,
+                          prefixIcon: const Icon(
+                            Icons.lock_outline_rounded,
+                            color: ZestTokens.ink3,
+                            size: 19,
+                          ),
+                          onSubmitted: (_) => _submit(),
+                        )
+                            .animate()
+                            .fadeIn(delay: 60.ms, duration: 400.ms)
+                            .slideY(begin: 0.1, end: 0, duration: 300.ms),
+
+                        if (!_isSignUp) ...[
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () => context.push('/auth/forgot-password'),
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: Text(
+                                'Forgot password?',
+                                style: ZestTokens.caption.copyWith(
+                                  color: ZestTokens.blue,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                        ],
 
                         const SizedBox(height: 24),
+
+                        // Primary Submit Button
+                        ZestButton(
+                          text: _isSignUp ? 'Create Student Account 🚀' : 'Sign In ⚡',
+                          fullWidth: true,
+                          isLoading: _isLoading,
+                          onPressed: _submit,
+                        )
+                            .animate()
+                            .fadeIn(delay: 120.ms, duration: 400.ms)
+                            .slideY(begin: 0.1, end: 0, duration: 300.ms),
                       ],
                     ),
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 20),
+
+                  // Bottom Organizer Portal Link
+                  Center(
+                    child: TextButton(
+                      onPressed: () => context.go('/admin/login'),
+                      child: Text(
+                        'Club Organizer or Admin? Access Suite 🛡️',
+                        style: ZestTokens.caption.copyWith(
+                          color: ZestTokens.ink2,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 80),
+                ],
+              ),
             ),
-          ],
-        ),
+          ),
+
+          // Subtle Mascot peeking from bottom-right
+          Positioned(
+            right: 12,
+            bottom: 8,
+            child: const ZestMascot(
+              size: 70,
+              tint: MascotTint.lemon,
+              mood: MascotMood.idle,
+            )
+                .animate()
+                .fadeIn(delay: 400.ms, duration: 600.ms)
+                .slideX(begin: 0.2, end: 0, duration: 500.ms),
+          ),
+        ],
       ),
     );
   }
