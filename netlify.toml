@@ -1,0 +1,4 @@
+[build]
+  base = "landing_page"
+  command = "npm install --no-audit --no-fund && npm run build"
+  publish = ".next"
