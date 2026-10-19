@@ -14,4 +14,5 @@ build/
 .vscode/
 .DS_Store
 .next/
+out/
 supabase/.temp/
