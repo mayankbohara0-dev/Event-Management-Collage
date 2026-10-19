@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:add_2_calendar/add_2_calendar.dart';
 import 'dart:async';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_shadows.dart';
-import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 import '../../../core/widgets/zest_button.dart';
 
-/// Zest Event Details Screen
-/// Displays hero event banner, countdown timer, seats remaining indicator,
-/// details highlights, description, calendar sync, and registration action.
+// ─────────────────────────────────────────────────────────────────────────────
+// EventDetailsScreen — Full Zest Event Experience
+// Spec: 300px event-colored banner (bottom radius 42), floating circular back
+//       button, huge emoji / cover image, 38sp title, category ink pill with
+//       lime text, seats-left progress bar, countdown card, sticky register bar
+//       with ZestButton (Done state: "You're in! ✓").
+// ─────────────────────────────────────────────────────────────────────────────
+
 class EventDetailsScreen extends ConsumerStatefulWidget {
   final String eventId;
   const EventDetailsScreen({super.key, required this.eventId});
@@ -57,7 +61,6 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         alreadyRegistered = regRes != null;
       }
 
-      // Count total registrations for this event
       final regCountRes = await Supabase.instance.client
           .from('registrations')
           .select('id')
@@ -82,25 +85,32 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
     }
   }
 
+  String _resolveEmoji(String title, String category) {
+    final lower = '$title $category'.toLowerCase();
+    if (lower.contains('tech') || lower.contains('hack') || lower.contains('code')) return '💻';
+    if (lower.contains('music') || lower.contains('concert') || lower.contains('fest')) return '🎵';
+    if (lower.contains('dance') || lower.contains('cultural')) return '🎭';
+    if (lower.contains('design') || lower.contains('art')) return '🎨';
+    if (lower.contains('sport') || lower.contains('cricket') || lower.contains('football')) return '⚡';
+    if (lower.contains('ai') || lower.contains('robot')) return '🤖';
+    if (lower.contains('quiz') || lower.contains('brain')) return '🧠';
+    return '✨';
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.charcoal,
-          foregroundColor: Colors.white,
-          title: Text('Loading Event...', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
-        ),
-        body: const Padding(
-          padding: EdgeInsets.all(AppSpacing.pagePadding),
+        backgroundColor: AppColors.ink,
+        body: Center(
           child: Column(
-            children: [
-              SkeletonLoader(height: 240),
-              SizedBox(height: AppSpacing.base),
-              SkeletonLoader(height: 32),
-              SizedBox(height: AppSpacing.sm),
-              SkeletonLoader(height: 60),
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              SkeletonLoader(width: double.infinity, height: 300),
+              SizedBox(height: 24),
+              SkeletonLoader(width: 220, height: 32),
+              SizedBox(height: 12),
+              SkeletonLoader(width: 140, height: 16),
             ],
           ),
         ),
@@ -109,11 +119,14 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
 
     if (_error != null || _event == null) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.ink,
         appBar: AppBar(
-          backgroundColor: AppColors.charcoal,
-          foregroundColor: Colors.white,
-          title: Text('Event Details', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+          backgroundColor: AppColors.ink,
+          foregroundColor: AppColors.white,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: () => context.pop(),
+          ),
         ),
         body: Center(
           child: EmptyState(
@@ -127,13 +140,14 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       );
     }
 
-    final title = _event!['title']?.toString() ?? 'Event';
+    final title = _event!['title']?.toString() ?? 'Campus Event';
     final shortDesc = _event!['short_description']?.toString() ?? '';
     final longDesc = _event!['long_description']?.toString() ?? '';
-    final venue = _event!['venue']?.toString() ?? 'Campus';
+    final venue = _event!['venue']?.toString() ?? 'Campus Grounds';
     final coverImage = _event!['cover_image_url']?.toString();
     final category = _event!['event_categories']?['name']?.toString() ?? 'General';
     final eligibility = _event!['eligibility']?.toString() ?? '';
+    final rules = _event!['rules']?.toString() ?? '';
     final maxCapacity = _event!['max_capacity'] != null
         ? int.tryParse(_event!['max_capacity'].toString())
         : null;
@@ -157,201 +171,220 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
         : 'Time TBA';
 
     final isPast = startDate != null && startDate.isBefore(DateTime.now());
-
-    // Capacity calculation
     final int? remainingSeats = maxCapacity != null ? (maxCapacity - _registrationCount) : null;
     final double capacityProgress = (maxCapacity != null && maxCapacity > 0)
         ? (_registrationCount / maxCapacity).clamp(0.0, 1.0)
         : 0.0;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-            slivers: [
-              // Parallax Hero Header Image
-              SliverAppBar(
-                expandedHeight: 280,
-                pinned: true,
-                backgroundColor: AppColors.charcoal,
-                elevation: 0,
-                leading: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: GestureDetector(
-                    onTap: () => context.pop(),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.45),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 20),
+    final emoji = _resolveEmoji(title, category);
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.ink,
+        body: Stack(
+          children: [
+            CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              slivers: [
+                // ── 300px Event Banner with Bottom Radius 42 ───────────────
+                SliverToBoxAdapter(
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(AppRadius.bottomSheetBanner),
+                      bottomRight: Radius.circular(AppRadius.bottomSheetBanner),
                     ),
-                  ),
-                ),
-                actions: [
-                  if (startDate != null && endDate != null)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 12.0),
-                      child: GestureDetector(
-                        onTap: () {
-                          final Event calEvent = Event(
-                            title: title,
-                            description: shortDesc,
-                            location: venue,
-                            startDate: startDate,
-                            endDate: endDate,
-                          );
-                          Add2Calendar.addEvent2Cal(calEvent);
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.45),
-                            shape: BoxShape.circle,
+                    child: SizedBox(
+                      height: 300,
+                      width: double.infinity,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          if (coverImage != null && coverImage.isNotEmpty)
+                            Image.network(
+                              coverImage,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => _buildBannerFallback(emoji),
+                            )
+                          else
+                            _buildBannerFallback(emoji),
+
+                          // Dark Gradient Overlay
+                          Positioned.fill(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.black.withValues(alpha: 0.35),
+                                    Colors.transparent,
+                                    Colors.black.withValues(alpha: 0.85),
+                                  ],
+                                  stops: const [0.0, 0.45, 1.0],
+                                ),
+                              ),
+                            ),
                           ),
-                          child: const Icon(Icons.calendar_month_rounded, color: Colors.white, size: 20),
-                        ),
-                      ),
-                    ),
-                ],
-                flexibleSpace: FlexibleSpaceBar(
-                  background: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      if (coverImage != null && coverImage.isNotEmpty)
-                        Image.network(
-                          coverImage,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => _fallbackBanner(),
-                        )
-                      else
-                        _fallbackBanner(),
-                      // Bottom gradient overlay
-                      Positioned.fill(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Colors.black.withValues(alpha: 0.7),
+
+                          // Floating Back Button
+                          Positioned(
+                            top: MediaQuery.of(context).padding.top + 10,
+                            left: 16,
+                            child: GestureDetector(
+                              onTap: () => context.pop(),
+                              child: Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: AppColors.ink.withValues(alpha: 0.75),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: AppColors.borderDark),
+                                ),
+                                child: const Icon(
+                                  Icons.arrow_back_rounded,
+                                  color: AppColors.white,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Floating Calendar Sync Button
+                          if (startDate != null && endDate != null)
+                            Positioned(
+                              top: MediaQuery.of(context).padding.top + 10,
+                              right: 16,
+                              child: GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  final Event calEvent = Event(
+                                    title: title,
+                                    description: shortDesc,
+                                    location: venue,
+                                    startDate: startDate,
+                                    endDate: endDate,
+                                  );
+                                  Add2Calendar.addEvent2Cal(calEvent);
+                                },
+                                child: Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.ink.withValues(alpha: 0.75),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: AppColors.borderDark),
+                                  ),
+                                  child: const Icon(
+                                    Icons.calendar_month_rounded,
+                                    color: AppColors.lime,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                          // Bottom Banner Info (Category pill + Status)
+                          Positioned(
+                            bottom: 20,
+                            left: 20,
+                            right: 20,
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.ink,
+                                    borderRadius: AppRadius.circularPill,
+                                    border: Border.all(color: AppColors.lime.withValues(alpha: 0.4)),
+                                  ),
+                                  child: Text(
+                                    category.toUpperCase(),
+                                    style: AppTextStyles.pillTag.copyWith(
+                                      color: AppColors.lime,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ),
+                                const Spacer(),
+                                if (_isRegistered)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.lime,
+                                      borderRadius: AppRadius.circularPill,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.check_circle_rounded, size: 14, color: AppColors.ink),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          'PASS CONFIRMED',
+                                          style: AppTextStyles.metaLabel.copyWith(
+                                            color: AppColors.ink,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                               ],
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Content Body
-              SliverToBoxAdapter(
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(AppRadius.xl3),
-                      topRight: Radius.circular(AppRadius.xl3),
                     ),
                   ),
-                  transform: Matrix4.translationValues(0, -24, 0),
+                ),
+
+                // ── Event Content Details ──────────────────────────────────
+                SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(AppSpacing.pagePadding, 24, AppSpacing.pagePadding, 140),
+                    padding: const EdgeInsets.fromLTRB(18, 24, 18, 140),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Category pill & status
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                              decoration: BoxDecoration(
-                                gradient: AppColors.zestGradient,
-                                borderRadius: AppRadius.circularPill,
-                              ),
-                              child: Text(
-                                category.toUpperCase(),
-                                style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                  letterSpacing: 1.0,
-                                ),
-                              ),
-                            ),
-                            const Spacer(),
-                            if (_isRegistered)
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: AppColors.tealLight,
-                                  borderRadius: AppRadius.circularPill,
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.check_circle_rounded, size: 14, color: AppColors.teal),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'Pass Confirmed',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.teal,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ),
-
-                        const SizedBox(height: AppSpacing.base),
-
-                        // Title
+                        // Title 38sp Bricolage 800
                         Text(
                           title,
-                          style: GoogleFonts.poppins(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.charcoal,
-                            height: 1.2,
+                          style: AppTextStyles.title38.copyWith(
+                            color: AppColors.white,
+                            height: 1.15,
                           ),
                         ),
 
                         if (shortDesc.isNotEmpty) ...[
-                          const SizedBox(height: AppSpacing.sm),
+                          const SizedBox(height: 8),
                           Text(
                             shortDesc,
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.lime,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.coral,
-                              height: 1.4,
                             ),
                           ),
                         ],
 
-                        const SizedBox(height: AppSpacing.lg),
+                        const SizedBox(height: 24),
 
                         // Countdown Timer Card
                         if (startDate != null && !isPast) ...[
                           _ZestCountdownCard(eventDate: startDate),
-                          const SizedBox(height: AppSpacing.base),
+                          const SizedBox(height: 20),
                         ],
 
-                        // Capacity Bar if set
+                        // Capacity / Seats Left Progress Bar
                         if (maxCapacity != null && maxCapacity > 0) ...[
                           Container(
-                            padding: const EdgeInsets.all(AppSpacing.base),
+                            padding: const EdgeInsets.all(18),
                             decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: AppRadius.circularLg,
-                              boxShadow: AppShadows.card,
+                              color: AppColors.surfaceDark,
+                              borderRadius: BorderRadius.circular(AppRadius.card),
+                              border: Border.all(color: AppColors.borderDark),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,145 +394,253 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
                                   children: [
                                     Text(
                                       'Seat Availability',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.charcoal,
+                                      style: AppTextStyles.title17.copyWith(
+                                        color: AppColors.white,
                                       ),
                                     ),
                                     Text(
                                       remainingSeats != null && remainingSeats > 0
                                           ? '$remainingSeats spots left ⚡'
                                           : 'Sold Out!',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: (remainingSeats != null && remainingSeats <= 5)
-                                            ? AppColors.error
-                                            : AppColors.teal,
+                                      style: AppTextStyles.caption.copyWith(
+                                        color: (remainingSeats != null && remainingSeats <= 10)
+                                            ? AppColors.coral
+                                            : AppColors.lime,
+                                        fontWeight: FontWeight.w800,
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 10),
                                 ClipRRect(
                                   borderRadius: AppRadius.circularPill,
                                   child: LinearProgressIndicator(
                                     value: capacityProgress,
                                     minHeight: 8,
-                                    backgroundColor: AppColors.grey100,
+                                    backgroundColor: AppColors.ink3,
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      capacityProgress > 0.9 ? AppColors.coral : AppColors.teal,
+                                      capacityProgress > 0.9 ? AppColors.coral : AppColors.lime,
                                     ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(height: AppSpacing.base),
+                          const SizedBox(height: 20),
                         ],
 
-                        // Key Information Highlights
+                        // Key Event Information Bento Grid
                         Text(
                           'Event Highlights 📍',
-                          style: GoogleFonts.poppins(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.charcoal,
+                          style: AppTextStyles.title24.copyWith(
+                            color: AppColors.white,
                           ),
                         ),
-                        const SizedBox(height: AppSpacing.sm),
+                        const SizedBox(height: 14),
 
                         Row(
                           children: [
                             Expanded(
-                              child: _ZestDetailTile(
+                              child: _buildHighlightTile(
                                 icon: Icons.calendar_today_rounded,
                                 label: 'Date',
                                 value: dateString,
-                                iconColor: AppColors.coral,
-                                iconBg: AppColors.coralLight,
+                                accentColor: AppColors.coral,
                               ),
                             ),
-                            const SizedBox(width: AppSpacing.sm),
+                            const SizedBox(width: 10),
                             Expanded(
-                              child: _ZestDetailTile(
+                              child: _buildHighlightTile(
                                 icon: Icons.access_time_rounded,
                                 label: 'Time',
                                 value: timeString,
-                                iconColor: AppColors.mustard,
-                                iconBg: AppColors.mustardLight,
+                                accentColor: AppColors.mustard,
                               ),
                             ),
                           ],
                         ),
 
-                        const SizedBox(height: AppSpacing.sm),
+                        const SizedBox(height: 10),
 
-                        _ZestDetailTile(
-                          icon: Icons.location_on_outlined,
+                        _buildHighlightTile(
+                          icon: Icons.location_on_rounded,
                           label: 'Venue',
                           value: venue,
-                          iconColor: AppColors.teal,
-                          iconBg: AppColors.tealLight,
+                          accentColor: AppColors.aqua,
                         ),
 
                         if (eligibility.isNotEmpty) ...[
-                          const SizedBox(height: AppSpacing.sm),
-                          _ZestDetailTile(
+                          const SizedBox(height: 10),
+                          _buildHighlightTile(
                             icon: Icons.verified_user_outlined,
                             label: 'Eligibility',
                             value: eligibility,
-                            iconColor: AppColors.periwinkle,
-                            iconBg: AppColors.periwinkleLight,
+                            accentColor: AppColors.lavender,
                           ),
                         ],
 
-                        const SizedBox(height: AppSpacing.xl),
+                        const SizedBox(height: 28),
 
                         // Long Description
-                        Text(
-                          'About this Event 📖',
-                          style: GoogleFonts.poppins(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.charcoal,
+                        if (longDesc.isNotEmpty) ...[
+                          Text(
+                            'About this Event 📝',
+                            style: AppTextStyles.title24.copyWith(
+                              color: AppColors.white,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceDark,
+                              borderRadius: BorderRadius.circular(AppRadius.card),
+                              border: Border.all(color: AppColors.borderDark),
+                            ),
+                            child: Text(
+                              longDesc,
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.grey400,
+                                height: 1.6,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+                        ],
 
-                        Text(
-                          longDesc.isNotEmpty ? longDesc : 'No additional information provided.',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: AppColors.grey600,
-                            height: 1.6,
+                        // Event Guidelines / Rules
+                        if (rules.isNotEmpty) ...[
+                          Text(
+                            'Rules & Guidelines 📌',
+                            style: AppTextStyles.title24.copyWith(
+                              color: AppColors.white,
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 12),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceDark,
+                              borderRadius: BorderRadius.circular(AppRadius.card),
+                              border: Border.all(color: AppColors.borderDark),
+                            ),
+                            child: Text(
+                              rules,
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.grey400,
+                                height: 1.6,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
 
-          // Sticky Bottom Registration Bar
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.pagePadding, 16, AppSpacing.pagePadding, 24),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                boxShadow: AppShadows.hero,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl2)),
-              ),
-              child: SafeArea(
-                top: false,
+            // ── Sticky Registration Bottom Bar ─────────────────────────
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: EdgeInsets.fromLTRB(
+                  18,
+                  14,
+                  18,
+                  MediaQuery.of(context).padding.bottom + 14,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.ink.withValues(alpha: 0.95),
+                  border: const Border(
+                    top: BorderSide(color: AppColors.borderDark, width: 1.5),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      blurRadius: 24,
+                      offset: const Offset(0, -4),
+                    ),
+                  ],
+                ),
                 child: _buildActionButton(context, isPast),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBannerFallback(String emoji) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.ink, Color(0xFF26262C)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Text(
+          emoji,
+          style: const TextStyle(fontSize: 78),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHighlightTile({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color accentColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceDark,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.borderDark),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: accentColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: accentColor, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.grey400,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.title17.copyWith(
+                    color: AppColors.white,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -521,7 +662,8 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       return ZestButton(
         label: 'View Your Entry Pass 🎟️',
         icon: Icons.confirmation_number_rounded,
-        variant: ZestButtonVariant.secondary,
+        isDone: true,
+        doneLabel: "You're in! View Pass 🎟️",
         fullWidth: true,
         onPressed: () => context.go('/student/home'),
       );
@@ -534,91 +676,12 @@ class _EventDetailsScreenState extends ConsumerState<EventDetailsScreen> {
       onPressed: () => context.push('/student/event/${widget.eventId}/register'),
     );
   }
-
-  Widget _fallbackBanner() {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.charcoal, Color(0xFF1E293B)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: const Center(
-        child: Icon(Icons.event_rounded, size: 72, color: Colors.white24),
-      ),
-    );
-  }
 }
 
-class _ZestDetailTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color iconColor;
-  final Color iconBg;
+// ─────────────────────────────────────────────────────────────────────────────
+// Countdown Timer Component
+// ─────────────────────────────────────────────────────────────────────────────
 
-  const _ZestDetailTile({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.iconColor,
-    required this.iconBg,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.base),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: AppRadius.circularLg,
-        boxShadow: AppShadows.card,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: AppRadius.circularMd,
-            ),
-            child: Icon(icon, color: iconColor, size: 20),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: AppColors.grey400,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: AppColors.charcoal,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Zest countdown card with energetic digits
 class _ZestCountdownCard extends StatefulWidget {
   final DateTime eventDate;
   const _ZestCountdownCard({required this.eventDate});
@@ -663,26 +726,24 @@ class _ZestCountdownCardState extends State<_ZestCountdownCard> {
     if (_timeLeft == Duration.zero) return const SizedBox.shrink();
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: AppRadius.circularLg,
-        boxShadow: AppShadows.card,
-        border: Border.all(color: AppColors.mustardLight, width: 2),
+        color: AppColors.surfaceDark,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(color: AppColors.borderDark),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           Row(
             children: [
-              const Text('⏱️', style: TextStyle(fontSize: 20)),
+              const Text('⏱️', style: TextStyle(fontSize: 22)),
               const SizedBox(width: 8),
               Text(
                 'Starts in',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.charcoal,
+                style: AppTextStyles.title17.copyWith(
+                  color: AppColors.white,
+                  fontSize: 14,
                 ),
               ),
             ],
@@ -702,10 +763,9 @@ class _ZestCountdownCardState extends State<_ZestCountdownCard> {
   Widget _colon() {
     return Text(
       ':',
-      style: GoogleFonts.poppins(
-        fontSize: 18,
+      style: AppTextStyles.title24.copyWith(
+        color: AppColors.lime,
         fontWeight: FontWeight.w900,
-        color: AppColors.mustard,
       ),
     );
   }
@@ -715,26 +775,26 @@ class _ZestCountdownCardState extends State<_ZestCountdownCard> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: AppColors.mustardLight,
-            borderRadius: AppRadius.circularSm,
+            color: AppColors.ink,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.borderDark),
           ),
           child: Text(
             val,
-            style: GoogleFonts.poppins(
-              fontSize: 15,
+            style: AppTextStyles.title17.copyWith(
+              color: AppColors.lime,
               fontWeight: FontWeight.w900,
-              color: AppColors.charcoal,
             ),
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 4),
         Text(
           label,
-          style: GoogleFonts.poppins(
+          style: AppTextStyles.caption.copyWith(
             fontSize: 9,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w800,
             color: AppColors.grey400,
           ),
         ),

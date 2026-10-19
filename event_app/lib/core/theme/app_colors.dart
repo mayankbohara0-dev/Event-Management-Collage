@@ -15,9 +15,12 @@ class AppColors {
   static const Color lime2 = Color(0xFF7DFF2A);
 
   /// Official Zest Ink Blacks
-  static const Color ink = Color(0xFF141416);
-  static const Color surfaceDark = Color(0xFF1D1D22);
-  static const Color surfaceCard = Color(0xFF26262C);
+  static const Color ink = Color(0xFF141416);   // ink (scaffold bg in dark)
+  static const Color ink2 = Color(0xFF1D1D22);  // ink2 (card bg in dark)
+  static const Color ink3 = Color(0xFF26262C);  // ink3 (deep surface/elevated)
+  // Legacy aliases — keep for backward compat
+  static const Color surfaceDark = Color(0xFF1D1D22); // = ink2
+  static const Color surfaceCard = Color(0xFF26262C); // = ink3
   static const Color borderDark = Color(0xFF2F3038);
 
   /// Paper & Off-Whites
@@ -56,7 +59,7 @@ class AppColors {
   static const Color grey100 = Color(0xFFF2F2F4);
   static const Color grey200 = Color(0xFFE6E6EA);
   static const Color grey300 = Color(0xFFD0D0D8);
-  static const Color grey400 = Color(0xFFA0A0B0);
+  static const Color grey400 = Color(0xFFA4A4AE); // Muted dark text per spec (#A4A4AE)
   static const Color grey600 = Color(0xFF505060);
   static const Color grey800 = Color(0xFF2A2A35);
 
@@ -211,13 +214,13 @@ class ZestColors extends ThemeExtension<ZestColors> {
     lime: AppColors.lime,
     limeGradient: AppColors.limeGradient,
     ink: AppColors.ink,
-    surfaceCard: AppColors.surfaceCard,
-    surfaceDark: AppColors.surfaceDark,
+    surfaceCard: AppColors.ink2,     // dark card = ink2 (#1D1D22) per spec
+    surfaceDark: AppColors.ink3,     // dark elevated = ink3 (#26262C) per spec
     paper: AppColors.paper,
-    offwhite: AppColors.surfaceDark,
+    offwhite: AppColors.ink2,
     border: AppColors.borderDark,
-    textPrimary: AppColors.paper,
-    textSecondary: AppColors.grey400,
+    textPrimary: Color(0xFFF4F5EF), // warm paper per spec
+    textSecondary: AppColors.grey400, // #A4A4AE per spec
     coral: AppColors.coral,
     lavender: AppColors.lavender,
     mustard: AppColors.mustard,

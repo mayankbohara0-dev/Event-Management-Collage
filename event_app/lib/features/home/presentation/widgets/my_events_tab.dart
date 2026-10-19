@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_radius.dart';
-import '../../../../core/theme/app_shadows.dart';
-import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/empty_state.dart';
-import '../../../../core/widgets/pill_toggle.dart';
 import '../../../../core/widgets/skeleton_loader.dart';
 
-/// Zest My Events Tab
-/// Displays student event registrations, ticket passes with QR codes,
-/// status badges, and filter toggles.
+// ─────────────────────────────────────────────────────────────────────────────
+// MyEventsTab — Zest Student Passes & Tickets
+// Spec: "My Passes" title 38sp, Upcoming/Attended segmented toggle,
+//       lime background ticket cards with side notches at ~62% height,
+//       dashed divider 3px 35% ink, 128px QR with animated scan line,
+//       "Show this at the gate" caption, "Certificate ready + 80pts" for attended.
+// ─────────────────────────────────────────────────────────────────────────────
+
 class MyEventsTab extends ConsumerStatefulWidget {
   final VoidCallback onProfileTap;
   final VoidCallback onExploreTap;
@@ -32,11 +35,12 @@ class MyEventsTab extends ConsumerStatefulWidget {
 class _MyEventsTabState extends ConsumerState<MyEventsTab> {
   List<Map<String, dynamic>> _registrations = [];
   List<Map<String, dynamic>> _filtered = [];
+  Set<String> _attendedEventIds = {};
   Map<String, dynamic>? _profile;
   bool _isLoading = true;
-  int _selectedFilterIndex = 0; // 0: All, 1: Approved, 2: Pending
+  int _selectedFilterIndex = 0; // 0: Upcoming, 1: Attended
 
-  static const _filterOptions = ['All Passes', 'Approved 🎟️', 'Pending ⏳'];
+  static const _filterOptions = ['Upcoming Passes', 'Attended Events 🏆'];
 
   @override
   void initState() {
@@ -53,7 +57,7 @@ class _MyEventsTabState extends ConsumerState<MyEventsTab> {
       final results = await Future.wait<dynamic>([
         Supabase.instance.client
             .from('student_profiles')
-            .select('name, avatar_url, roll_number')
+            .select('name, avatar_url, roll_number, enrollment_number')
             .eq('id', user.id)
             .maybeSingle(),
         Supabase.instance.client
@@ -61,9 +65,19 @@ class _MyEventsTabState extends ConsumerState<MyEventsTab> {
             .select('*, events(id, title, start_date, end_date, venue, cover_image_url)')
             .eq('student_id', user.id)
             .order('created_at', ascending: false),
+        Supabase.instance.client
+            .from('attendance')
+            .select('event_id')
+            .eq('student_id', user.id),
       ]);
 
       if (mounted) {
+        final attList = (results[2] as List);
+        _attendedEventIds = attList
+            .map((a) => a['event_id']?.toString() ?? '')
+            .where((id) => id.isNotEmpty)
+            .toSet();
+
         setState(() {
           _profile = results[0] as Map<String, dynamic>?;
           _registrations = List<Map<String, dynamic>>.from(results[1] as List);
@@ -78,16 +92,23 @@ class _MyEventsTabState extends ConsumerState<MyEventsTab> {
   }
 
   void _applyFilter() {
-    if (_selectedFilterIndex == 1) {
-      _filtered = _registrations.where((r) => r['status'] == 'approved').toList();
-    } else if (_selectedFilterIndex == 2) {
-      _filtered = _registrations.where((r) => r['status'] == 'pending').toList();
+    if (_selectedFilterIndex == 0) {
+      // Upcoming: not attended yet
+      _filtered = _registrations.where((r) {
+        final eventId = r['event_id']?.toString() ?? '';
+        return !_attendedEventIds.contains(eventId);
+      }).toList();
     } else {
-      _filtered = _registrations;
+      // Attended
+      _filtered = _registrations.where((r) {
+        final eventId = r['event_id']?.toString() ?? '';
+        return _attendedEventIds.contains(eventId) || r['status'] == 'attended';
+      }).toList();
     }
   }
 
   void _onFilterChanged(int index) {
+    HapticFeedback.selectionClick();
     setState(() {
       _selectedFilterIndex = index;
       _applyFilter();
@@ -97,386 +118,218 @@ class _MyEventsTabState extends ConsumerState<MyEventsTab> {
   @override
   Widget build(BuildContext context) {
     final avatarUrl = _profile?['avatar_url']?.toString();
-    final name = _profile?['name']?.toString() ?? 'S';
+    final name = _profile?['name']?.toString() ?? 'Student';
+    final rollNumber = _profile?['roll_number']?.toString() ??
+        _profile?['enrollment_number']?.toString() ?? '';
 
-    return RefreshIndicator(
-      color: AppColors.coral,
-      backgroundColor: AppColors.surface,
-      onRefresh: _load,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-        slivers: [
-          // Safe top area
-          const SliverToBoxAdapter(child: SizedBox(height: 52)),
-
-          // Header
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.pagePadding),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.ink,
+        body: RefreshIndicator(
+          color: AppColors.ink,
+          backgroundColor: AppColors.lime,
+          onRefresh: _load,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            slivers: [
+              // ── Top Safe Area + Screen Title ───────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    18,
+                    MediaQuery.of(context).padding.top + 20,
+                    18,
+                    16,
+                  ),
+                  child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'My Event Passes 🎟️',
-                        style: GoogleFonts.poppins(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.charcoal,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.lime.withValues(alpha: 0.15),
+                              borderRadius: AppRadius.circularPill,
+                            ),
+                            child: Text(
+                              'CAMPUS ACCESS',
+                              style: AppTextStyles.pillTag.copyWith(
+                                color: AppColors.lime,
+                                fontSize: 11,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'My Passes',
+                            style: AppTextStyles.title38.copyWith(
+                              color: AppColors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Your verified entry tickets to campus events.',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.grey400,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Your tickets to campus life and energy',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: AppColors.grey600,
+                      GestureDetector(
+                        onTap: widget.onProfileTap,
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppColors.lime, width: 2),
+                          ),
+                          child: CircleAvatar(
+                            radius: 20,
+                            backgroundColor: AppColors.surfaceCard,
+                            backgroundImage: (avatarUrl != null && avatarUrl.isNotEmpty)
+                                ? NetworkImage(avatarUrl)
+                                : null,
+                            child: (avatarUrl == null || avatarUrl.isEmpty)
+                                ? Text(
+                                    name.isNotEmpty ? name[0].toUpperCase() : 'S',
+                                    style: AppTextStyles.title17.copyWith(
+                                      color: AppColors.lime,
+                                    ),
+                                  )
+                                : null,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  GestureDetector(
-                    onTap: widget.onProfileTap,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: AppShadows.card,
-                      ),
-                      child: CircleAvatar(
-                        radius: 20,
-                        backgroundColor: AppColors.mustard,
-                        backgroundImage: (avatarUrl != null && avatarUrl.isNotEmpty)
-                            ? NetworkImage(avatarUrl)
-                            : null,
-                        child: (avatarUrl == null || avatarUrl.isEmpty)
-                            ? Text(
-                                name.isNotEmpty ? name[0].toUpperCase() : 'S',
-                                style: GoogleFonts.poppins(
-                                  color: AppColors.white,
+                ),
+              ),
+
+              // ── Upcoming / Attended Segmented Pill Toggle ─────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceDark,
+                      borderRadius: AppRadius.circularPill,
+                      border: Border.all(color: AppColors.borderDark),
+                    ),
+                    child: Row(
+                      children: List.generate(_filterOptions.length, (i) {
+                        final isSel = i == _selectedFilterIndex;
+                        return Expanded(
+                          child: GestureDetector(
+                            onTap: () => _onFilterChanged(i),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(vertical: 11),
+                              decoration: BoxDecoration(
+                                color: isSel ? AppColors.lime : Colors.transparent,
+                                borderRadius: AppRadius.circularPill,
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                _filterOptions[i],
+                                style: AppTextStyles.caption.copyWith(
+                                  color: isSel ? AppColors.ink : AppColors.grey400,
                                   fontWeight: FontWeight.w800,
-                                  fontSize: 16,
                                 ),
-                              )
-                            : null,
-                      ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
+              const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-          // Filter Pills
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.pagePadding),
-              child: PillToggle(
-                options: _filterOptions,
-                selectedIndex: _selectedFilterIndex,
-                onChanged: _onFilterChanged,
-              ),
-            ),
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
-
-          // Registrations Body
-          if (_isLoading)
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.pagePadding),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (_, _) => const Padding(
-                    padding: EdgeInsets.only(bottom: AppSpacing.md),
-                    child: SkeletonEventCard(),
+              // ── Passes List / Tickets ──────────────────────────────────
+              if (_isLoading)
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (_, i) => Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: SkeletonLoader(
+                          width: double.infinity,
+                          height: 320,
+                          radius: AppRadius.ticketCard,
+                        ),
+                      ),
+                      childCount: 2,
+                    ),
                   ),
-                  childCount: 3,
-                ),
-              ),
-            )
-          else if (_filtered.isEmpty)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.xl2),
-                child: EmptyState(
-                  emoji: '🎟️',
-                  title: _selectedFilterIndex == 0
-                      ? 'No Event Passes Yet'
-                      : 'No ${_filterOptions[_selectedFilterIndex]} Passes',
-                  subtitle: _selectedFilterIndex == 0
-                      ? "Your event passport is waiting! Squeeze some fun into your semester."
-                      : "No passes found under this filter.",
-                  actionLabel: _selectedFilterIndex == 0 ? 'Explore Events 🚀' : 'Show All Passes',
-                  onAction: () {
-                    if (_selectedFilterIndex == 0) {
-                      widget.onExploreTap();
-                    } else {
-                      _onFilterChanged(0);
-                    }
-                  },
-                ),
-              ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.pagePadding),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final reg = _filtered[index];
-                    final event = (reg['events'] as Map<String, dynamic>?) ?? {};
-                    return _ZestTicketCard(
-                      registration: reg,
-                      event: event,
-                      studentName: name,
-                      onTap: () {
-                        final eventId = event['id']?.toString() ?? reg['event_id']?.toString();
-                        if (eventId != null) {
-                          context.push('/student/event/$eventId');
+                )
+              else if (_filtered.isEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: EmptyState(
+                      emoji: _selectedFilterIndex == 0 ? '🎟️' : '🏆',
+                      title: _selectedFilterIndex == 0
+                          ? 'No Upcoming Passes'
+                          : 'No Attended Events Yet',
+                      subtitle: _selectedFilterIndex == 0
+                          ? 'Explore campus workshops, hackathons, and concerts to reserve your ticket.'
+                          : 'Attend registered events to get verified, earn XP, and unlock certificates!',
+                      actionLabel: _selectedFilterIndex == 0 ? 'Explore Events 🚀' : 'View Upcoming Passes',
+                      onAction: () {
+                        if (_selectedFilterIndex == 0) {
+                          widget.onExploreTap();
+                        } else {
+                          _onFilterChanged(0);
                         }
                       },
-                      onViewTicket: () => _showTicketDialog(context, reg, event),
-                    );
-                  },
-                  childCount: _filtered.length,
-                ),
-              ),
-            ),
-
-          // Bottom padding
-          const SliverToBoxAdapter(child: SizedBox(height: 120)),
-        ],
-      ),
-    );
-  }
-
-  void _showTicketDialog(
-    BuildContext context,
-    Map<String, dynamic> reg,
-    Map<String, dynamic> event,
-  ) {
-    final status = (reg['status'] ?? 'pending').toString().toLowerCase();
-    final qrData = reg['qr_code_data']?.toString().isNotEmpty == true
-        ? reg['qr_code_data'].toString()
-        : reg['id']?.toString() ?? 'ZEST_PASS';
-
-    final eventTitle = event['title']?.toString() ?? 'Campus Event';
-    final venue = event['venue']?.toString() ?? 'Main Auditorium';
-    final studentName = _profile?['name']?.toString() ?? 'Student';
-    final rollNumber = _profile?['roll_number']?.toString() ?? '';
-
-    final dateStr = event['start_date'] != null
-        ? () {
-            final d = DateTime.tryParse(event['start_date'].toString());
-            if (d == null) return 'Date TBA';
-            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-            return '${months[d.month - 1]} ${d.day}, ${d.year}';
-          }()
-        : 'Date TBA';
-
-    showDialog(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.65),
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: AppRadius.circularXl3,
-            boxShadow: AppShadows.hero,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Ticket Header Banner
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-                decoration: BoxDecoration(
-                  gradient: status == 'approved'
-                      ? AppColors.zestGradient
-                      : const LinearGradient(
-                          colors: [Color(0xFFFFA000), Color(0xFFFFB74D)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl3)),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: Image.asset(
-                            'assets/logo.png',
-                            width: 24,
-                            height: 24,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'ZEST CAMPUS PASS',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                      ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      status == 'approved' ? 'Verified Ticket 🎟️' : 'Registration Pending ⏳',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.25),
-                        borderRadius: AppRadius.circularPill,
-                      ),
-                      child: Text(
-                        status.toUpperCase(),
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Perforated Dashed Divider
-              CustomPaint(
-                size: const Size(double.infinity, 28),
-                painter: _ZestTicketDividerPainter(),
-              ),
-
-              // QR Code
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                child: QrImageView(
-                  data: qrData,
-                  version: QrVersions.auto,
-                  size: 190.0,
-                  eyeStyle: QrEyeStyle(
-                    eyeShape: QrEyeShape.square,
-                    color: status == 'approved' ? AppColors.charcoal : const Color(0xFFFFA000),
                   ),
-                  dataModuleStyle: QrDataModuleStyle(
-                    dataModuleShape: QrDataModuleShape.square,
-                    color: status == 'approved' ? AppColors.charcoal : const Color(0xFFFFA000),
-                  ),
-                ),
-              ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 120),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final reg = _filtered[index];
+                        final event = (reg['events'] as Map<String, dynamic>?) ?? {};
+                        final isAttended = _selectedFilterIndex == 1;
 
-              // Event & Student Details
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  children: [
-                    Text(
-                      eventTitle,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.charcoal,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.person_outline, size: 13, color: AppColors.grey600),
-                        const SizedBox(width: 4),
-                        Text(
-                          studentName + (rollNumber.isNotEmpty ? ' ($rollNumber)' : ''),
-                          style: GoogleFonts.poppins(fontSize: 12, color: AppColors.grey600, fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.calendar_today_rounded, size: 12, color: AppColors.coral),
-                        const SizedBox(width: 4),
-                        Text(
-                          dateStr,
-                          style: GoogleFonts.poppins(fontSize: 12, color: AppColors.coral, fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(width: 10),
-                        const Icon(Icons.location_on_outlined, size: 13, color: AppColors.teal),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            venue,
-                            style: GoogleFonts.poppins(fontSize: 12, color: AppColors.teal, fontWeight: FontWeight.w600),
-                            overflow: TextOverflow.ellipsis,
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 24),
+                          child: _ZestLimeTicket(
+                            registration: reg,
+                            event: event,
+                            studentName: name,
+                            rollNumber: rollNumber,
+                            isAttended: isAttended,
+                            onTap: () {
+                              final eventId = event['id']?.toString() ?? reg['event_id']?.toString();
+                              if (eventId != null) {
+                                context.push('/student/event/$eventId');
+                              }
+                            },
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      status == 'approved'
-                          ? 'Scan at event check-in for entry & +10 Zest points!'
-                          : 'Your registration is being reviewed by the club organizer.',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        color: AppColors.grey400,
-                        fontSize: 11,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Close Button
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.charcoal,
-                      foregroundColor: AppColors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: AppRadius.circularPill),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      'Done',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
+                        );
+                      },
+                      childCount: _filtered.length,
                     ),
                   ),
                 ),
-              ),
             ],
           ),
         ),
@@ -485,279 +338,352 @@ class _MyEventsTabState extends ConsumerState<MyEventsTab> {
   }
 }
 
-/// Ticket card with notch effect, status badge, date, venue, and QR action
-class _ZestTicketCard extends StatelessWidget {
+// ─────────────────────────────────────────────────────────────────────────────
+// Spec-Exact Lime Ticket Card with Notches, Perforation, and Animated QR
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ZestLimeTicket extends StatefulWidget {
   final Map<String, dynamic> registration;
   final Map<String, dynamic> event;
   final String studentName;
+  final String rollNumber;
+  final bool isAttended;
   final VoidCallback onTap;
-  final VoidCallback onViewTicket;
 
-  const _ZestTicketCard({
+  const _ZestLimeTicket({
     required this.registration,
     required this.event,
     required this.studentName,
+    required this.rollNumber,
+    required this.isAttended,
     required this.onTap,
-    required this.onViewTicket,
   });
 
   @override
+  State<_ZestLimeTicket> createState() => _ZestLimeTicketState();
+}
+
+class _ZestLimeTicketState extends State<_ZestLimeTicket>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _scanController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scanController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2400),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _scanController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final status = (registration['status'] ?? 'pending').toString().toLowerCase();
-    final eventTitle = event['title']?.toString() ?? 'Event';
-    final venue = event['venue']?.toString() ?? 'Campus';
-    final coverImage = event['cover_image_url']?.toString();
-
-    final startDateStr = event['start_date']?.toString();
+    final status = (widget.registration['status'] ?? 'approved').toString().toLowerCase();
+    final eventTitle = widget.event['title']?.toString() ?? 'Campus Event';
+    final venue = widget.event['venue']?.toString() ?? 'Main Campus';
+    final startDateStr = widget.event['start_date']?.toString();
     final startDate = startDateStr != null ? DateTime.tryParse(startDateStr)?.toLocal() : null;
-    final dateLabel = startDate != null
+
+    final dateStr = startDate != null
         ? () {
-            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-            return '${months[startDate.month - 1]} ${startDate.day}';
+            const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+            const days = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+            return '${days[startDate.weekday - 1]}, ${months[startDate.month - 1]} ${startDate.day}';
           }()
-        : 'TBA';
+        : 'DATE TBA';
 
-    final Color statusColor;
-    final Color statusBg;
-    final String statusLabel;
+    final qrData = widget.registration['qr_code_data']?.toString().isNotEmpty == true
+        ? widget.registration['qr_code_data'].toString()
+        : widget.registration['id']?.toString() ?? 'ZEST_PASS';
 
-    if (status == 'approved') {
-      statusColor = AppColors.teal;
-      statusBg = AppColors.tealLight;
-      statusLabel = 'Approved ✓';
-    } else if (status == 'rejected') {
-      statusColor = AppColors.error;
-      statusBg = const Color(0xFFFFEBEE);
-      statusLabel = 'Declined';
-    } else {
-      statusColor = const Color(0xFFF57C00);
-      statusBg = const Color(0xFFFFF3E0);
-      statusLabel = 'Pending ⏳';
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+    return GestureDetector(
+      onTap: widget.onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: AppRadius.circularXl2,
-          boxShadow: AppShadows.card,
+          color: AppColors.lime,
+          borderRadius: BorderRadius.circular(AppRadius.ticketCard),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.lime.withValues(alpha: 0.18),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: Column(
           children: [
-            InkWell(
-              onTap: onTap,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl2)),
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.base),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Mini event thumbnail
-                    ClipRRect(
-                      borderRadius: AppRadius.circularMd,
-                      child: Container(
-                        width: 58,
-                        height: 58,
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [AppColors.coral, AppColors.orange],
+            // ── Top Ticket Section ─────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(22, 22, 22, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Pass tag & Date
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.ink,
+                          borderRadius: AppRadius.circularPill,
+                        ),
+                        child: Text(
+                          widget.isAttended
+                              ? 'ATTENDED ✓'
+                              : (status == 'approved' ? 'VERIFIED PASS' : 'PENDING APPROVAL'),
+                          style: AppTextStyles.pillTag.copyWith(
+                            color: AppColors.lime,
+                            fontSize: 10,
+                            letterSpacing: 0.8,
                           ),
                         ),
-                        child: coverImage != null && coverImage.isNotEmpty
-                            ? Image.network(
-                                coverImage,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => const Icon(Icons.event, color: Colors.white),
-                              )
-                            : const Icon(Icons.event, color: Colors.white),
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    // Title and metadata
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: statusBg,
-                                  borderRadius: AppRadius.circularPill,
-                                ),
-                                child: Text(
-                                  statusLabel,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: statusColor,
-                                  ),
-                                ),
-                              ),
-                              Text(
-                                dateLabel,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.coral,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            eventTitle,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.poppins(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.charcoal,
-                              height: 1.25,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(Icons.location_on_outlined, size: 12, color: AppColors.grey400),
-                              const SizedBox(width: 3),
-                              Expanded(
-                                child: Text(
-                                  venue,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    color: AppColors.grey600,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                      Text(
+                        dateStr,
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.ink.withValues(alpha: 0.75),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 11,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                    ],
+                  ),
 
-            // Perforated line
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              child: CustomPaint(
-                size: const Size(double.infinity, 12),
-                painter: _ZestCardPerforationPainter(),
-              ),
-            ),
+                  const SizedBox(height: 14),
 
-            // Ticket Action Bar
-            Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.base, 4, AppSpacing.base, AppSpacing.sm),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
+                  // Event Title (Bricolage 800 ink)
                   Text(
-                    'Entry Pass ID: #${(registration['id'] ?? '').toString().takeLast(6)}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.grey400,
+                    eventTitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.title24.copyWith(
+                      color: AppColors.ink,
+                      height: 1.15,
                     ),
                   ),
-                  TextButton.icon(
-                    onPressed: status == 'rejected' ? null : onViewTicket,
-                    icon: Icon(
-                      Icons.qr_code_rounded,
-                      size: 18,
-                      color: status == 'rejected' ? AppColors.grey300 : AppColors.coral,
-                    ),
-                    label: Text(
-                      'View QR Pass',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: status == 'rejected' ? AppColors.grey300 : AppColors.coral,
+
+                  const SizedBox(height: 6),
+
+                  // Venue & Time
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on_rounded, size: 14, color: AppColors.ink),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          venue,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.ink.withValues(alpha: 0.72),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Attendee Info Box
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.ink.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          widget.studentName,
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.ink,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        if (widget.rollNumber.isNotEmpty)
+                          Text(
+                            widget.rollNumber,
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.ink.withValues(alpha: 0.65),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ],
               ),
+            ),
+
+            // ── Perforated Notches & Dashed Divider ────────────────────
+            CustomPaint(
+              size: const Size(double.infinity, 24),
+              painter: _TicketNotchPainter(),
+            ),
+
+            // ── Bottom Section (QR + Scanner OR Certificate) ───────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(22, 14, 22, 22),
+              child: widget.isAttended
+                  ? _buildAttendedFooter()
+                  : _buildScannerFooter(qrData),
             ),
           ],
         ),
       ),
     );
   }
-}
 
-extension _StringExt on String {
-  String takeLast(int n) {
-    if (length <= n) return this;
-    return substring(length - n);
+  Widget _buildScannerFooter(String qrData) {
+    return Column(
+      children: [
+        // 128px QR Code with Scan Line Animation
+        SizedBox(
+          width: 128,
+          height: 128,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              QrImageView(
+                data: qrData,
+                version: QrVersions.auto,
+                size: 128.0,
+                eyeStyle: const QrEyeStyle(
+                  eyeShape: QrEyeShape.square,
+                  color: AppColors.ink,
+                ),
+                dataModuleStyle: const QrDataModuleStyle(
+                  dataModuleShape: QrDataModuleShape.square,
+                  color: AppColors.ink,
+                ),
+              ),
+              // Animated scan line sweeping down
+              AnimatedBuilder(
+                animation: _scanController,
+                builder: (context, _) {
+                  return Positioned(
+                    top: _scanController.value * 120,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      height: 3,
+                      decoration: BoxDecoration(
+                        color: AppColors.coral,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.coral.withValues(alpha: 0.8),
+                            blurRadius: 6,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // Caption per spec
+        Text(
+          'Show this at the gate',
+          style: AppTextStyles.caption.copyWith(
+            color: AppColors.ink,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.3,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAttendedFooter() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.ink,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('📜', style: TextStyle(fontSize: 20)),
+              const SizedBox(width: 8),
+              Text(
+                'Certificate ready + 80pts',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.lime,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Attendance verified by campus faculty',
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.grey400,
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
-/// Paints the ticket dialog perforation line with cutouts
-class _ZestTicketDividerPainter extends CustomPainter {
+// ─────────────────────────────────────────────────────────────────────────────
+// Custom Painter for ticket side notches + 3px dashed divider at 35% ink
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _TicketNotchPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    const dashWidth = 8.0;
-    const dashSpace = 5.0;
-    const circleRadius = 14.0;
+    const cutoutRadius = 14.0;
+    const centerY = 12.0;
 
+    // Cutout circles that match the scaffold background (AppColors.ink)
     final cutoutPaint = Paint()
-      ..color = const Color(0xFFF6F8FA) // Matches dialog barrier / background
+      ..color = AppColors.ink
       ..style = PaintingStyle.fill;
 
-    // Left and right circular punch-outs
-    canvas.drawCircle(Offset(0, size.height / 2), circleRadius, cutoutPaint);
-    canvas.drawCircle(Offset(size.width, size.height / 2), circleRadius, cutoutPaint);
+    canvas.drawCircle(Offset(0, centerY), cutoutRadius, cutoutPaint);
+    canvas.drawCircle(Offset(size.width, centerY), cutoutRadius, cutoutPaint);
 
+    // Dashed line 3px thick, 35% ink opacity per spec
     final linePaint = Paint()
-      ..color = const Color(0xFFE2E8F0)
-      ..strokeWidth = 1.5
+      ..color = AppColors.ink.withValues(alpha: 0.35)
+      ..strokeWidth = 3.0
+      ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
 
-    double startX = circleRadius + 6;
-    final endX = size.width - (circleRadius + 6);
-    while (startX < endX) {
+    const dashWidth = 8.0;
+    const dashSpace = 6.0;
+    double currentX = cutoutRadius + 8.0;
+    final maxX = size.width - (cutoutRadius + 8.0);
+
+    while (currentX < maxX) {
       canvas.drawLine(
-        Offset(startX, size.height / 2),
-        Offset(startX + dashWidth, size.height / 2),
+        Offset(currentX, centerY),
+        Offset(currentX + dashWidth, centerY),
         linePaint,
       );
-      startX += dashWidth + dashSpace;
-    }
-  }
-
-  @override
-  bool shouldRepaint(_) => false;
-}
-
-/// Paints a subtle perforated line for card bottoms
-class _ZestCardPerforationPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    const dashWidth = 6.0;
-    const dashSpace = 4.0;
-
-    final linePaint = Paint()
-      ..color = const Color(0xFFEEF2F6)
-      ..strokeWidth = 1.2
-      ..style = PaintingStyle.stroke;
-
-    double startX = 0;
-    while (startX < size.width) {
-      canvas.drawLine(
-        Offset(startX, size.height / 2),
-        Offset(startX + dashWidth, size.height / 2),
-        linePaint,
-      );
-      startX += dashWidth + dashSpace;
+      currentX += dashWidth + dashSpace;
     }
   }
 

@@ -347,12 +347,12 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen>
             child: ElevatedButton.icon(
               onPressed: _isSaving ? null : _saveForm,
               icon: _isSaving
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AdminColors.onAccent))
                   : const Icon(Icons.save_rounded),
               label: const Text('Save Form'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AdminColors.accent,
-                foregroundColor: Colors.white,
+                foregroundColor: AdminColors.onAccent,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
@@ -1006,7 +1006,7 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen>
                     if (mounted) context.go('/admin/events');
                   },
                   icon: _isSaving
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: AdminColors.onAccent))
                       : const Icon(Icons.check_circle_outline, size: 22),
                   label: const Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
@@ -1014,7 +1014,7 @@ class _FormBuilderScreenState extends ConsumerState<FormBuilderScreen>
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AdminColors.accent,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AdminColors.onAccent,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),

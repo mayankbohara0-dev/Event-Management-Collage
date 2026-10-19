@@ -396,9 +396,9 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                     child: Text(
                       f,
                       style: GoogleFonts.inter(
-                        color: selected ? Colors.white : AdminColors.textSecondary,
+                        color: selected ? AdminColors.onAccent : AdminColors.textSecondary,
                         fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                       ),
                     ),
                   ),

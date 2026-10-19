@@ -247,7 +247,7 @@ class _EventsTableScreenState extends ConsumerState<EventsTableScreen> {
                                 label: const Text('New'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AdminColors.accent,
-                                  foregroundColor: Colors.white,
+                                  foregroundColor: AdminColors.onAccent,
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 14, vertical: 10),
                                   shape: RoundedRectangleBorder(
@@ -314,7 +314,7 @@ class _EventsTableScreenState extends ConsumerState<EventsTableScreen> {
                             label: const Text('Create Event'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AdminColors.accent,
-                              foregroundColor: Colors.white,
+                              foregroundColor: AdminColors.onAccent,
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 20, vertical: 12),
                               shape: RoundedRectangleBorder(
@@ -565,7 +565,7 @@ class _ErrorView extends StatelessWidget {
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AdminColors.accent,
-                foregroundColor: Colors.white,
+                foregroundColor: AdminColors.onAccent,
                 padding: const EdgeInsets.symmetric(
                     horizontal: 24, vertical: 14),
                 shape: RoundedRectangleBorder(

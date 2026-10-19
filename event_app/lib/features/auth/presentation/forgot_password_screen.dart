@@ -130,9 +130,26 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         style: AppTextStyles.body15.copyWith(color: AppColors.paper),
-                        decoration: InputDecoration(
+                        cursorColor: AppColors.lime,
+                        decoration: const InputDecoration(
                           hintText: 'student@college.edu',
-                          prefixIcon: const Icon(Icons.alternate_email_rounded, color: AppColors.lime, size: 20),
+                          hintStyle: TextStyle(color: AppColors.grey400, fontSize: 14),
+                          prefixIcon: Icon(Icons.alternate_email_rounded, color: AppColors.lime, size: 20),
+                          filled: true,
+                          fillColor: AppColors.surfaceDark,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                          border: OutlineInputBorder(
+                            borderRadius: AppRadius.circularInput,
+                            borderSide: BorderSide(color: AppColors.borderDark, width: 1.5),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: AppRadius.circularInput,
+                            borderSide: BorderSide(color: AppColors.borderDark, width: 1.5),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: AppRadius.circularInput,
+                            borderSide: BorderSide(color: AppColors.lime, width: 2),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),

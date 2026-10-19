@@ -81,7 +81,10 @@ class _EventFeedbackScreenState extends ConsumerState<EventFeedbackScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: AdminColors.accent),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AdminColors.accent,
+              foregroundColor: AdminColors.onAccent,
+            ),
             child: const Text('Send Requests'),
           ),
         ],
@@ -130,7 +133,7 @@ class _EventFeedbackScreenState extends ConsumerState<EventFeedbackScreen> {
               label: const Text('Request Feedback'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AdminColors.accent,
-                foregroundColor: Colors.white,
+                foregroundColor: AdminColors.onAccent,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),

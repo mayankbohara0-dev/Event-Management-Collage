@@ -130,8 +130,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         controller: _passwordController,
                         obscureText: _obscurePassword,
                         style: AppTextStyles.body15.copyWith(color: AppColors.paper),
+                        cursorColor: AppColors.lime,
                         decoration: InputDecoration(
                           hintText: '••••••••',
+                          hintStyle: const TextStyle(color: AppColors.grey400, fontSize: 14),
                           prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.lime, size: 20),
                           suffixIcon: IconButton(
                             icon: Icon(
@@ -140,6 +142,21 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                               size: 20,
                             ),
                             onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.surfaceDark,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                          border: const OutlineInputBorder(
+                            borderRadius: AppRadius.circularInput,
+                            borderSide: BorderSide(color: AppColors.borderDark, width: 1.5),
+                          ),
+                          enabledBorder: const OutlineInputBorder(
+                            borderRadius: AppRadius.circularInput,
+                            borderSide: BorderSide(color: AppColors.borderDark, width: 1.5),
+                          ),
+                          focusedBorder: const OutlineInputBorder(
+                            borderRadius: AppRadius.circularInput,
+                            borderSide: BorderSide(color: AppColors.lime, width: 2),
                           ),
                         ),
                       ),

@@ -1,7 +1,7 @@
-name: zest_app
+﻿name: zest_app
 description: "Add some zest to your campus life — the ultimate college event platform."
 # The following line prevents the package from being accidentally published to
-# pub.dev using `flutter pub publish`. This is preferred for private packages.
+# pub.dev using lutter pub publish. This is preferred for private packages.
 publish_to: 'none'
 
 version: 2.0.0+2
@@ -49,13 +49,30 @@ flutter:
     - assets/fonts/
 
   fonts:
+    # Bricolage Grotesque — ExtraBold (w800) for all display/heading text
     - family: Bricolage Grotesque
       fonts:
         - asset: assets/fonts/BricolageGrotesque-ExtraBold.ttf
           weight: 800
+    # Inter Variable — supports all weights 100-900 via single variable font
     - family: Inter
       fonts:
         - asset: assets/fonts/Inter-Variable.ttf
+          weight: 100
+        - asset: assets/fonts/Inter-Variable.ttf
+          weight: 200
+        - asset: assets/fonts/Inter-Variable.ttf
+          weight: 300
+        - asset: assets/fonts/Inter-Variable.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-Variable.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-Variable.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Variable.ttf
+          weight: 700
+        - asset: assets/fonts/Inter-Variable.ttf
+          weight: 800
 
 flutter_launcher_icons:
   android: true
@@ -64,4 +81,3 @@ flutter_launcher_icons:
   min_sdk_android: 21
   adaptive_icon_background: "#B8FF1A"
   adaptive_icon_foreground: "assets/brand/logo_icon_1024.png"
-

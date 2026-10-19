@@ -1,9 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../core/design_system.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/skeleton_loader.dart';
 import '../../events/presentation/feedback_dialog.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NotificationsScreen — Zest Campus Alerts & Activity
+// Styled to match the dark neo-bold brand with lime accents
+// ─────────────────────────────────────────────────────────────────────────────
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -33,7 +43,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           .select()
           .eq('user_id', user.id)
           .order('created_at', ascending: false);
-          
+
       if (mounted) {
         setState(() {
           _notifications = List<Map<String, dynamic>>.from(res);
@@ -52,7 +62,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           .from('notifications')
           .update({'is_read': true})
           .eq('id', id);
-      
+
       setState(() {
         final index = _notifications.indexWhere((n) => n['id'] == id);
         if (index != -1) {
@@ -63,7 +73,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       debugPrint('Error marking as read: $e');
     }
   }
-  
+
   Future<void> _markAllAsRead() async {
     try {
       final user = Supabase.instance.client.auth.currentUser;
@@ -74,7 +84,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           .update({'is_read': true})
           .eq('user_id', user.id)
           .eq('is_read', false);
-          
+
       _loadNotifications();
     } catch (e) {
       debugPrint('Error marking all as read: $e');
@@ -85,84 +95,101 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   Widget build(BuildContext context) {
     final unreadCount = _notifications.where((n) => n['is_read'] == false).length;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.white,
-        elevation: 0,
-        centerTitle: true,
-        leading: const BackButton(color: AppColors.black),
-        title: Text(
-          'Notifications',
-          style: GoogleFonts.inter(
-              color: AppColors.black, fontSize: 18, fontWeight: FontWeight.w800),
-        ),
-        actions: [
-          if (unreadCount > 0)
-            TextButton(
-              onPressed: _markAllAsRead,
-              child: Text(
-                'Mark all read',
-                style: GoogleFonts.inter(
-                    color: AppColors.green, fontSize: 13, fontWeight: FontWeight.w600),
-              ),
-            ),
-        ],
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.green))
-          : _notifications.isEmpty
-              ? _buildEmpty()
-              : RefreshIndicator(
-                  color: AppColors.green,
-                  onRefresh: _loadNotifications,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    itemCount: _notifications.length,
-                    separatorBuilder: (context, index) => const Divider(height: 1, color: AppColors.grey100),
-                    itemBuilder: (context, i) {
-                      final n = _notifications[i];
-                      return _NotificationTile(
-                        notification: n,
-                        onTap: () {
-                          if (n['is_read'] == false) {
-                            _markAsRead(n['id']);
-                          }
-                          if (n['type'] == 'feedback_request' && n['link_id'] != null) {
-                            FeedbackDialog.show(context, n['link_id']);
-                          }
-                        },
-                      );
-                    },
+      child: Scaffold(
+        backgroundColor: AppColors.ink,
+        appBar: AppBar(
+          backgroundColor: AppColors.ink,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded, color: AppColors.white),
+            onPressed: () => context.pop(),
+          ),
+          title: Text(
+            'Notifications',
+            style: AppTextStyles.title20.copyWith(color: AppColors.white),
+          ),
+          actions: [
+            if (unreadCount > 0)
+              TextButton(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  _markAllAsRead();
+                },
+                child: Text(
+                  'Mark all read',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.lime,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-    );
-  }
-
-  Widget _buildEmpty() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.notifications_off_outlined, size: 64, color: AppColors.grey200),
-          const SizedBox(height: 16),
-          Text('No notifications yet',
-              style: GoogleFonts.inter(
-                  color: AppColors.grey800, fontSize: 18, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 8),
-          Text('We\'ll let you know when something happens',
-              style: GoogleFonts.inter(color: AppColors.grey400, fontSize: 14)),
-        ],
+              ),
+          ],
+        ),
+        body: _isLoading
+            ? Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  children: List.generate(
+                    4,
+                    (_) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: SkeletonLoader(
+                        width: double.infinity,
+                        height: 76,
+                        radius: AppRadius.listRow,
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            : _notifications.isEmpty
+                ? Center(
+                    child: EmptyState(
+                      emoji: '🔔',
+                      title: 'No Notifications Yet',
+                      subtitle: 'We will let you know when fresh event updates or passes arrive!',
+                      actionLabel: 'Back to Feed',
+                      onAction: () => context.pop(),
+                    ),
+                  )
+                : RefreshIndicator(
+                    color: AppColors.ink,
+                    backgroundColor: AppColors.lime,
+                    onRefresh: _loadNotifications,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(18, 12, 18, 40),
+                      itemCount: _notifications.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
+                      itemBuilder: (context, i) {
+                        final n = _notifications[i];
+                        return _NotificationCard(
+                          notification: n,
+                          onTap: () {
+                            if (n['is_read'] == false) {
+                              _markAsRead(n['id']);
+                            }
+                            if (n['type'] == 'feedback_request' && n['link_id'] != null) {
+                              FeedbackDialog.show(context, n['link_id']);
+                            }
+                          },
+                        );
+                      },
+                    ),
+                  ),
       ),
     );
   }
 }
 
-class _NotificationTile extends StatelessWidget {
+class _NotificationCard extends StatelessWidget {
   final Map<String, dynamic> notification;
   final VoidCallback onTap;
 
-  const _NotificationTile({required this.notification, required this.onTap});
+  const _NotificationCard({required this.notification, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -170,106 +197,126 @@ class _NotificationTile extends StatelessWidget {
     final type = notification['type'] as String? ?? '';
     final title = notification['title'] as String? ?? 'Notification';
     final message = notification['message'] as String? ?? '';
-    final date = notification['created_at'] != null 
-        ? DateTime.parse(notification['created_at']).toLocal() 
+    final date = notification['created_at'] != null
+        ? DateTime.parse(notification['created_at']).toLocal()
         : DateTime.now();
 
     IconData icon;
     Color iconColor;
-    Color bgColor;
+    Color iconBg;
 
     switch (type) {
       case 'event_update':
         icon = Icons.event_rounded;
-        iconColor = AppColors.green;
-        bgColor = AppColors.green.withValues(alpha: 0.1);
+        iconColor = AppColors.lime;
+        iconBg = AppColors.lime.withValues(alpha: 0.15);
         break;
       case 'feedback_request':
         icon = Icons.star_rounded;
-        iconColor = Colors.amber;
-        bgColor = Colors.amber.withValues(alpha: 0.1);
+        iconColor = AppColors.mustard;
+        iconBg = AppColors.mustard.withValues(alpha: 0.15);
         break;
       case 'registration_update':
-        icon = Icons.how_to_reg_rounded;
-        iconColor = AppColors.yellow;
-        bgColor = AppColors.yellow.withValues(alpha: 0.2);
+        icon = Icons.confirmation_number_rounded;
+        iconColor = AppColors.coral;
+        iconBg = AppColors.coral.withValues(alpha: 0.15);
         break;
       default:
         icon = Icons.notifications_rounded;
-        iconColor = AppColors.grey400;
-        bgColor = AppColors.grey100;
+        iconColor = AppColors.aqua;
+        iconBg = AppColors.aqua.withValues(alpha: 0.15);
     }
 
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        color: isRead ? Colors.transparent : AppColors.green.withValues(alpha: 0.02),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
-              child: Icon(icon, color: iconColor, size: 20),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+    return Container(
+      decoration: BoxDecoration(
+        color: isRead ? AppColors.surfaceDark : AppColors.ink2,
+        borderRadius: BorderRadius.circular(AppRadius.listRow),
+        border: Border.all(
+          color: isRead ? AppColors.borderDark : AppColors.lime.withValues(alpha: 0.4),
+          width: isRead ? 1 : 1.5,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppRadius.listRow),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.listRow),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: iconBg,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 20),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: isRead ? FontWeight.w600 : FontWeight.w800,
-                            color: AppColors.black,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.title17.copyWith(
+                                color: AppColors.white,
+                                fontSize: 15,
+                              ),
+                            ),
                           ),
-                        ),
+                          Text(
+                            _formatDate(date),
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.grey400,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 4),
                       Text(
-                        _formatDate(date),
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
+                        message,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.bodyMedium.copyWith(
                           color: AppColors.grey400,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 13,
+                          height: 1.35,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    message,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: isRead ? AppColors.grey400 : AppColors.grey800,
-                      height: 1.4,
+                ),
+                if (!isRead) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 8,
+                    height: 8,
+                    margin: const EdgeInsets.only(top: 4),
+                    decoration: const BoxDecoration(
+                      color: AppColors.lime,
+                      shape: BoxShape.circle,
                     ),
                   ),
                 ],
-              ),
+              ],
             ),
-            if (!isRead) ...[
-              const SizedBox(width: 12),
-              Container(
-                width: 8,
-                height: 8,
-                margin: const EdgeInsets.only(top: 6),
-                decoration: const BoxDecoration(
-                  color: AppColors.green,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );
   }
-  
+
   String _formatDate(DateTime d) {
     final now = DateTime.now();
     final diff = now.difference(d);
@@ -282,6 +329,6 @@ class _NotificationTile extends StatelessWidget {
     if (diff.inDays < 7) {
       return '${diff.inDays}d ago';
     }
-    return '${d.day}/${d.month}/${d.year}';
+    return '${d.day}/${d.month}';
   }
 }

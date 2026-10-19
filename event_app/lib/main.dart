@@ -27,9 +27,9 @@ void main() async {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: Color(0xFFF7F6F3),
-      systemNavigationBarIconBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Color(0xFF141416),
+      systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
 
@@ -51,8 +51,9 @@ class ZestApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'Zest',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
+      theme: AppTheme.dark,
       darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.dark,
       routerConfig: router,
     );
   }

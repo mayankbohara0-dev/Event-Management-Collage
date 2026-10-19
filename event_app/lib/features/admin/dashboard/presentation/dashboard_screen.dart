@@ -559,7 +559,7 @@ class _ErrorView extends StatelessWidget {
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AdminColors.accent,
-                foregroundColor: Colors.white,
+                foregroundColor: AdminColors.onAccent,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 14,

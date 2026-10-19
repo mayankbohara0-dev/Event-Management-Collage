@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
@@ -192,7 +192,7 @@ class _EventResponsesScreenState extends ConsumerState<EventResponsesScreen> {
               label: const Text('Export CSV'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AdminColors.gold,
-                foregroundColor: AdminColors.textPrimary,
+                foregroundColor: AdminColors.onAccent,
                 elevation: 0,
               ),
             ),

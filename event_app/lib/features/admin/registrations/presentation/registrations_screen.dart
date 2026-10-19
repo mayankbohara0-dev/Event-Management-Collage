@@ -250,9 +250,11 @@ class _RegistrationsScreenState extends ConsumerState<RegistrationsScreen> {
                         child: Text(
                           f == 'all' ? 'All' : f[0].toUpperCase() + f.substring(1),
                           style: GoogleFonts.inter(
-                            color: _globalFilter == f ? Colors.white : AdminColors.textSecondary,
+                            color: _globalFilter == f
+                                ? (_filterColor(f) == AdminColors.accent ? AdminColors.onAccent : Colors.white)
+                                : AdminColors.textSecondary,
                             fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: _globalFilter == f ? FontWeight.w800 : FontWeight.w600,
                           ),
                         ),
                       ),

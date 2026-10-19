@@ -2,7 +2,7 @@
 <html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Zest — Add some zest to your campus life.</title>
   <meta name="description" content="Zest is the bold, fast college event app. Discover fests, hackathons, and club workshops. Register in 1-tap, scan with offline QR passes, and earn verified certificates." />
   <meta name="theme-color" content="#B8FF1A" />
@@ -33,6 +33,7 @@
   <link rel="stylesheet" href="css/components.css?v=2.0.0" />
   <link rel="stylesheet" href="css/animations.css?v=2.0.0" />
   <link rel="stylesheet" href="css/sections.css?v=2.0.0" />
+  <link rel="stylesheet" href="css/mobile.css?v=1.0.0" />
 
   <!-- JSON-LD Structured Data -->
   <script type="application/ld+json">
@@ -935,7 +936,7 @@
           <form class="waitlist-form" style="display:flex; gap:10px; background:#fff; padding:6px; border-radius:99px; box-shadow:0 12px 32px rgba(0,0,0,0.15);">
             <!-- Honeypot -->
             <input type="text" name="b_honey" style="display:none;" tabindex="-1" autocomplete="off" />
-            <input type="email" placeholder="Enter college email for iOS alert" required style="flex:1; padding-left:20px; font-weight:600; background:transparent;" />
+            <input type="email" inputmode="email" autocomplete="email" placeholder="Enter college email for iOS alert" required style="flex:1; padding-left:20px; font-weight:600; background:transparent; font-size:16px;" />
             <button type="submit" class="btn btn-ink" style="padding:12px 24px;">Join VIP</button>
           </form>
           <div class="form-feedback" style="font-size:12px; font-weight:700; margin-top:10px;"></div>
@@ -1020,5 +1021,6 @@
   <script src="js/scroll.js" defer></script>
   <script src="js/forms.js" defer></script>
   <script src="js/main.js" defer></script>
+  <script src="js/mobile.js" defer></script>
 </body>
 </html>

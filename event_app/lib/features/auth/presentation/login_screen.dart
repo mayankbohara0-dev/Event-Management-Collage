@@ -296,9 +296,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 keyboardType: TextInputType.emailAddress,
                                 textInputAction: TextInputAction.next,
                                 style: AppTextStyles.body15.copyWith(color: AppColors.paper),
-                                decoration: InputDecoration(
+                                cursorColor: AppColors.lime,
+                                decoration: const InputDecoration(
                                   hintText: 'student@college.edu',
-                                  prefixIcon: const Icon(Icons.alternate_email_rounded, color: AppColors.lime, size: 20),
+                                  hintStyle: TextStyle(color: AppColors.grey400, fontSize: 14),
+                                  prefixIcon: Icon(Icons.alternate_email_rounded, color: AppColors.lime, size: 20),
+                                  filled: true,
+                                  fillColor: AppColors.surfaceDark,
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                                  border: OutlineInputBorder(
+                                    borderRadius: AppRadius.circularInput,
+                                    borderSide: BorderSide(color: AppColors.borderDark, width: 1.5),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: AppRadius.circularInput,
+                                    borderSide: BorderSide(color: AppColors.borderDark, width: 1.5),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: AppRadius.circularInput,
+                                    borderSide: BorderSide(color: AppColors.lime, width: 2),
+                                  ),
                                 ),
                               ),
 
@@ -319,8 +336,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 textInputAction: TextInputAction.done,
                                 onSubmitted: (_) => _submit(),
                                 style: AppTextStyles.body15.copyWith(color: AppColors.paper),
+                                cursorColor: AppColors.lime,
                                 decoration: InputDecoration(
                                   hintText: '••••••••',
+                                  hintStyle: const TextStyle(color: AppColors.grey400, fontSize: 14),
                                   prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.lime, size: 20),
                                   suffixIcon: IconButton(
                                     icon: Icon(
@@ -329,6 +348,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       size: 20,
                                     ),
                                     onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                  ),
+                                  filled: true,
+                                  fillColor: AppColors.surfaceDark,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                                  border: const OutlineInputBorder(
+                                    borderRadius: AppRadius.circularInput,
+                                    borderSide: BorderSide(color: AppColors.borderDark, width: 1.5),
+                                  ),
+                                  enabledBorder: const OutlineInputBorder(
+                                    borderRadius: AppRadius.circularInput,
+                                    borderSide: BorderSide(color: AppColors.borderDark, width: 1.5),
+                                  ),
+                                  focusedBorder: const OutlineInputBorder(
+                                    borderRadius: AppRadius.circularInput,
+                                    borderSide: BorderSide(color: AppColors.lime, width: 2),
                                   ),
                                 ),
                               ),
@@ -379,13 +413,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   ),
                                   TextSpan(
                                     text: _isSignUp ? 'Sign In' : 'Create an account',
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       color: AppColors.lime,
                                       fontWeight: FontWeight.w800,
                                       decoration: TextDecoration.underline,
                                     ),
                                   ),
                                 ],
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        // Organizer / Admin portal link
+                        Center(
+                          child: GestureDetector(
+                            onTap: () => context.go('/admin/login'),
+                            child: Text(
+                              'Club Organizer or Admin? Sign in here 🛡️',
+                              style: AppTextStyles.caption12.copyWith(
+                                color: AppColors.grey400,
+                                decoration: TextDecoration.underline,
                               ),
                             ),
                           ),

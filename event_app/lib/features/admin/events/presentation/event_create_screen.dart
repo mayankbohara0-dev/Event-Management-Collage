@@ -162,7 +162,12 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(primary: AdminColors.accent, onPrimary: Colors.white),
+          colorScheme: const ColorScheme.dark(
+            primary: AdminColors.accent,
+            onPrimary: AdminColors.onAccent,
+            surface: AdminColors.surface,
+            onSurface: AdminColors.textPrimary,
+          ),
         ),
         child: child!,
       ),
@@ -173,7 +178,12 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
         initialTime: const TimeOfDay(hour: 9, minute: 0),
         builder: (context, child) => Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: AdminColors.accent, onPrimary: Colors.white),
+            colorScheme: const ColorScheme.dark(
+              primary: AdminColors.accent,
+              onPrimary: AdminColors.onAccent,
+              surface: AdminColors.surface,
+              onSurface: AdminColors.textPrimary,
+            ),
           ),
           child: child!,
         ),
@@ -349,7 +359,7 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
                           child: ElevatedButton.icon(
                             onPressed: (_isLoading || _isUploadingPoster) ? null : _saveEvent,
                             icon: (_isLoading || _isUploadingPoster)
-                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: AdminColors.onAccent, strokeWidth: 2))
                                 : const Icon(Icons.arrow_forward),
                             label: Text(
                               _isUploadingPoster ? 'Uploading poster...' : 'Save & Build Registration Form',
@@ -357,7 +367,7 @@ class _EventCreateScreenState extends ConsumerState<EventCreateScreen> {
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AdminColors.accent,
-                              foregroundColor: Colors.white,
+                              foregroundColor: AdminColors.onAccent,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
                           ),
