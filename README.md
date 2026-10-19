@@ -1,7 +1,7 @@
 # ZEST — Add some zest to your campus life. 🍋⚡
 
 <p align="center">
-  <img src="event_app/assets/brand/zest_08_corner_z.png" width="120" height="120" alt="Zest Logo" />
+  <img src="zest_app_icon.png" width="120" height="120" alt="ZEST App Icon" style="border-radius: 28px;" />
 </p>
 
 <p align="center">
