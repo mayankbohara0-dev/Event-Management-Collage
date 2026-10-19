@@ -32,6 +32,13 @@ export const metadata: Metadata = {
     "attendance scanner",
   ],
   authors: [{ name: "ZEST Team" }],
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "ZEST",
+    startupImage: "/apple-touch-icon.png",
+  },
   openGraph: {
     title: "ZEST — Campus events, passes & XP",
     description: "Add some zest to your campus life. Event discovery, digital QR passes, and real-time gate scanner.",
@@ -55,9 +62,21 @@ export const metadata: Metadata = {
     images: ["/og-image.png"],
   },
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
-    apple: "/apple-touch-icon.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-48x48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: "/favicon-32x32.png",
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    other: [
+      { rel: "mask-icon", url: "/favicon.svg", color: "#0063F0" },
+    ],
   },
 };
 
@@ -88,6 +107,11 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        {/* PWA & Mobile App Meta */}
+        <meta name="theme-color" content="#0063F0" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="msapplication-TileColor" content="#0063F0" />
+        <meta name="msapplication-TileImage" content="/icon-192x192.png" />
       </head>
       <body className="min-h-screen bg-[var(--page)] text-[var(--ink)] font-sans antialiased selection:bg-[var(--sky)]/30 selection:text-[var(--ink)]">
         {children}
