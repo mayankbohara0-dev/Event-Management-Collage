@@ -25,13 +25,13 @@ class ZestChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const selectedBg = Color(0xFFE6F4FE);
+    const selectedBg = ZestTokens.blue;
     const selectedBorder = ZestTokens.blue;
-    const selectedText = ZestTokens.blue;
+    const selectedText = Colors.white;
 
-    final unselectedBg = ZestTokens.fill;
-    final unselectedBorder = ZestTokens.line;
-    final unselectedText = ZestTokens.ink2;
+    const unselectedBg = Color(0xFFF1F5F9);
+    const unselectedBorder = Color(0xFFE2E8F0);
+    const unselectedText = ZestTokens.ink2;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
@@ -45,7 +45,7 @@ class ZestChip extends StatelessWidget {
           },
           borderRadius: ZestTokens.borderPill,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8.5),
             decoration: BoxDecoration(
               color: isSelected ? selectedBg : unselectedBg,
               borderRadius: ZestTokens.borderPill,
@@ -53,6 +53,15 @@ class ZestChip extends StatelessWidget {
                 color: isSelected ? selectedBorder : unselectedBorder,
                 width: 1.0,
               ),
+              boxShadow: isSelected
+                  ? const [
+                      BoxShadow(
+                        color: Color(0x300063F0),
+                        blurRadius: 10,
+                        offset: Offset(0, 3),
+                      ),
+                    ]
+                  : null,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -74,7 +83,7 @@ class ZestChip extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: isSelected ? ZestTokens.blue : ZestTokens.line,
+                      color: isSelected ? Colors.white.withValues(alpha: 0.25) : ZestTokens.line,
                       borderRadius: ZestTokens.borderPill,
                     ),
                     child: Text(

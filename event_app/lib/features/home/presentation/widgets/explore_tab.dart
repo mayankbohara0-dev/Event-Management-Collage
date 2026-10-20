@@ -348,158 +348,179 @@ class _ExploreCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progress = seatsTotal > 0 ? seatsLeft / seatsTotal : 0.0;
-    final isLowSeats = progress < 0.25;
-    final gradient = ZestTokens.categoryGradient(category);
+    final progress = seatsTotal > 0 ? (seatsTotal - seatsLeft) / seatsTotal : 0.0;
+    final isLowSeats = seatsLeft < (seatsTotal * 0.25);
 
-    return ZestCard(
-      padding: const EdgeInsets.all(16),
+    return GestureDetector(
       onTap: onTap,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // 64px category gradient thumbnail
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              gradient: gradient,
-              borderRadius: const BorderRadius.all(Radius.circular(18)),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: ZestTokens.line),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x060B1220),
+              blurRadius: 12,
+              offset: Offset(0, 3),
             ),
-            alignment: Alignment.center,
-            child: Text(
-              _emojiForCategory(category),
-              style: const TextStyle(fontSize: 28),
-            ),
-          ),
-          const SizedBox(width: 14),
-
-          // Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          ],
+        ),
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top Row: Category tag + Seats left badge
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Category tag pill
-                if (category.isNotEmpty)
-                  Text(
-                    category.toUpperCase(),
-                    style: ZestTokens.labelCaps.copyWith(
-                      color: ZestTokens.blue,
-                      fontSize: 10,
-                      letterSpacing: 0.6,
+                Text(
+                  category.toUpperCase(),
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: ZestTokens.core,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: isLowSeats ? const Color(0xFFFEF2F2) : const Color(0xFFEFF6FF),
+                    borderRadius: ZestTokens.borderPill,
+                    border: Border.all(
+                      color: isLowSeats ? const Color(0xFFFECACA) : const Color(0xFFBFDBFE),
                     ),
                   ),
-                const SizedBox(height: 2),
-                Text(
-                  title,
-                  style: ZestTokens.bodyBold.copyWith(
-                    fontSize: 15,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    if (date.isNotEmpty) ...[
-                      const Icon(
-                        LucideIcons.calendar,
-                        size: 12,
-                        color: ZestTokens.ink3,
-                      ),
-                      const SizedBox(width: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       Text(
-                        date,
-                        style: ZestTokens.caption.copyWith(
-                          fontSize: 12,
-                          color: ZestTokens.ink2,
-                        ),
+                        isLowSeats ? '⚡ ' : '🎟️ ',
+                        style: const TextStyle(fontSize: 10),
                       ),
-                      const SizedBox(width: 10),
-                    ],
-                    if (venue.isNotEmpty) ...[
-                      const Icon(
-                        LucideIcons.mapPin,
-                        size: 12,
-                        color: ZestTokens.ink3,
-                      ),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          venue,
-                          style: ZestTokens.caption.copyWith(
-                            fontSize: 12,
-                            color: ZestTokens.ink2,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 10),
-
-                // Seats progress bar
-                ZestProgressBar(
-                  value: progress.clamp(0.05, 1.0),
-                  height: 6,
-                  progressGradient: isLowSeats
-                      ? const LinearGradient(
-                          colors: [ZestTokens.coral, Color(0xFFFF8FA3)],
-                        )
-                      : ZestTokens.brandGradient,
-                ),
-                const SizedBox(height: 5),
-
-                // Seats caption
-                Row(
-                  children: [
-                    if (isLowSeats) ...[
-                      const Text('⚡ ', style: TextStyle(fontSize: 11)),
                       Text(
-                        '$seatsLeft spots left!',
-                        style: ZestTokens.caption.copyWith(
-                          color: ZestTokens.coral,
+                        '$seatsLeft seats left',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 10.5,
                           fontWeight: FontWeight.w700,
-                          fontSize: 11.5,
-                        ),
-                      ),
-                    ] else ...[
-                      Text(
-                        '$seatsLeft of $seatsTotal seats left',
-                        style: ZestTokens.caption.copyWith(
-                          color: ZestTokens.ink3,
-                          fontSize: 11.5,
+                          color: isLowSeats ? ZestTokens.coral : ZestTokens.blue,
                         ),
                       ),
                     ],
-                  ],
+                  ),
                 ),
               ],
             ),
-          ),
 
-          const SizedBox(width: 10),
-          const Icon(
-            LucideIcons.chevronRight,
-            color: ZestTokens.ink3,
-            size: 20,
-          ),
-        ],
+            const SizedBox(height: 7),
+
+            // Title
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14.5,
+                fontWeight: FontWeight.w700,
+                color: ZestTokens.ink,
+                letterSpacing: -0.2,
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            // Date & Venue
+            Row(
+              children: [
+                if (date.isNotEmpty) ...[
+                  const Icon(LucideIcons.calendar, size: 11.5, color: ZestTokens.ink3),
+                  const SizedBox(width: 4),
+                  Text(
+                    date,
+                    style: ZestTokens.caption.copyWith(
+                      color: ZestTokens.ink3,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                if (venue.isNotEmpty) ...[
+                  const Icon(LucideIcons.mapPin, size: 11.5, color: ZestTokens.ink3),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      venue,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: ZestTokens.caption.copyWith(
+                        color: ZestTokens.ink3,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            // Divider
+            Container(height: 1, color: ZestTokens.line),
+
+            const SizedBox(height: 8),
+
+            // Bottom Row: Seats progress bar & +150 XP
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 70,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(3),
+                          child: LinearProgressIndicator(
+                            value: progress.clamp(0.05, 1.0),
+                            minHeight: 5,
+                            backgroundColor: ZestTokens.line,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              isLowSeats ? ZestTokens.coral : ZestTokens.core,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '$seatsLeft of $seatsTotal left',
+                        style: ZestTokens.caption.copyWith(
+                          fontSize: 11,
+                          color: ZestTokens.ink3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Text(
+                  '+150 XP',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: ZestTokens.core,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
-  }
-
-  static String _emojiForCategory(String cat) {
-    final c = cat.toLowerCase();
-    if (c.contains('tech') || c.contains('hack')) return '💻';
-    if (c.contains('cultur') || c.contains('fest')) return '🎭';
-    if (c.contains('sport')) return '🏅';
-    if (c.contains('workshop')) return '🔬';
-    if (c.contains('music')) return '🎵';
-    if (c.contains('art')) return '🎨';
-    if (c.contains('quiz')) return '🧠';
-    return '⭐';
   }
 }

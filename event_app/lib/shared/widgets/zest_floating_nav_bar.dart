@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/theme/zest_tokens.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
 /// ZEST FLOATING NAV BAR
 /// Floating white pill with sliding 48px brandGradient circle indicator (easeOutBack),
-/// 5 outline icons, scale 1.08 pop on active item, and light haptic feedback.
+/// 5 Lucide outline icons, scale 1.08 pop on active item, and light haptic feedback.
 /// ─────────────────────────────────────────────────────────────────────────────
 
 class ZestFloatingNavBar extends StatelessWidget {
@@ -21,11 +22,11 @@ class ZestFloatingNavBar extends StatelessWidget {
   });
 
   static const List<IconData> _navIcons = [
-    Icons.home_outlined,
-    Icons.explore_outlined,
-    Icons.confirmation_number_outlined,
-    Icons.emoji_events_outlined,
-    Icons.person_outline_rounded,
+    LucideIcons.home,
+    LucideIcons.compass,
+    LucideIcons.ticket,
+    LucideIcons.trophy,
+    LucideIcons.user,
   ];
 
   static const List<String> _navLabels = [

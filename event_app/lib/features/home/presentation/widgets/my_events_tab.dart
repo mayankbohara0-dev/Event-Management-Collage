@@ -343,6 +343,9 @@ class _ZestTicketState extends State<_ZestTicket>
         (widget.registration['status'] ?? 'approved').toString().toLowerCase();
     final eventTitle = widget.event['title']?.toString() ?? 'Campus Event';
     final venue = widget.event['venue']?.toString() ?? 'Main Campus';
+    final clubOrCollege = widget.event['club_name']?.toString() ??
+        widget.event['category']?.toString() ??
+        'CAMPUS PASS';
     final startDateStr = widget.event['start_date']?.toString();
     final startDate =
         startDateStr != null ? DateTime.tryParse(startDateStr)?.toLocal() : null;
@@ -350,303 +353,418 @@ class _ZestTicketState extends State<_ZestTicket>
     final dateStr = startDate != null
         ? () {
             const months = [
-              'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-              'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
+              'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
             ];
-            const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
             return '${days[startDate.weekday - 1]}, ${months[startDate.month - 1]} ${startDate.day}';
           }()
-        : 'DATE TBA';
+        : 'Date TBA';
 
     final qrData =
         widget.registration['qr_code_data']?.toString().isNotEmpty == true
             ? widget.registration['qr_code_data'].toString()
             : widget.registration['id']?.toString() ?? 'ZEST_PASS';
 
+    final regId = widget.registration['id']?.toString() ?? 'PASS';
+    final ticketIdDisplay = regId.length > 8
+        ? regId.substring(0, 8).toUpperCase()
+        : regId.toUpperCase();
+
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
         decoration: BoxDecoration(
-          gradient: ZestTokens.brandGradient,
-          borderRadius: BorderRadius.circular(ZestTokens.radiusHero),
-          boxShadow: const [
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFF38BDF8),
+              Color(0xFF0AA5F0),
+              Color(0xFF0063F0),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.4),
+            width: 1.2,
+          ),
+          boxShadow: [
             BoxShadow(
-              color: Color(0x330063F0),
+              color: const Color(0xFF0063F0).withValues(alpha: 0.32),
               blurRadius: 28,
-              offset: Offset(0, 10),
+              offset: const Offset(0, 12),
             ),
           ],
         ),
         child: Column(
           children: [
-            // ── Top Ticket Section ─────────────────────────────────────
+            // ── Ticket Header ──────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(22, 22, 22, 16),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Pass tag & Date
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Row(
+                        children: [
+                          const ZestBlobLogo(size: 26),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                clubOrCollege.toUpperCase(),
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.1,
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                ),
+                              ),
+                              const Text(
+                                'ZEST Event Pass',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  height: 1.1,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+
+                      // Status Pill
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.22),
-                          borderRadius: ZestTokens.borderPill,
+                          color: widget.isAttended
+                              ? const Color(0xFF10B981)
+                              : Colors.white.withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(99),
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.35),
                           ),
                         ),
-                        child: Text(
-                          widget.isAttended
-                              ? 'ATTENDED ✓'
-                              : (status == 'approved'
-                                  ? 'VERIFIED PASS'
-                                  : 'PENDING APPROVAL'),
-                          style: ZestTokens.labelCaps.copyWith(
-                            color: Colors.white,
-                            fontSize: 10,
-                            letterSpacing: 0.6,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        dateStr,
-                        style: ZestTokens.caption.copyWith(
-                          color: Colors.white.withValues(alpha: 0.85),
-                          fontWeight: FontWeight.w600,
-                          fontSize: 11,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (widget.isAttended) ...[
+                              const Icon(
+                                LucideIcons.check,
+                                size: 12,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 4),
+                            ],
+                            Text(
+                              widget.isAttended
+                                  ? 'Attended ✓'
+                                  : (status == 'approved'
+                                      ? 'Valid Entry'
+                                      : 'Pending'),
+                              style: const TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 16),
 
-                  // Event Title
+                  // Official Badge + Event title
+                  const Text(
+                    'OFFICIAL BADGE',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.2,
+                      color: Color(0xFFFFD84D), // Lemon yellow brand accent
+                    ),
+                  ),
+                  const SizedBox(height: 3),
                   Text(
                     eventTitle,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontFamily: 'Inter',
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
                       color: Colors.white,
-                      height: 1.2,
-                      letterSpacing: -0.4,
+                      height: 1.22,
+                      letterSpacing: -0.3,
                     ),
                   ),
 
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 10),
 
-                  // Venue
+                  // Date & Venue Row
                   Row(
                     children: [
-                      const Icon(
-                        LucideIcons.mapPin,
-                        size: 14,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: Text(
-                          venue,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white.withValues(alpha: 0.85),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            LucideIcons.calendar,
+                            size: 13,
+                            color: Color(0xFF6CE3FF), // Sky cyan
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  // Attendee Info Box
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 9,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.25),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          widget.studentName,
-                          style: const TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                        if (widget.rollNumber.isNotEmpty)
+                          const SizedBox(width: 5),
                           Text(
-                            widget.rollNumber,
+                            dateStr,
                             style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white.withValues(alpha: 0.85),
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white.withValues(alpha: 0.95),
                             ),
                           ),
-                      ],
-                    ),
+                        ],
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            const Icon(
+                              LucideIcons.mapPin,
+                              size: 13,
+                              color: Color(0xFFFFD84D), // Lemon
+                            ),
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                venue,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white.withValues(alpha: 0.95),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
 
-            // ── Perforated Notches & Dashed Divider ────────────────────
+            // ── Circular side notches & dashed perforation ──────────
             CustomPaint(
-              size: const Size(double.infinity, 24),
+              size: const Size(double.infinity, 22),
               painter: _TicketNotchPainter(),
             ),
 
-            // ── Bottom Section (QR + Scanner OR Certificate) ───────────
+            // ── Attendee row & White rounded QR tile ────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(22, 14, 22, 22),
-              child: widget.isAttended
-                  ? _buildAttendedFooter()
-                  : _buildScannerFooter(qrData),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Left: Attendee Details
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'ATTENDEE',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                            color: Colors.white.withValues(alpha: 0.7),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.studentName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                        if (widget.rollNumber.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              widget.rollNumber,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white.withValues(alpha: 0.85),
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'ID: $ticketIdDisplay',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 10,
+                            color: Colors.white.withValues(alpha: 0.6),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3.5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.25),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                LucideIcons.sparkles,
+                                size: 10,
+                                color: Color(0xFFFFD84D),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                widget.isAttended
+                                    ? 'VERIFIED · +80 XP'
+                                    : '+80 XP UPON SCAN',
+                                style: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  letterSpacing: 0.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(width: 14),
+
+                  // Right: White rounded QR tile with sweeping laser line
+                  Container(
+                    width: 96,
+                    height: 96,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.14),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: widget.isAttended
+                        ? Container(
+                            color: const Color(0xFF10B981),
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  LucideIcons.check,
+                                  size: 32,
+                                  color: Colors.white,
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'CHECKED IN',
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                    letterSpacing: 0.6,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              QrImageView(
+                                data: qrData,
+                                version: QrVersions.auto,
+                                size: 78.0,
+                                padding: EdgeInsets.zero,
+                                eyeStyle: const QrEyeStyle(
+                                  eyeShape: QrEyeShape.square,
+                                  color: ZestTokens.ink,
+                                ),
+                                dataModuleStyle: const QrDataModuleStyle(
+                                  dataModuleShape: QrDataModuleShape.square,
+                                  color: ZestTokens.ink,
+                                ),
+                              ),
+                              // Sweeping coral laser line
+                              AnimatedBuilder(
+                                animation: _scanController,
+                                builder: (context, _) {
+                                  return Positioned(
+                                    top: 8 + (_scanController.value * 76),
+                                    left: 6,
+                                    right: 6,
+                                    child: Container(
+                                      height: 2.2,
+                                      decoration: const BoxDecoration(
+                                        color: ZestTokens.coral,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: ZestTokens.coral,
+                                            blurRadius: 6,
+                                            spreadRadius: 1.5,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildScannerFooter(String qrData) {
-    return Column(
-      children: [
-        // 130px QR Code on white card with Laser Line Animation
-        Container(
-          width: 140,
-          height: 140,
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x20000000),
-                blurRadius: 16,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              QrImageView(
-                data: qrData,
-                version: QrVersions.auto,
-                size: 120.0,
-                eyeStyle: const QrEyeStyle(
-                  eyeShape: QrEyeShape.square,
-                  color: ZestTokens.ink,
-                ),
-                dataModuleStyle: const QrDataModuleStyle(
-                  dataModuleShape: QrDataModuleShape.square,
-                  color: ZestTokens.ink,
-                ),
-              ),
-              // Animated sweeping laser line
-              AnimatedBuilder(
-                animation: _scanController,
-                builder: (context, _) {
-                  return Positioned(
-                    top: _scanController.value * 110,
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      height: 2.5,
-                      decoration: const BoxDecoration(
-                        color: ZestTokens.coral,
-                        boxShadow: [
-                          BoxShadow(
-                            color: ZestTokens.coral,
-                            blurRadius: 6,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 12),
-
-        // Caption
-        Text(
-          'Show this at the gate',
-          style: ZestTokens.caption.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
-            fontSize: 12,
-            letterSpacing: 0.3,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAttendedFooter() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('📜', style: TextStyle(fontSize: 20)),
-              const SizedBox(width: 8),
-              Text(
-                'Certificate ready + 80pts',
-                style: ZestTokens.bodyBold.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Attendance verified by campus faculty',
-            style: ZestTokens.caption.copyWith(
-              color: Colors.white.withValues(alpha: 0.85),
-              fontSize: 11,
-            ),
-          ),
-        ],
       ),
     );
   }

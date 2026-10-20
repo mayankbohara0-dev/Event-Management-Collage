@@ -43,7 +43,6 @@ class _HomeFeedTabState extends ConsumerState<HomeFeedTab> {
   String _searchQuery = '';
   Map<String, dynamic>? _profile;
   int _attendedCount = 0;
-  int _registeredCount = 0;
   int _unreadNotifications = 0;
 
   @override
@@ -87,7 +86,6 @@ class _HomeFeedTabState extends ConsumerState<HomeFeedTab> {
         _profile = results[0] as Map<String, dynamic>?;
         _attendedCount = (results[1] as List).length;
         final regList = (results[2] as List);
-        _registeredCount = regList.length;
         _registeredEventIds = regList
             .map((r) => r['event_id']?.toString() ?? '')
             .where((id) => id.isNotEmpty)
@@ -561,161 +559,126 @@ class _HomeFeedTabState extends ConsumerState<HomeFeedTab> {
     );
   }
 
-  // ── Journey Card Widget ────────────────────────────────────────────────────
+  // ── Journey Card Widget (matches Landing Page Hero Preview) ───────────────
   Widget _buildJourneyCard({
     required int points,
     required int level,
     required double progress,
     required int nextTarget,
   }) {
+    final levelTitle = _getLevelTitle(level);
+    final needed = (nextTarget - points).clamp(0, 9999);
+    final batchYear = DateTime.now().year % 100;
+
     return Container(
       decoration: BoxDecoration(
-        gradient: ZestTokens.brandGradient,
-        borderRadius: ZestTokens.borderHero,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [ZestTokens.core, ZestTokens.blue],
+        ),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x330063F0),
-            blurRadius: 28,
-            offset: Offset(0, 10),
+            color: Color(0x330AA5F0),
+            blurRadius: 18,
+            offset: Offset(0, 6),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: ZestTokens.borderHero,
-        child: Stack(
-          children: [
-            // Watermark lemon blob in bottom-right
-            Positioned(
-              right: -30,
-              bottom: -30,
-              child: Opacity(
-                opacity: 0.12,
-                child: SizedBox(
-                  width: 200,
-                  height: 200,
-                  child: CustomPaint(
-                    painter: _WatermarkBlobPainter(),
-                  ),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Row: Level Title · Role  |  ⚡ XP Counter
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Level $level · $levelTitle',
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                  letterSpacing: -0.1,
                 ),
               ),
-            ),
-
-            // Card Content
-            Padding(
-              padding: const EdgeInsets.all(22),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Top Row: Tag + Level Badge
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.18),
-                          borderRadius: ZestTokens.borderPill,
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Text(
-                          'YOUR ZEST XP',
-                          style: ZestTokens.labelCaps.copyWith(
-                            color: Colors.white,
-                            fontSize: 10.5,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: ZestTokens.borderPill,
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x1A000000),
-                              blurRadius: 8,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          'LEVEL $level • ${_getLevelTitle(level).toUpperCase()}',
-                          style: ZestTokens.labelCaps.copyWith(
-                            color: ZestTokens.blue,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.6,
-                          ),
-                        ),
-                      ),
-                    ],
+                  const Icon(
+                    LucideIcons.zap,
+                    size: 13,
+                    color: Color(0xFFFFD84D),
                   ),
-
-                  const SizedBox(height: 14),
-
-                  // Big Points Counter
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      CountUpText(
-                        value: points,
-                        textStyle: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 52,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -1.5,
-                          color: Colors.white,
-                          height: 1.0,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'pts',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 20,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white.withValues(alpha: 0.8),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 6),
-
-                  // Progress description
+                  const SizedBox(width: 4),
                   Text(
-                    '${nextTarget - points} pts to Level ${level + 1} • $_registeredCount passes • $_attendedCount attended',
-                    style: ZestTokens.caption.copyWith(
-                      color: Colors.white.withValues(alpha: 0.85),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  // 8px Progress Bar
-                  ZestProgressBar(
-                    value: progress,
-                    height: 8,
-                    progressGradient: const LinearGradient(
-                      colors: [ZestTokens.lemon, Colors.white],
+                    '$points XP',
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFFFD84D),
                     ),
                   ),
                 ],
               ),
+            ],
+          ),
+
+          const SizedBox(height: 10),
+
+          // Sleek Progress Bar (aqua to lemon gradient)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: Container(
+              height: 6,
+              width: double.infinity,
+              color: Colors.white.withValues(alpha: 0.22),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FractionallySizedBox(
+                  widthFactor: progress.clamp(0.04, 1.0),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFF6CE3FF), Color(0xFFFFD84D)],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ],
-        ),
+          ),
+
+          const SizedBox(height: 8),
+
+          // Bottom Info Row: Batch '26  |  XP to next level
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Batch '$batchYear",
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.75),
+                ),
+              ),
+              Text(
+                '$needed XP to Level ${level + 1}',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.75),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -869,7 +832,7 @@ class _HomeFeedTabState extends ConsumerState<HomeFeedTab> {
     );
   }
 
-  // ── Spec-Exact Event List Row ──────────────────────────────────────────────
+  // ── Spec-Exact Event List Row (matches Landing Page Hero Preview) ──────────
   Widget _buildEventListRow({
     required Map<String, dynamic> event,
     required bool isRegistered,
@@ -877,83 +840,183 @@ class _HomeFeedTabState extends ConsumerState<HomeFeedTab> {
   }) {
     final title = event['title']?.toString() ?? 'Event';
     final venue = event['venue']?.toString() ?? 'Campus Hall';
-    final catName = event['event_categories']?['name']?.toString() ?? 'General';
+    final catName = event['event_categories']?['name']?.toString() ?? 'CAMPUS';
     final date = _formatDate(event['start_date']?.toString());
-    final emoji = _categoryEmoji(catName);
-    final gradient = ZestTokens.categoryGradient(catName);
+    final rawSeats = event['max_seats'] ?? event['max_capacity'];
+    final seatsTotal = rawSeats is int ? rawSeats : int.tryParse(rawSeats?.toString() ?? '') ?? 100;
+    final seatsLeft = (seatsTotal * 0.35).toInt();
+    final xpReward = event['points_awarded'] ?? 150;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: ZestCard(
-        padding: const EdgeInsets.all(12),
+      child: GestureDetector(
         onTap: onTap,
-        child: Row(
-          children: [
-            // 56px thumbnail with category gradient + emoji
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                gradient: gradient,
-                borderRadius: const BorderRadius.all(Radius.circular(16)),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: ZestTokens.line),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x060B1220),
+                blurRadius: 12,
+                offset: Offset(0, 3),
               ),
-              alignment: Alignment.center,
-              child: Text(
-                emoji,
-                style: const TextStyle(fontSize: 26),
-              ),
-            ),
-            const SizedBox(width: 14),
-
-            // Center Info: Title + date/venue
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            ],
+          ),
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Row: Club / Category uppercase + Status Pill
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: ZestTokens.bodyBold.copyWith(
-                      fontSize: 15,
+                    catName.toUpperCase(),
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: ZestTokens.core,
+                      letterSpacing: 0.8,
                     ),
                   ),
-                  const SizedBox(height: 3),
+                  if (isRegistered)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFECFDF5),
+                        borderRadius: ZestTokens.borderPill,
+                        border: Border.all(color: const Color(0xFFA7F3D0)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(LucideIcons.checkCircle2, size: 10, color: Color(0xFF10B981)),
+                          SizedBox(width: 4),
+                          Text(
+                            'Going ✓',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF059669),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: ZestTokens.borderPill,
+                        border: Border.all(color: const Color(0xFFBFDBFE)),
+                      ),
+                      child: const Text(
+                        'Register',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          color: ZestTokens.blue,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+
+              const SizedBox(height: 7),
+
+              // Title
+              Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w700,
+                  color: ZestTokens.ink,
+                  letterSpacing: -0.2,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              // Date & Venue metadata row
+              Row(
+                children: [
+                  const Icon(LucideIcons.calendar, size: 11.5, color: ZestTokens.ink3),
+                  const SizedBox(width: 4),
                   Text(
-                    '$date • $venue',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    date,
                     style: ZestTokens.caption.copyWith(
-                      color: ZestTokens.ink2,
+                      color: ZestTokens.ink3,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Icon(LucideIcons.mapPin, size: 11.5, color: ZestTokens.ink3),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      venue,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: ZestTokens.caption.copyWith(
+                        color: ZestTokens.ink3,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(width: 10),
 
-            // Right: Pill "Register" or "Going ✓"
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-              decoration: BoxDecoration(
-                color: isRegistered
-                    ? const Color(0xFFE8F6FE)
-                    : ZestTokens.blue,
-                borderRadius: ZestTokens.borderPill,
-                border: isRegistered
-                    ? Border.all(color: ZestTokens.sky)
-                    : null,
+              const SizedBox(height: 10),
+
+              // Divider
+              Container(height: 1, color: ZestTokens.line),
+
+              const SizedBox(height: 8),
+
+              // Bottom Row: Seats Left | +XP Reward
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('⚡', style: TextStyle(fontSize: 11)),
+                      const SizedBox(width: 3),
+                      Text(
+                        '$seatsLeft seats left',
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: ZestTokens.coral,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    '+$xpReward XP',
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: ZestTokens.core,
+                    ),
+                  ),
+                ],
               ),
-              child: Text(
-                isRegistered ? 'Going ✓' : 'Register',
-                style: ZestTokens.caption.copyWith(
-                  color: isRegistered ? ZestTokens.blue : Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -985,24 +1048,4 @@ class _HomeFeedTabState extends ConsumerState<HomeFeedTab> {
     if (lower.contains('lit') || lower.contains('quiz')) return '📚';
     return '⚡';
   }
-}
-
-class _WatermarkBlobPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-    final path = Path();
-    path.addRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, size.width, size.height),
-        Radius.circular(size.width * 0.45),
-      ),
-    );
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
