@@ -129,29 +129,27 @@ git push origin v2.0.0
 
 ---
 
-## 📂 Project Structure
+## 📂 Repository Layout
+
+- **`event_app/`**: Flutter student mobile application (Android & iOS).
+- **`admin-web/`**: ZEST Admin web control panel (Next.js 14 + Supabase), independently deployable on Vercel (Root Directory = `admin-web`).
+- **`landing_page/`**: Public web marketing landing page.
+- **`supabase/`**: Database schemas, migrations, RLS policies, and Edge Functions.
 
 ```
 Event-Management-Collage/
 ├── .github/
 │   └── workflows/
-│       └── release.yml          # Automated APK Build & GitHub Release
-├── event_app/                   # Main Flutter application
-│   ├── assets/                  # Brand logos, fonts, icons
-│   └── lib/
-│       ├── core/                # Theme, radius, typography, router, widgets
-│       │   ├── theme/           # AppColors, AppRadius, AppTextStyles, AppTheme
-│       │   └── widgets/         # ZestButton, FloatingPillNavBar, HeroEventCard, etc.
-│       └── features/
-│           ├── landing/         # Animated Splash & Marketing Hero
-│           ├── auth/            # Student Login & Password Reset
-│           ├── home/            # 5-Tab Shell (Feed, Explore, Passes, Leaderboard, Profile)
-│           ├── events/          # Event Details, Custom Forms, Registration
-│           ├── admin/           # Admin Dashboard, Tables, Scanner, Form Builder
-│           └── notifications/   # Campus Activity & Feedback Dialogs
+│       ├── release.yml          # Automated Flutter APK Release (triggers on v* tags)
+│       └── admin-web-ci.yml     # Admin Web CI (lint, typecheck, build on admin-web/**)
+├── admin-web/                   # Standalone Web Admin Control Panel (Next.js)
+├── event_app/                   # Main Flutter student application
 ├── landing_page/                # Web marketing site
 └── supabase/                    # SQL migrations, RLS policies, schemas
 ```
+
+> **Deployment & Tag Isolation**:  
+> The Flutter APK release workflow triggers exclusively on version tags (`v*`). Admin web deployments are managed independently by Vercel from the `admin-web/` root directory and never use `v*` tags.
 
 ---
 

@@ -1,0 +1,6 @@
+---
+description: Rules for ZEST Admin web panel development
+globs: admin-web/**
+---
+
+Work inside admin-web/ only unless explicitly told otherwise; never touch Flutter code; never commit secrets.

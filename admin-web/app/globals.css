@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@1&family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-instrument-serif: 'Instrument Serif', Georgia, serif;
+
+  --color-page: #F5F7FB;
+  --color-card: #FFFFFF;
+  --color-line: #E6EAF2;
+  --color-fill: #EEF2F8;
+
+  --color-ink: #0B1220;
+  --color-ink-2: #5B6577;
+  --color-ink-3: #8A93A5;
+
+  --color-brand-sky: #38BDF8;
+  --color-brand-core: #0AA5F0;
+  --color-brand-blue: #0063F0;
+  --color-brand-blue-deep: #0050C8;
+  --color-brand-tint: #E6F4FE;
+
+  --color-semantic-success: #16B364;
+  --color-semantic-warning: #F59E0B;
+  --color-semantic-danger: #EF4444;
+
+  --color-accent-lemon: #FFD84D;
+  --color-accent-coral: #FF6B8A;
+  --color-accent-aqua: #6CE3FF;
+  --color-accent-lavender: #8E8BEA;
+  --color-accent-mint: #3DDC97;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+  body {
+    background-color: var(--color-page);
+    color: var(--color-ink);
+    font-family: var(--font-inter);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Custom Serif Accent Word Utility */
+.serif-accent {
+  font-family: var(--font-instrument-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* Shimmer Keyframe */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Custom Scrollbar for sleek aesthetic */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Tabular nums for all data tables, numbers, and stats */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

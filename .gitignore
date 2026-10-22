@@ -16,3 +16,11 @@ build/
 .next/
 out/
 supabase/.temp/
+
+# admin-web ignores
+admin-web/node_modules/
+admin-web/.next/
+admin-web/.env.local
+admin-web/.env*.local
+admin-web/.vercel/
+admin-web/coverage/
