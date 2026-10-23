@@ -751,7 +751,7 @@ export function FormBuilderClient({
               </div>
             ) : (
               <div className="p-12 border border-line rounded-card text-center bg-card text-ink-3">
-                Select a question on the left to edit its properties or click "Add question".
+                Select a question on the left to edit its properties or click &quot;Add question&quot;.
               </div>
             )}
           </div>

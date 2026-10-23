@@ -20,6 +20,7 @@ npm run dev
 ```
 
 To create a production static build:
+
 ```bash
 npm run build
 npm run start
@@ -29,7 +30,7 @@ npm run start
 
 ## 📂 Architecture & File Map
 
-```
+```text
 landing_page/
 ├── app/
 │   ├── (landing)/
@@ -107,12 +108,14 @@ Search for `// TODO` in [`lib/landing-data.ts`](lib/landing-data.ts) to find and
 ## 🌐 Deploy to Vercel
 
 ### Option 1: Vercel CLI
+
 ```bash
 cd landing_page
 npx vercel
 ```
 
 ### Option 2: GitHub Integration
+
 1. Push this repository to GitHub.
 2. In the [Vercel Dashboard](https://vercel.com/dashboard), click **Add New Project**.
 3. Select your repository.

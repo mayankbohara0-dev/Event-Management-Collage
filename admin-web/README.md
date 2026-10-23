@@ -46,11 +46,14 @@ NEXT_PUBLIC_LANDING_URL="http://localhost:3000"
 ZEST Admin operates on the existing ZEST database schema without breaking student app compatibility.
 
 ### 1. Admin Profiles & Roles
+
 The table `admin_profiles` stores organizer metadata and privileges:
+
 - `super_admin`: Full access to events, settings, team invitations, and role management.
 - `admin`: Standard event management, check-in gate scanner, and registration approval.
 
 ### 2. Seeding Your First Super-Admin
+
 To grant an account super-admin status, run the following SQL query in the Supabase SQL Editor:
 
 ```sql
@@ -88,9 +91,11 @@ Deploy `admin-web` as a standalone project on Vercel:
    - `NEXT_PUBLIC_LANDING_URL`: Student portal / landing URL
 4. **Ignored Build Step (Prevents Unnecessary Deployments)**:
    In Vercel Project Settings $\to$ **Git** $\to$ **Ignored Build Step**, select *Custom* and enter:
+
    ```bash
    git diff --quiet HEAD^ HEAD -- .
    ```
+
    *This ensures commits that only modify Flutter code (`event_app/`) or root docs skip the admin web deployment entirely.*
 
 ---
@@ -98,6 +103,7 @@ Deploy `admin-web` as a standalone project on Vercel:
 ## 🧪 Available Scripts
 
 Inside `admin-web/`:
+
 - `npm run dev`: Start Next.js development server on port 3001.
 - `npm run build`: Compile and optimize production build.
 - `npm run start`: Start production server on port 3001.
