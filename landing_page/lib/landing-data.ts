@@ -98,6 +98,9 @@ export interface CalendarEvent {
   category: string;
 }
 
+export const APP_DOWNLOAD_URL =
+  "https://github.com/mayankbohara0-dev/Event-Management-Collage/releases/latest/download/app-release.apk";
+
 export const landingData = {
   // Navigation
   navigation: {
@@ -115,7 +118,6 @@ export const landingData = {
     },
     ctaPrimary: {
       label: "Get the app",
-      // TODO: Replace with App Store / Google Play direct download links
       href: "#get-app",
     },
   },
@@ -132,8 +134,7 @@ export const landingData = {
       "Find events, grab a QR pass and earn XP for showing up. One app instead of forms, forwards and paper lists.",
     ctaPrimary: {
       label: "Get the app",
-      // TODO: Replace with App Store / Google Play link
-      href: "#get-app",
+      href: APP_DOWNLOAD_URL,
     },
     ctaSecondary: {
       label: "I'm an organizer",
@@ -496,8 +497,7 @@ export const landingData = {
         period: "forever for students",
         description: "Download the app, discover all campus events, grab QR passes, and earn XP.",
         cta: "Download student app",
-        // TODO: Replace with store link
-        href: "#get-app",
+        href: APP_DOWNLOAD_URL,
         highlights: [
           "Unlimited event discoveries",
           "One-tap autofill registrations",
@@ -619,8 +619,7 @@ export const landingData = {
       "Get the app on your phone today or book a 10-minute demo for your club council or college administration.",
     ctaPrimary: {
       label: "Get the student app",
-      // TODO: Replace with app download link
-      href: "#get-app",
+      href: APP_DOWNLOAD_URL,
     },
     ctaSecondary: {
       label: "Book club demo",

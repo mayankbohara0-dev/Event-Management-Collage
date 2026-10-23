@@ -12,7 +12,7 @@ export default function PricingCTA() {
   const { eyebrow, headingParts, cards, infoTiles } = landingData.pricing;
 
   return (
-    <section className="py-[60px] lg:py-[120px] relative">
+    <section id="get-app" className="py-[60px] lg:py-[120px] relative">
       <div className="max-w-[1200px] mx-auto px-5 sm:px-6">
         <SectionHeading
           eyebrow={eyebrow}

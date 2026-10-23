@@ -9,11 +9,19 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+  const FALLBACK_URL = "https://fgdrvtonfgeuboggucoe.supabase.co";
+  const FALLBACK_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZnZHJ2dG9uZmdldWJvZ2d1Y29lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwOTQyNzAsImV4cCI6MjEwMTY3MDI3MH0.A7Oghf0CjCjZKEmZ5PqhHKXLXP86MaPUWFMy_aoVaJM";
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return response;
+  let supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "").trim().replace(/^["']|["']$/g, "");
+  let supabaseAnonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "").trim().replace(/^["']|["']$/g, "");
+
+  if (!supabaseUrl || supabaseUrl.includes("dummy") || supabaseUrl.includes("your-project") || supabaseUrl.includes("fgdrvtongfeuboggucoc")) {
+    supabaseUrl = FALLBACK_URL;
+  }
+
+  if (!supabaseAnonKey || !supabaseAnonKey.startsWith("eyJ") || supabaseAnonKey.includes("dummy")) {
+    supabaseAnonKey = FALLBACK_KEY;
   }
 
   const supabase = createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
