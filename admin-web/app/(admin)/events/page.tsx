@@ -8,7 +8,13 @@ export const metadata = {
   description: "Manage all campus events",
 };
 
-export default async function EventsPage() {
+export const revalidate = 10;
+
+export default async function EventsPage({
+  searchParams,
+}: {
+  searchParams?: { view?: string };
+}) {
   const supabase = createClient();
   const {
     data: { session },
@@ -35,6 +41,7 @@ export default async function EventsPage() {
       initialEvents={(events as any[]) ?? []}
       categories={(categories as any[]) ?? []}
       departments={(departments as any[]) ?? []}
+      initialView={searchParams?.view === "calendar" ? "calendar" : "grid"}
     />
   );
 }

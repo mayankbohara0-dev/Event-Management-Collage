@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   LayoutDashboard,
@@ -140,6 +140,119 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+function NavItemLink({
+  item,
+  pathname,
+}: {
+  item: NavItem;
+  pathname: string;
+}) {
+  const searchParams = useSearchParams();
+  const currentView = searchParams ? searchParams.get("view") : null;
+
+  const isCalendar = item.href.includes("view=calendar");
+  const isAllEvents = item.href === "/events";
+
+  let isActive = false;
+  if (isCalendar) {
+    isActive = pathname === "/events" && currentView === "calendar";
+  } else if (isAllEvents) {
+    isActive = pathname === "/events" && currentView !== "calendar";
+  } else {
+    isActive =
+      pathname === item.href ||
+      (item.href !== "/dashboard" &&
+        !item.href.includes("?") &&
+        pathname.startsWith(item.href));
+  }
+
+  return (
+    <Link
+      href={item.href}
+      className={cn(
+        "relative flex items-center justify-center lg:justify-between px-2.5 lg:px-3 py-2 rounded-pill text-xs font-medium transition-all group",
+        isActive
+          ? "bg-brand-tint text-brand-blue font-semibold"
+          : "text-ink-2 hover:text-ink hover:bg-fill/70"
+      )}
+      title={item.label}
+    >
+      {/* Active sliding indicator bar */}
+      {isActive && (
+        <motion.div
+          layoutId="activeNavIndicator"
+          className="hidden lg:block absolute left-1 top-2 bottom-2 w-1 rounded-full bg-brand-core"
+          transition={{
+            type: "spring",
+            stiffness: 450,
+            damping: 32,
+          }}
+        />
+      )}
+
+      <div className="flex items-center gap-2.5">
+        <span
+          className={cn(
+            "shrink-0 transition-colors",
+            isActive ? "text-brand-core" : "text-ink-3 group-hover:text-ink"
+          )}
+        >
+          {item.icon}
+        </span>
+        <span className="hidden lg:inline">{item.label}</span>
+      </div>
+
+      {item.badge && (
+        <span
+          className={cn(
+            "hidden lg:inline text-[9px] font-bold px-1.5 py-0.2 rounded-full",
+            item.badge === "Live"
+              ? "bg-semantic-success text-white animate-pulse"
+              : "bg-fill text-ink-3"
+          )}
+        >
+          {item.badge}
+        </span>
+      )}
+    </Link>
+  );
+}
+
+function NavItemFallback({
+  item,
+  pathname,
+}: {
+  item: NavItem;
+  pathname: string;
+}) {
+  const isCalendar = item.href.includes("view=calendar");
+  const isAllEvents = item.href === "/events";
+  const isActive = isCalendar
+    ? false
+    : isAllEvents
+    ? pathname === "/events"
+    : pathname === item.href ||
+      (!item.href.includes("?") && pathname.startsWith(item.href));
+
+  return (
+    <Link
+      href={item.href}
+      className={cn(
+        "relative flex items-center justify-center lg:justify-between px-2.5 lg:px-3 py-2 rounded-pill text-xs font-medium transition-all group",
+        isActive
+          ? "bg-brand-tint text-brand-blue font-semibold"
+          : "text-ink-2 hover:text-ink hover:bg-fill/70"
+      )}
+      title={item.label}
+    >
+      <div className="flex items-center gap-2.5">
+        <span className="shrink-0 text-ink-3">{item.icon}</span>
+        <span className="hidden lg:inline">{item.label}</span>
+      </div>
+    </Link>
+  );
+}
+
 interface SidebarProps {
   user?: {
     name?: string;
@@ -197,65 +310,14 @@ export function Sidebar({ user }: SidebarProps) {
                 </span>
 
                 <div className="space-y-0.5">
-                  {visibleItems.map((item) => {
-                    const isActive =
-                      pathname === item.href ||
-                      (item.href !== "/dashboard" &&
-                        !item.href.includes("?") &&
-                        pathname.startsWith(item.href));
-
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={cn(
-                          "relative flex items-center justify-center lg:justify-between px-2.5 lg:px-3 py-2 rounded-pill text-xs font-medium transition-all group",
-                          isActive
-                            ? "bg-brand-tint text-brand-blue font-semibold"
-                            : "text-ink-2 hover:text-ink hover:bg-fill/70"
-                        )}
-                        title={item.label}
-                      >
-                        {/* Active sliding indicator bar */}
-                        {isActive && (
-                          <motion.div
-                            layoutId="activeNavIndicator"
-                            className="hidden lg:block absolute left-1 top-2 bottom-2 w-1 rounded-full bg-brand-core"
-                            transition={{
-                              type: "spring",
-                              stiffness: 450,
-                              damping: 32,
-                            }}
-                          />
-                        )}
-
-                        <div className="flex items-center gap-2.5">
-                          <span
-                            className={cn(
-                              "shrink-0 transition-colors",
-                              isActive ? "text-brand-core" : "text-ink-3 group-hover:text-ink"
-                            )}
-                          >
-                            {item.icon}
-                          </span>
-                          <span className="hidden lg:inline">{item.label}</span>
-                        </div>
-
-                        {item.badge && (
-                          <span
-                            className={cn(
-                              "hidden lg:inline text-[9px] font-bold px-1.5 py-0.2 rounded-full",
-                              item.badge === "Live"
-                                ? "bg-semantic-success text-white animate-pulse"
-                                : "bg-fill text-ink-3"
-                            )}
-                          >
-                            {item.badge}
-                          </span>
-                        )}
-                      </Link>
-                    );
-                  })}
+                  {visibleItems.map((item) => (
+                    <Suspense
+                      key={item.href}
+                      fallback={<NavItemFallback item={item} pathname={pathname} />}
+                    >
+                      <NavItemLink item={item} pathname={pathname} />
+                    </Suspense>
+                  ))}
                 </div>
               </div>
             );

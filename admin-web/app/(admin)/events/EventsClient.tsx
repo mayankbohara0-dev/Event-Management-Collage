@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Plus,
@@ -12,12 +13,13 @@ import {
   Filter,
   LayoutGrid,
   LayoutList,
+  CalendarDays,
   Eye,
   Edit,
-  Archive,
-  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from "date-fns";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
@@ -46,6 +48,7 @@ interface EventsClientProps {
   initialEvents: Event[];
   categories: { id: string; name: string }[];
   departments: { id: string; name: string; code: string }[];
+  initialView?: "grid" | "list" | "calendar";
 }
 
 function VisibilityBadge({ v }: { v: string }) {
@@ -227,12 +230,15 @@ export function EventsClient({
   initialEvents,
   categories,
   departments,
+  initialView = "grid",
 }: EventsClientProps) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [filterVis, setFilterVis] = useState("all");
   const [filterCat, setFilterCat] = useState("all");
   const [filterDept, setFilterDept] = useState("all");
-  const [view, setView] = useState<"grid" | "list">("grid");
+  const [view, setView] = useState<"grid" | "list" | "calendar">(initialView);
+  const [calMonth, setCalMonth] = useState(() => new Date());
 
   const filtered = useMemo(() => {
     return initialEvents.filter((e) => {
@@ -320,6 +326,7 @@ export function EventsClient({
                 ? "bg-card shadow-sm text-brand-blue"
                 : "text-ink-3 hover:text-ink"
             }`}
+            title="Grid view"
           >
             <LayoutGrid size={16} />
           </button>
@@ -330,8 +337,20 @@ export function EventsClient({
                 ? "bg-card shadow-sm text-brand-blue"
                 : "text-ink-3 hover:text-ink"
             }`}
+            title="List view"
           >
             <LayoutList size={16} />
+          </button>
+          <button
+            onClick={() => setView("calendar")}
+            className={`p-1.5 rounded-card transition-colors ${
+              view === "calendar"
+                ? "bg-card shadow-sm text-brand-blue"
+                : "text-ink-3 hover:text-ink"
+            }`}
+            title="Calendar view"
+          >
+            <CalendarDays size={16} />
           </button>
         </div>
       </div>
@@ -358,29 +377,17 @@ export function EventsClient({
             <EventCard key={event.id} event={event} />
           ))}
         </div>
-      ) : (
+      ) : view === "list" ? (
         <div className="bg-card rounded-card border border-line overflow-hidden">
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-line bg-fill/50">
-                <th className="px-4 py-3 text-xs font-semibold text-ink-2 uppercase tracking-wider">
-                  Event
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold text-ink-2 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold text-ink-2 uppercase tracking-wider">
-                  Venue
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold text-ink-2 uppercase tracking-wider">
-                  Dept
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold text-ink-2 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold text-ink-2 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="px-4 py-3 text-xs font-semibold text-ink-2 uppercase tracking-wider">Event</th>
+                <th className="px-4 py-3 text-xs font-semibold text-ink-2 uppercase tracking-wider">Date</th>
+                <th className="px-4 py-3 text-xs font-semibold text-ink-2 uppercase tracking-wider">Venue</th>
+                <th className="px-4 py-3 text-xs font-semibold text-ink-2 uppercase tracking-wider">Dept</th>
+                <th className="px-4 py-3 text-xs font-semibold text-ink-2 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-xs font-semibold text-ink-2 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -389,6 +396,100 @@ export function EventsClient({
               ))}
             </tbody>
           </table>
+        </div>
+      ) : (
+        /* Calendar View */
+        <div className="bg-card rounded-card border border-line overflow-hidden">
+          {/* Calendar Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-line">
+            <button
+              onClick={() => setCalMonth((m) => subMonths(m, 1))}
+              className="p-2 rounded-card hover:bg-fill transition-colors text-ink-2"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <h2 className="text-base font-semibold text-ink">
+              {format(calMonth, "MMMM yyyy")}
+            </h2>
+            <button
+              onClick={() => setCalMonth((m) => addMonths(m, 1))}
+              className="p-2 rounded-card hover:bg-fill transition-colors text-ink-2"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+
+          {/* Day headers */}
+          <div className="grid grid-cols-7 border-b border-line">
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+              <div key={d} className="px-2 py-2 text-center text-[11px] font-semibold text-ink-3 uppercase tracking-wider">
+                {d}
+              </div>
+            ))}
+          </div>
+
+          {/* Calendar Grid */}
+          <div className="grid grid-cols-7">
+            {(() => {
+              const start = startOfMonth(calMonth);
+              const end = endOfMonth(calMonth);
+              const days = eachDayOfInterval({ start, end });
+              // Pad start with blanks
+              const startPad = start.getDay();
+              const allCells: React.ReactNode[] = [];
+              for (let i = 0; i < startPad; i++) {
+                allCells.push(<div key={`pad-${i}`} className="min-h-[80px] border-b border-r border-line/50 bg-fill/20" />);
+              }
+              days.forEach((day) => {
+                const dayEvents = initialEvents.filter((e) =>
+                  isSameDay(new Date(e.start_date), day)
+                );
+                const isToday = isSameDay(day, new Date());
+                allCells.push(
+                  <div
+                    key={day.toISOString()}
+                    className={`min-h-[80px] border-b border-r border-line/50 p-1.5 ${
+                      !isSameMonth(day, calMonth) ? "bg-fill/20" : ""
+                    }`}
+                  >
+                    <span
+                      className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold mb-1 ${
+                        isToday
+                          ? "bg-brand-core text-white"
+                          : "text-ink-2"
+                      }`}
+                    >
+                      {format(day, "d")}
+                    </span>
+                    <div className="space-y-0.5">
+                      {dayEvents.slice(0, 3).map((ev) => (
+                        <Link
+                          key={ev.id}
+                          href={`/events/${ev.id}`}
+                          className={`block text-[10px] font-medium px-1.5 py-0.5 rounded truncate transition-colors ${
+                            ev.visibility === "published"
+                              ? "bg-semantic-success-tint text-semantic-success hover:bg-semantic-success hover:text-white"
+                              : ev.visibility === "draft"
+                              ? "bg-brand-tint text-brand-blue hover:bg-brand-core hover:text-white"
+                              : "bg-fill text-ink-3"
+                          }`}
+                          title={ev.title}
+                        >
+                          {ev.title}
+                        </Link>
+                      ))}
+                      {dayEvents.length > 3 && (
+                        <span className="text-[10px] text-ink-3 px-1">
+                          +{dayEvents.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              });
+              return allCells;
+            })()}
+          </div>
         </div>
       )}
     </div>
