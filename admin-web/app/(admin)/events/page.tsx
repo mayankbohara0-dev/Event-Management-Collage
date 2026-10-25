@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { EventsClient } from "./EventsClient";
@@ -8,13 +8,9 @@ export const metadata = {
   description: "Manage all campus events",
 };
 
-export const revalidate = 10;
+export const revalidate = 30;
 
-export default async function EventsPage({
-  searchParams,
-}: {
-  searchParams?: { view?: string };
-}) {
+export default async function EventsPage() {
   const supabase = createClient();
   const {
     data: { session },
@@ -30,18 +26,16 @@ export default async function EventsPage({
         )
         .order("start_date", { ascending: false }),
       supabase.from("event_categories").select("id, name").order("name"),
-      supabase
-        .from("departments")
-        .select("id, name, code")
-        .order("name"),
+      supabase.from("departments").select("id, name, code").order("name"),
     ]);
 
   return (
-    <EventsClient
-      initialEvents={(events as any[]) ?? []}
-      categories={(categories as any[]) ?? []}
-      departments={(departments as any[]) ?? []}
-      initialView={searchParams?.view === "calendar" ? "calendar" : "grid"}
-    />
+    <Suspense fallback={null}>
+      <EventsClient
+        initialEvents={(events as any[]) ?? []}
+        categories={(categories as any[]) ?? []}
+        departments={(departments as any[]) ?? []}
+      />
+    </Suspense>
   );
 }

@@ -8,6 +8,8 @@ export const metadata = {
   description: "Student directory",
 };
 
+export const revalidate = 30;
+
 export default async function StudentsPage() {
   const supabase = createClient();
   const {

@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Plus,
@@ -48,7 +48,6 @@ interface EventsClientProps {
   initialEvents: Event[];
   categories: { id: string; name: string }[];
   departments: { id: string; name: string; code: string }[];
-  initialView?: "grid" | "list" | "calendar";
 }
 
 function VisibilityBadge({ v }: { v: string }) {
@@ -230,15 +229,23 @@ export function EventsClient({
   initialEvents,
   categories,
   departments,
-  initialView = "grid",
 }: EventsClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Derive view directly from URL so navigating to ?view=calendar always works
+  const view = (searchParams?.get("view") ?? "grid") as "grid" | "list" | "calendar";
+  const [calMonth, setCalMonth] = useState(() => new Date());
+
   const [search, setSearch] = useState("");
   const [filterVis, setFilterVis] = useState("all");
   const [filterCat, setFilterCat] = useState("all");
   const [filterDept, setFilterDept] = useState("all");
-  const [view, setView] = useState<"grid" | "list" | "calendar">(initialView);
-  const [calMonth, setCalMonth] = useState(() => new Date());
+
+  // Switch view by pushing URL param so sidebar also updates active state
+  function switchView(v: "grid" | "list" | "calendar") {
+    if (v === "grid") router.push("/events");
+    else router.push(`/events?view=${v}`);
+  }
 
   const filtered = useMemo(() => {
     return initialEvents.filter((e) => {
@@ -320,7 +327,7 @@ export function EventsClient({
         {/* View toggle */}
         <div className="flex items-center gap-1 bg-fill rounded-card p-1">
           <button
-            onClick={() => setView("grid")}
+            onClick={() => switchView("grid")}
             className={`p-1.5 rounded-card transition-colors ${
               view === "grid"
                 ? "bg-card shadow-sm text-brand-blue"
@@ -331,7 +338,7 @@ export function EventsClient({
             <LayoutGrid size={16} />
           </button>
           <button
-            onClick={() => setView("list")}
+            onClick={() => switchView("list")}
             className={`p-1.5 rounded-card transition-colors ${
               view === "list"
                 ? "bg-card shadow-sm text-brand-blue"
@@ -342,7 +349,7 @@ export function EventsClient({
             <LayoutList size={16} />
           </button>
           <button
-            onClick={() => setView("calendar")}
+            onClick={() => switchView("calendar")}
             className={`p-1.5 rounded-card transition-colors ${
               view === "calendar"
                 ? "bg-card shadow-sm text-brand-blue"

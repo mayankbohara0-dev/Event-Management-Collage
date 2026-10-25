@@ -45,6 +45,10 @@ export default function RootLayout({
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
+        {/* Preconnect to Supabase to eliminate DNS latency on first data fetch */}
+        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
+          <link rel="preconnect" href={process.env.NEXT_PUBLIC_SUPABASE_URL} />
+        )}
       </head>
       <body className="min-h-screen bg-page text-ink selection:bg-brand-tint selection:text-brand-blue">
         <QueryProvider>

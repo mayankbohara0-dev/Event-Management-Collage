@@ -8,6 +8,8 @@ export const metadata = {
   description: "Manage all event registrations",
 };
 
+export const revalidate = 15;
+
 export default async function RegistrationsPage({
   searchParams,
 }: {
