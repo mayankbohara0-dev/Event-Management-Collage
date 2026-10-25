@@ -17,7 +17,7 @@ import {
 import SectionHeading from "@/components/brand/SectionHeading";
 import MagneticButton from "@/components/brand/MagneticButton";
 import Mascot from "@/components/brand/Mascot";
-import { landingData } from "@/lib/landing-data";
+import { landingData, APP_DOWNLOAD_URL } from "@/lib/landing-data";
 
 const ORGANIZER_ICONS: Record<string, React.ElementType> = {
   BarChart3,
@@ -173,7 +173,7 @@ export default function Bento() {
                   </li>
                 ))}
               </ul>
-              <MagneticButton variant="secondary" href="#get-app" className="w-full sm:w-auto text-center">
+              <MagneticButton variant="secondary" href={APP_DOWNLOAD_URL} className="w-full sm:w-auto text-center">
                 {bento.students.cta}
               </MagneticButton>
             </div>
