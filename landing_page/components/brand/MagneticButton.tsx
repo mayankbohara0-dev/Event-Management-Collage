@@ -20,11 +20,11 @@ export default function MagneticButton({
   href,
   ariaLabel,
 }: MagneticButtonProps) {
-  const buttonRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const reducedMotion = useReducedMotion();
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
     if (reducedMotion || !buttonRef.current) return;
     const { clientX, clientY } = e;
     const { left, top, width, height } = buttonRef.current.getBoundingClientRect();
@@ -52,38 +52,44 @@ export default function MagneticButton({
     dark: "btn-dark px-7 py-3.5 text-[15px] sm:text-[16px]",
   };
 
-  const buttonContent = (
-    <motion.div
-      ref={buttonRef}
+  if (href) {
+    const isExternal = href.startsWith("http://") || href.startsWith("https://");
+
+    return (
+      <motion.a
+        ref={buttonRef as React.RefObject<HTMLAnchorElement>}
+        href={href}
+        target={isExternal ? "_blank" : undefined}
+        rel={isExternal ? "noopener noreferrer" : undefined}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        animate={{ x: position.x, y: position.y }}
+        transition={{ type: "spring", stiffness: 350, damping: 25, mass: 0.5 }}
+        whileTap={{ scale: 0.97 }}
+        className={`inline-flex items-center justify-center cursor-pointer select-none transition-all no-underline ${variantClasses[variant]} ${className}`}
+        aria-label={ariaLabel}
+        onClick={onClick}
+      >
+        {children}
+      </motion.a>
+    );
+  }
+
+  return (
+    <motion.button
+      ref={buttonRef as React.RefObject<HTMLButtonElement>}
+      type="button"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       animate={{ x: position.x, y: position.y }}
       transition={{ type: "spring", stiffness: 350, damping: 25, mass: 0.5 }}
       whileTap={{ scale: 0.97 }}
       className={`inline-flex items-center justify-center cursor-pointer select-none transition-all ${variantClasses[variant]} ${className}`}
-      role={href ? undefined : "button"}
       aria-label={ariaLabel}
       onClick={onClick}
     >
       {children}
-    </motion.div>
+    </motion.button>
   );
-
-  if (href) {
-    const isFullWidth = className.includes("w-full");
-    const isExternal = href.startsWith("http://") || href.startsWith("https://");
-
-    return (
-      <a
-        href={href}
-        target={isExternal ? "_blank" : undefined}
-        rel={isExternal ? "noopener noreferrer" : undefined}
-        className={`${isFullWidth ? "block w-full sm:w-auto sm:inline-block" : "inline-block"} no-underline`}
-      >
-        {buttonContent}
-      </a>
-    );
-  }
-
-  return buttonContent;
 }
+

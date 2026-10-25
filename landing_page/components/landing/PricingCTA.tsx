@@ -6,7 +6,7 @@ import SectionHeading from "@/components/brand/SectionHeading";
 import MeshCard from "@/components/brand/MeshCard";
 import MagneticButton from "@/components/brand/MagneticButton";
 import Mascot from "@/components/brand/Mascot";
-import { landingData } from "@/lib/landing-data";
+import { landingData, APP_DIRECT_DOWNLOAD_URL } from "@/lib/landing-data";
 
 export default function PricingCTA() {
   const { eyebrow, headingParts, cards, infoTiles } = landingData.pricing;
@@ -68,7 +68,7 @@ export default function PricingCTA() {
                 </ul>
               </div>
 
-              <div className="pt-6 sm:pt-8 mt-4 sm:mt-6 border-t border-white/20 relative z-30">
+              <div className="pt-6 sm:pt-8 mt-4 sm:mt-6 border-t border-white/20 relative z-30 flex flex-col sm:flex-row sm:items-center gap-3">
                 <MagneticButton
                   variant="secondary"
                   href={cards.studentCard.href}
@@ -76,6 +76,14 @@ export default function PricingCTA() {
                 >
                   {cards.studentCard.cta}
                 </MagneticButton>
+                <a
+                  href={APP_DIRECT_DOWNLOAD_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[12px] sm:text-[13px] text-white/80 hover:text-white underline text-center sm:text-left transition-colors"
+                >
+                  Direct APK (77 MB) ↓
+                </a>
               </div>
             </MeshCard>
           </div>
