@@ -99,10 +99,10 @@ export interface CalendarEvent {
 }
 
 export const APP_DOWNLOAD_URL =
-  "https://github.com/mayankbohara0-dev/Event-Management-Collage/releases/tag/v1.0.0";
-
-export const APP_DIRECT_DOWNLOAD_URL =
   "https://github.com/mayankbohara0-dev/Event-Management-Collage/releases/download/v1.0.0/app-release.apk";
+
+export const APP_RELEASE_PAGE_URL =
+  "https://github.com/mayankbohara0-dev/Event-Management-Collage/releases/tag/v1.0.0";
 
 export const landingData = {
   // Navigation

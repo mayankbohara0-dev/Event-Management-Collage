@@ -9,6 +9,7 @@ interface MagneticButtonProps {
   className?: string;
   onClick?: () => void;
   href?: string;
+  download?: boolean | string;
   ariaLabel?: string;
 }
 
@@ -18,6 +19,7 @@ export default function MagneticButton({
   className = "",
   onClick,
   href,
+  download,
   ariaLabel,
 }: MagneticButtonProps) {
   const buttonRef = useRef<HTMLElement>(null);
@@ -54,12 +56,21 @@ export default function MagneticButton({
 
   if (href) {
     const isExternal = href.startsWith("http://") || href.startsWith("https://");
+    const isApk = href.endsWith(".apk") || href.includes(".apk");
+    const downloadAttr = download
+      ? typeof download === "string"
+        ? download
+        : "app-release.apk"
+      : isApk
+      ? "app-release.apk"
+      : undefined;
 
     return (
       <motion.a
         ref={buttonRef as React.RefObject<HTMLAnchorElement>}
         href={href}
-        target={isExternal ? "_blank" : undefined}
+        download={downloadAttr}
+        target={isExternal && !isApk ? "_blank" : undefined}
         rel={isExternal ? "noopener noreferrer" : undefined}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
