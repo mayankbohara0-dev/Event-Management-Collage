@@ -38,18 +38,16 @@ export function StatCard({
   const isBrand = variant === "brand";
 
   // Formatted count-up animation for numeric values
-  const [displayValue, setDisplayValue] = useState<number | string>(
-    typeof value === "number" ? 0 : value
-  );
+  const [displayValue, setDisplayValue] = useState<number | string>(value);
 
   useEffect(() => {
-    if (typeof value !== "number") {
+    if (typeof value !== "number" || value <= 5) {
       setDisplayValue(value);
       return;
     }
 
-    const duration = 800; // ms
-    const steps = 24;
+    const duration = 240; // ms
+    const steps = 8;
     const stepDuration = duration / steps;
     let step = 0;
 

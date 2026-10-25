@@ -100,21 +100,36 @@ export async function updateSession(request: NextRequest) {
     if (pathname !== "/") {
       redirectUrl.searchParams.set("returnTo", pathname);
     }
+    // Clear any stale admin role cookie
+    response.cookies.delete("zest_admin_role");
     return NextResponse.redirect(redirectUrl);
   }
 
-  // If authenticated and accessing login or root page
+  // If authenticated
   if (session) {
-    // Check if user is an admin in admin_profiles
-    const { data: adminProfile } = await supabase
-      .from("admin_profiles")
-      .select("id, role")
-      .eq("id", session.user.id)
-      .maybeSingle();
+    const cachedRole = request.cookies.get("zest_admin_role")?.value;
+    let isAdmin = cachedRole === "admin" || cachedRole === "super_admin";
 
-    const p = adminProfile as { id: string; role: string } | null;
-    const isAdmin =
-      p && (p.role === "admin" || p.role === "super_admin");
+    // Only query database if role is not already verified in cookie
+    if (!isAdmin) {
+      const { data: adminProfile } = await supabase
+        .from("admin_profiles")
+        .select("id, role")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      const p = adminProfile as { id: string; role: string } | null;
+      isAdmin = !!p && (p.role === "admin" || p.role === "super_admin");
+
+      if (isAdmin && p?.role) {
+        response.cookies.set("zest_admin_role", p.role, {
+          path: "/",
+          maxAge: 60 * 60 * 24, // 24 hours
+          sameSite: "lax",
+          httpOnly: true,
+        });
+      }
+    }
 
     if (!isAdmin && pathname !== "/unauthorized") {
       return NextResponse.redirect(new URL("/unauthorized", request.url));

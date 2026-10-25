@@ -72,14 +72,12 @@ export default function MagneticButton({
   if (href) {
     const isFullWidth = className.includes("w-full");
     const isExternal = href.startsWith("http://") || href.startsWith("https://");
-    const isApkDownload = href.endsWith(".apk");
 
     return (
       <a
         href={href}
         target={isExternal ? "_blank" : undefined}
         rel={isExternal ? "noopener noreferrer" : undefined}
-        download={isApkDownload ? "app-release.apk" : undefined}
         className={`${isFullWidth ? "block w-full sm:w-auto sm:inline-block" : "inline-block"} no-underline`}
       >
         {buttonContent}

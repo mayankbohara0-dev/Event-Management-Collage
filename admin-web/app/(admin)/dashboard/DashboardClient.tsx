@@ -36,11 +36,11 @@ interface DashboardClientProps {
 const stagger = {
   container: {
     hidden: {},
-    show: { transition: { staggerChildren: 0.07 } },
+    show: { transition: { staggerChildren: 0.03 } },
   },
   item: {
-    hidden: { opacity: 0, y: 16 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } },
+    hidden: { opacity: 0, y: 8 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.2, ease: "easeOut" } },
   },
 };
 
@@ -160,9 +160,9 @@ export function DashboardClient({
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Left: Upcoming Events */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.4 }}
+          transition={{ duration: 0.2 }}
           className="xl:col-span-2 bg-card rounded-card border border-line p-6"
         >
           <div className="flex items-center justify-between mb-5">
@@ -185,12 +185,9 @@ export function DashboardClient({
             </div>
           ) : (
             <div className="space-y-2">
-              {upcomingEvents.map((event, i) => (
-                <motion.div
+              {upcomingEvents.map((event) => (
+                <div
                   key={event.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.25 + i * 0.06 }}
                 >
                   <Link
                     href={`/events/${event.id}`}
@@ -215,7 +212,7 @@ export function DashboardClient({
                     </div>
                     <VisibilityBadge v={event.visibility} />
                   </Link>
-                </motion.div>
+                </div>
               ))}
             </div>
           )}
@@ -223,9 +220,9 @@ export function DashboardClient({
 
         {/* Right: Recent Registrations */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.4 }}
+          transition={{ duration: 0.2 }}
           className="bg-card rounded-card border border-line p-6"
         >
           <div className="flex items-center justify-between mb-5">
@@ -248,7 +245,7 @@ export function DashboardClient({
             </div>
           ) : (
             <div className="space-y-3">
-              {recentRegistrations.map((reg, i) => {
+              {recentRegistrations.map((reg) => {
                 const student = Array.isArray(reg.student_profiles)
                   ? reg.student_profiles[0]
                   : reg.student_profiles;
@@ -256,11 +253,8 @@ export function DashboardClient({
                   ? reg.events[0]
                   : reg.events;
                 return (
-                  <motion.div
+                  <div
                     key={reg.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.35 + i * 0.05 }}
                     className="flex items-start gap-3"
                   >
                     <div className="w-7 h-7 rounded-full bg-brand-gradient text-white flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
@@ -278,7 +272,7 @@ export function DashboardClient({
                       </p>
                     </div>
                     <StatusBadge status={reg.status} />
-                  </motion.div>
+                  </div>
                 );
               })}
             </div>
