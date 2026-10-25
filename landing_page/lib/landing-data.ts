@@ -98,6 +98,7 @@ export interface CalendarEvent {
   category: string;
 }
 
+// Production Direct APK Asset URL (v1.0.0)
 export const APP_DOWNLOAD_URL =
   "https://github.com/mayankbohara0-dev/Event-Management-Collage/releases/download/v1.0.0/app-release.apk";
 
